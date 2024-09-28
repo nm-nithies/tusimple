@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+# Define the PyTorch model with three Add operations
 class ThreeAddModel(nn.Module):
     def __init__(self):
         super(ThreeAddModel, self).__init__()
@@ -15,15 +16,34 @@ class ThreeAddModel(nn.Module):
         
         return out3
 
-# Example usage:
-# Create some sample tensors
-x = torch.tensor([1.0, 2.0, 3.0])
-y = torch.tensor([4.0, 5.0, 6.0])
-z = torch.tensor([7.0, 8.0, 9.0])
-
-# Initialize the model
+# Instantiate the model
 model = ThreeAddModel()
 
-# Forward pass
-result = model(x, y, z)
-print(result)
+# Set the model to evaluation mode
+model.eval()
+
+# Create some sample input tensors
+x = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
+y = torch.tensor([4.0, 5.0, 6.0], dtype=torch.float32)
+z = torch.tensor([7.0, 8.0, 9.0], dtype=torch.float32)
+
+# Define a dummy input tuple for export
+dummy_input = (x, y, z)
+
+# Export the model to ONNX
+torch.onnx.export(
+    model,                      # The model to be exported
+    dummy_input,                # The model's input (example inputs)
+    "three_add_model.onnx",     # The filename of the output ONNX model
+    input_names=["x", "y", "z"], # Name the input nodes
+    output_names=["out"],        # Name the output node
+    opset_version=11,            # ONNX opset version to export to (11 is widely supported)
+    dynamic_axes={
+        'x': {0: 'batch_size'}, 
+        'y': {0: 'batch_size'}, 
+        'z': {0: 'batch_size'}, 
+        'out': {0: 'batch_size'}
+    }  # Allows dynamic input sizes (batch_size)
+)
+
+print("Model has been successfully converted to ONNX.")
