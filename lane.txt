@@ -137,3 +137,45 @@ torch.onnx.export(
 )
 
 print("Model exported to ONNX.")
+
+
+import torch
+import torch.nn as nn
+import torch.onnx
+
+class ConcatShapeTransposeModel(nn.Module):
+    def __init__(self):
+        super(ConcatShapeTransposeModel, self).__init__()
+
+    def forward(self, input1, input2):
+        # 1. Add the inputs
+        add_result = input1 + input2
+        
+        # 2. Concatenate the result along axis 1
+        concat_result = torch.cat((add_result, input2), dim=1)
+        
+        # 3. Shape operation - extract the shape, mimicking the ONNX Shape op
+        shape_result = concat_result.shape[1:3]  # Equivalent to extracting shape
+
+        # 4. Transpose operation - swap dimensions 1 and 2
+        transpose_result = concat_result.permute(0, 2, 1)
+
+        # 5. Add a constant tensor (for example, a tensor of ones with the same shape as transpose_result)
+        add_after_transpose_result = transpose_result + torch.ones_like(transpose_result)
+
+        return shape_result, add_after_transpose_result
+
+# Instantiate the model
+model = ConcatShapeTransposeModel()
+
+# Create dummy input tensors
+input1 = torch.randn(1, 3, 4)
+input2 = torch.randn(1, 3, 4)
+
+# Export the model to ONNX
+torch.onnx.export(model, (input1, input2), "concat_shape_transpose_model.onnx",
+                  input_names=['input1', 'input2'],
+                  output_names=['shape_result', 'add_after_transpose_result'],
+                  opset_version=13)
+
+print("ONNX model has been exported.")
