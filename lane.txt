@@ -218,3 +218,37 @@ struct AddToMulPattern : public OpRewritePattern<ONNXAddOp> {
     return success();
   }
 };
+
+
+
+import torch
+import torch.nn as nn
+import torch.onnx
+
+# Define a simple model with Add operations
+class AddModel(nn.Module):
+    def __init__(self):
+        super(AddModel, self).__init__()
+        
+    def forward(self, x, y):
+        # Add operation
+        z = x + y
+        # Another add operation
+        w = z + y
+        return w
+
+# Create model and dummy inputs
+model = AddModel()
+x = torch.randn(2, 3)
+y = torch.randn(2, 3)
+
+# Perform inference
+output = model(x, y)
+print("Output of AddModel before transformation:", output)
+
+# Export the model to ONNX format
+onnx_file = "add_model.onnx"
+torch.onnx.export(model, (x, y), onnx_file, export_params=True, opset_version=11, 
+                  input_names=['input1', 'input2'], output_names=['output'])
+
+print(f"Model has been exported to {onnx_file}")
