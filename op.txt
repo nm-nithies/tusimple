@@ -140,3 +140,18 @@ struct SubAndDivToBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
   }
 };
 
+bool isConstant(Value operand) {
+  return operand.getDefiningOp<ONNXConstantOp>() != nullptr;
+}
+
+float getConstantValue(Value operand) {
+  auto constOp = operand.getDefiningOp<ONNXConstantOp>();
+  auto attr = constOp.valueAttr().dyn_cast<DenseElementsAttr>();
+  return attr.getValues<float>()[0];
+}
+
+Value createConstantTensor(PatternRewriter &rewriter, float value, Location loc) {
+  auto constType = RankedTensorType::get({}, rewriter.getF32Type()); // Scalar
+  auto constAttr = DenseElementsAttr::get(constType, value);
+  return rewriter.create<ONNXConstantOp>(loc, constType, constAttr);
+}
