@@ -138,44 +138,66 @@ torch.onnx.export(
 
 print("Model exported to ONNX.")
 
-
 import torch
 import torch.nn as nn
-import torch.onnx
 
-class ConcatShapeTransposeModel(nn.Module):
+class ConcatShapeTransposeAddModel(nn.Module):
     def __init__(self):
-        super(ConcatShapeTransposeModel, self).__init__()
-
-    def forward(self, input1, input2):
-        # 1. Add the inputs
-        add_result = input1 + input2
+        super(ConcatShapeTransposeAddModel, self).__init__()
+    
+    def forward(self, inputs, start, end, perm, tensor_to_add):
+        # Step 1: Concat - Concatenate inputs along the specified axis
+        concat_result = torch.cat(inputs, dim=1)  # Concatenate along dim=1 (adjust axis as needed)
         
-        # 2. Concatenate the result along axis 1
-        concat_result = torch.cat((add_result, input2), dim=1)
+        # Step 2: Shape - Get the shape of the concatenated tensor
+        shape_of_concat = concat_result.shape[start:end]  # Slice the shape using start and end
         
-        # 3. Shape operation - extract the shape, mimicking the ONNX Shape op
-        shape_result = concat_result.shape[1:3]  # Equivalent to extracting shape
-
-        # 4. Transpose operation - swap dimensions 1 and 2
-        transpose_result = concat_result.permute(0, 2, 1)
-
-        # 5. Add a constant tensor (for example, a tensor of ones with the same shape as transpose_result)
-        add_after_transpose_result = transpose_result + torch.ones_like(transpose_result)
-
-        return shape_result, add_after_transpose_result
+        # Step 3: Transpose - Perform a transpose on the concatenated result
+        transpose_result = concat_result.permute(perm)  # permute based on the perm argument
+        
+        # Step 4: Add - Add the transposed tensor with another tensor (element-wise)
+        add_result = transpose_result + tensor_to_add
+        
+        return concat_result, shape_of_concat, transpose_result, add_result
 
 # Instantiate the model
-model = ConcatShapeTransposeModel()
+model = ConcatShapeTransposeAddModel()
 
-# Create dummy input tensors
-input1 = torch.randn(1, 3, 4)
-input2 = torch.randn(1, 3, 4)
+# Create dummy inputs for the model
+input1 = torch.randn(1, 3, 224, 224)
+input2 = torch.randn(1, 3, 224, 224)
+inputs = [input1, input2]
+
+start = 1   # Start index for slicing the shape
+end = 3     # End index for slicing the shape
+perm = [0, 2, 3, 1]  # Permutation order for transpose
+tensor_to_add = torch.randn(1, 224, 224, 6)  # Shape to match transposed tensor
+
+# Wrap inputs into a tuple for exporting (ONNX requires a single input)
+inputs_onnx = (inputs, start, end, perm, tensor_to_add)
+
+# Perform a forward pass (optional, for verification)
+with torch.no_grad():
+    concat_result, shape_of_concat, transpose_result, add_result = model(*inputs_onnx)
+    print("Model forward pass done.")
 
 # Export the model to ONNX
-torch.onnx.export(model, (input1, input2), "concat_shape_transpose_model.onnx",
-                  input_names=['input1', 'input2'],
-                  output_names=['shape_result', 'add_after_transpose_result'],
-                  opset_version=13)
+torch.onnx.export(
+    model,                            # The model being exported
+    inputs_onnx,                       # Input to the model
+    "concat_shape_transpose_add.onnx", # Path to save the ONNX model
+    export_params=True,                # Store the trained parameter weights inside the model file
+    opset_version=11,                  # ONNX opset version (11 is commonly used)
+    do_constant_folding=True,          # Whether to execute constant folding for optimization
+    input_names=['inputs', 'start', 'end', 'perm', 'tensor_to_add'],  # Model input names
+    output_names=['concat_result', 'shape_of_concat', 'transpose_result', 'add_result'],  # Model output names
+    dynamic_axes={
+        'inputs': {0: 'batch_size'},  # Declare dynamic axes (if any)
+        'concat_result': {0: 'batch_size'},
+        'transpose_result': {0: 'batch_size'},
+        'add_result': {0: 'batch_size'}
+    }
+)
 
-print("ONNX model has been exported.")
+print("Model has been exported to ONNX format.")
+
