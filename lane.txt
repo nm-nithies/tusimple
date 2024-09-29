@@ -1,254 +1,53 @@
 import torch
 import torch.nn as nn
-
-# Define the PyTorch model with three Add operations
-class ThreeAddModel(nn.Module):
-    def __init__(self):
-        super(ThreeAddModel, self).__init__()
-        
-    def forward(self, x, y, z):
-        # First add operation
-        out1 = torch.add(x, y)
-        # Second add operation
-        out2 = torch.add(out1, z)
-        # Third add operation
-        out3 = torch.add(out2, x)
-        
-        return out3
-
-# Instantiate the model
-model = ThreeAddModel()
-
-# Set the model to evaluation mode
-model.eval()
-
-# Create some sample input tensors
-x = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float32)
-y = torch.tensor([4.0, 5.0, 6.0], dtype=torch.float32)
-z = torch.tensor([7.0, 8.0, 9.0], dtype=torch.float32)
-
-# Define a dummy input tuple for export
-dummy_input = (x, y, z)
-
-# Export the model to ONNX
-torch.onnx.export(
-    model,                      # The model to be exported
-    dummy_input,                # The model's input (example inputs)
-    "three_add_model.onnx",     # The filename of the output ONNX model
-    input_names=["x", "y", "z"], # Name the input nodes
-    output_names=["out"],        # Name the output node
-    opset_version=11,            # ONNX opset version to export to (11 is widely supported)
-    dynamic_axes={
-        'x': {0: 'batch_size'}, 
-        'y': {0: 'batch_size'}, 
-        'z': {0: 'batch_size'}, 
-        'out': {0: 'batch_size'}
-    }  # Allows dynamic input sizes (batch_size)
-)
-
-print("Model has been successfully converted to ONNX.")
-
-
-
-
-
-
-
-import torch
-import torch.nn as nn
-
-class ConcatShapeTransposeModel(nn.Module):
-    def __init__(self):
-        super(ConcatShapeTransposeModel, self).__init__()
-
-    def forward(self, x, y):
-        # Concat operation (along dimension 1)
-        concat_result = torch.cat((x, y), dim=1)
-
-        # Shape operation (simulate by extracting shape)
-        shape_result = concat_result.shape  # Not an actual tensor operation, but simulates shape extraction.
-
-        # Transpose operation (swap dimensions 1 and 2)
-        transpose_result = concat_result.transpose(1, 2)
-
-        return transpose_result
-
-# Create some sample tensors
-x = torch.randn(2, 3, 4)  # Shape: [batch_size, channels, width]
-y = torch.randn(2, 3, 4)  # Shape: [batch_size, channels, width]
-
-# Instantiate the model
-model = ConcatShapeTransposeModel()
-
-# Forward pass
-output = model(x, y)
-print(output)
-
-
-# Export the PyTorch model to ONNX
-dummy_input_1 = torch.randn(2, 3, 4)
-dummy_input_2 = torch.randn(2, 3, 4)
-
-torch.onnx.export(
-    model,                               # The model to export
-    (dummy_input_1, dummy_input_2),      # Model inputs
-    "concat_shape_transpose_model.onnx", # Output file
-    input_names=["input1", "input2"],    # Input tensor names
-    output_names=["output"],             # Output tensor name
-    opset_version=11                     # ONNX opset version
-)
-
-print("Model exported to ONNX.")
-
-
-import torch
-import torch.nn as nn
-
-class InstanceNormModel(nn.Module):
-    def __init__(self):
-        super(InstanceNormModel, self).__init__()
-        # Instance normalization layer
-        self.instance_norm = nn.InstanceNorm2d(3, affine=True)  # For 2D input with 3 channels
-
-    def forward(self, x):
-        # Apply instance normalization
-        return self.instance_norm(x)
-
-# Create a sample input tensor
-input_tensor = torch.randn(1, 3, 224, 224)  # Batch size = 1, Channels = 3, Height = 224, Width = 224
-
-# Instantiate the model
-model = InstanceNormModel()
-
-# Forward pass
-output = model(input_tensor)
-print(output.shape)
-
-# Export the PyTorch model to ONNX
-dummy_input = torch.randn(1, 3, 224, 224)  # Input tensor for the model
-
-torch.onnx.export(
-    model,                                # The model to export
-    dummy_input,                          # Model input
-    "instance_norm_model.onnx",           # Output ONNX file
-    input_names=["input"],                # Input tensor name
-    output_names=["output"],              # Output tensor name
-    opset_version=11                      # ONNX opset version
-)
-
-print("Model exported to ONNX.")
-
-import torch
-import torch.nn as nn
-
-class ConcatShapeTransposeAddModel(nn.Module):
-    def __init__(self):
-        super(ConcatShapeTransposeAddModel, self).__init__()
-    
-    def forward(self, inputs, start, end, perm, tensor_to_add):
-        # Step 1: Concat - Concatenate inputs along the specified axis
-        concat_result = torch.cat(inputs, dim=1)  # Concatenate along dim=1 (adjust axis as needed)
-        
-        # Step 2: Shape - Get the shape of the concatenated tensor
-        shape_of_concat = concat_result.shape[start:end]  # Slice the shape using start and end
-        
-        # Step 3: Transpose - Perform a transpose on the concatenated result
-        transpose_result = concat_result.permute(perm)  # permute based on the perm argument
-        
-        # Step 4: Add - Add the transposed tensor with another tensor (element-wise)
-        add_result = transpose_result + tensor_to_add
-        
-        return concat_result, shape_of_concat, transpose_result, add_result
-
-# Instantiate the model
-model = ConcatShapeTransposeAddModel()
-
-# Create dummy inputs for the model
-input1 = torch.randn(1, 3, 224, 224)
-input2 = torch.randn(1, 3, 224, 224)
-inputs = [input1, input2]
-
-start = 1   # Start index for slicing the shape
-end = 3     # End index for slicing the shape
-perm = [0, 2, 3, 1]  # Permutation order for transpose
-tensor_to_add = torch.randn(1, 224, 224, 6)  # Shape to match transposed tensor
-
-# Wrap inputs into a tuple for exporting (ONNX requires a single input)
-inputs_onnx = (inputs, start, end, perm, tensor_to_add)
-
-# Perform a forward pass (optional, for verification)
-with torch.no_grad():
-    concat_result, shape_of_concat, transpose_result, add_result = model(*inputs_onnx)
-    print("Model forward pass done.")
-
-# Export the model to ONNX
-torch.onnx.export(
-    model,                            # The model being exported
-    inputs_onnx,                       # Input to the model
-    "concat_shape_transpose_add.onnx", # Path to save the ONNX model
-    export_params=True,                # Store the trained parameter weights inside the model file
-    opset_version=11,                  # ONNX opset version (11 is commonly used)
-    do_constant_folding=True,          # Whether to execute constant folding for optimization
-    input_names=['inputs', 'start', 'end', 'perm', 'tensor_to_add'],  # Model input names
-    output_names=['concat_result', 'shape_of_concat', 'transpose_result', 'add_result'],  # Model output names
-    dynamic_axes={
-        'inputs': {0: 'batch_size'},  # Declare dynamic axes (if any)
-        'concat_result': {0: 'batch_size'},
-        'transpose_result': {0: 'batch_size'},
-        'add_result': {0: 'batch_size'}
-    }
-)
-
-print("Model has been exported to ONNX format.")
-
-struct AddToMulPattern : public OpRewritePattern<ONNXAddOp> {
-  using OpRewritePattern<ONNXAddOp>::OpRewritePattern;
-
-  LogicalResult matchAndRewrite(
-      ONNXAddOp addOp, PatternRewriter &rewriter) const final {
-    
-    // Match - Since we're targeting ONNXAddOp, no complex matching is needed.
-    
-    // Rewrite
-    // Create a new ONNXMulOp with the same operands as the original Add operation.
-    rewriter.replaceOpWithNewOp<ONNXMulOp>(
-        addOp, addOp.getType(), addOp.getOperands());
-    
-    // Since we've successfully replaced the Add operation, return success.
-    return success();
-  }
-};
-
-
-
-import torch
-import torch.nn as nn
 import torch.onnx
 
-# Define a simple model with Add operations
-class AddModel(nn.Module):
+class SimpleModel(nn.Module):
     def __init__(self):
-        super(AddModel, self).__init__()
-        
+        super(SimpleModel, self).__init__()
+        self.softmax = nn.Softmax(dim=1)
+
     def forward(self, x, y):
         # Add operation
-        z = x + y
-        # Another add operation
-        w = z + y
-        return w
+        add_result = x + y
+        
+        # Subtract with constant 0.5
+        sub_result = add_result - 0.5
+        
+        # Divide with constant 0.2
+        div_result = sub_result / 0.2
+        
+        # Reshape operation
+        reshape_result = div_result.view(div_result.size(0), -1)
+        
+        # Softmax operation
+        output = self.softmax(reshape_result)
+        return output
 
-# Create model and dummy inputs
-model = AddModel()
-x = torch.randn(2, 3)
-y = torch.randn(2, 3)
+# Create a model instance
+model = SimpleModel()
 
-# Perform inference
+# Dummy input tensors
+x = torch.randn(1, 3, 28, 28)
+y = torch.randn(1, 3, 28, 28)
+
+# Perform a forward pass to test the model
 output = model(x, y)
-print("Output of AddModel before transformation:", output)
+print("Model output:", output)
 
 # Export the model to ONNX format
-onnx_file = "add_model.onnx"
-torch.onnx.export(model, (x, y), onnx_file, export_params=True, opset_version=11, 
-                  input_names=['input1', 'input2'], output_names=['output'])
+torch.onnx.export(
+    model,                        # Model being run
+    (x, y),                       # Model input (dummy inputs for export)
+    "simple_model_with_constants.onnx",  # File name to export the model
+    export_params=True,           # Store trained parameters
+    opset_version=12,             # ONNX opset version
+    do_constant_folding=True,     # Fold constant values for optimization
+    input_names=['input_x', 'input_y'],  # Input names
+    output_names=['output'],      # Output names
+    dynamic_axes={'input_x': {0: 'batch_size'},  # Dynamic axes for input
+                  'input_y': {0: 'batch_size'},
+                  'output': {0: 'batch_size'}}   # Dynamic axes for output
+)
 
-print(f"Model has been exported to {onnx_file}")
+print("Model exported to simple_model_with_constants.onnx")
