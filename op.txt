@@ -90,65 +90,44 @@ def FuseSubAndDivIntoBN(opt):
 
 
 
-
-struct SubAndDivToBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
+struct SubDivBatchNormFusePattern : public OpRewritePattern<ONNXSubOp> {
   using OpRewritePattern<ONNXSubOp>::OpRewritePattern;
 
-  LogicalResult matchAndRewrite(ONNXSubOp subOp, PatternRewriter &rewriter) const override {
-    // Get the result of the Sub operation.
-    Value subResult = subOp.getResult();
-    if (!subResult.hasOneUse()) 
-      return failure(); // Check if Sub has exactly one user (Div)
-    
-    // The succeeding operation must be Div.
-    Operation *divOp = *subResult.getUsers().begin();
-    if (!isa<ONNXDivOp>(divOp)) 
-      return failure(); // If the succeeding op is not Div, fail.
+  LogicalResult matchAndRewrite(
+      ONNXSubOp subOp, PatternRewriter &rewriter) const final {
+    // Match
+    ONNXDivOp divOp;
+    if (!isSubDivMatched(subOp, divOp)) // Check if the pattern matches.
+      return failure();
 
-    // Retrieve constant operands for Sub and Div.
-    Value subOperand0 = subOp.getOperand(0);
-    Value subOperand1 = subOp.getOperand(1);
-    Value divOperand0 = divOp->getOperand(0);
-    Value divOperand1 = divOp->getOperand(1);
-    
-    if (!isConstant(subOperand1) || !isConstant(divOperand1))
-      return failure(); // Ensure constants are available.
-    
-    // Calculate the scale and bias for BatchNorm.
-    auto subValue = getConstantValue(subOperand1);
-    auto divValue = getConstantValue(divOperand1);
-    
-    float scale = 1.0f / divValue;
-    float bias = -subValue / divValue;
-    
-    // Create the new BatchNorm operation.
-    auto batchNormOp = rewriter.create<ONNXBatchNormOp>(
-      subOp.getLoc(), // Location of the original operation.
-      subOperand0,    // Input for BatchNorm is the first operand of Sub.
-      createConstantTensor(rewriter, scale, subOp.getLoc()),  // Scale tensor
-      createConstantTensor(rewriter, bias, subOp.getLoc()),   // Bias tensor
-      /* mean */ createConstantTensor(rewriter, 0.0f, subOp.getLoc()), // Mean
-      /* variance */ createConstantTensor(rewriter, 1.0f, subOp.getLoc()) // Variance
-    );
-    
-    // Replace the Div result with the result of BatchNorm.
-    rewriter.replaceOp(divOp, batchNormOp.getResult());
-    // Erase the Sub operation as well.
-    rewriter.eraseOp(subOp);
+    // Fetch input tensors for sub, div, and batch normalization.
+    Value subInput1 = subOp.getOperand(0); // First input of Sub
+    Value subInput2 = subOp.getOperand(1); // Second input of Sub
+    Value divInput = divOp.getOperand(1);  // Div's denominator
+
+    // Assuming the BatchNorm constants (scale, bias, mean, var) are known.
+    // These can either be extracted from the surrounding context or passed in.
+    Value scale = ...; // Placeholder: Value representing scale
+    Value bias = ...;  // Placeholder: Value representing bias
+    Value mean = ...;  // Placeholder: Value representing mean
+    Value var = ...;   // Placeholder: Value representing variance
+    FloatAttr epsilon = rewriter.getF32FloatAttr(1e-5f); // Small epsilon value
+
+    // Rewrite
+    Location loc = subOp.getLoc();
+    onnx_mlir::MultiDialectBuilder<onnx_mlir::OnnxBuilder> create(rewriter, loc);
+
+    // Create the fused BatchNorm operation with inputs, scale, bias, mean, and variance.
+    auto batchNormResult = rewriter.create<ONNXBatchNormalizationOp>(
+        loc, subInput1.getType(), subInput1, scale, bias, mean, var, epsilon);
+
+    // Replace the original sub and div operations with the result of batch normalization.
+    rewriter.replaceOp(subOp, batchNormResult.getResult(0)); // Replace subOp's result
+    rewriter.replaceOp(divOp, batchNormResult.getResult(0)); // Replace divOp's result
 
     return success();
   }
 };
-
-bool isConstant(Value operand) {
-  return operand.getDefiningOp<ONNXConstantOp>() != nullptr;
-}
-
-float getConstantValue(Value operand) {
-  auto constOp = operand.getDefiningOp<ONNXConstantOp>();
-  auto attr = constOp.valueAttr().dyn_cast<DenseElementsAttr>();
-  return attr.getValues<float>()[0];
-}
 
 Value createConstantTensor(PatternRewriter &rewriter, float value, Location loc) {
   auto constType = RankedTensorType::get({}, rewriter.getF32Type()); // Scalar
