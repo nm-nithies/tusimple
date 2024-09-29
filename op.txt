@@ -87,3 +87,56 @@ def FuseSubAndDivIntoBN(opt):
                         G.remove_node(div_layer)
 
                         opt.passes_counter["FuseSubAndDivIntoBN"] += 1
+
+
+
+
+struct SubAndDivToBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
+  using OpRewritePattern<ONNXSubOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(ONNXSubOp subOp, PatternRewriter &rewriter) const override {
+    // Get the result of the Sub operation.
+    Value subResult = subOp.getResult();
+    if (!subResult.hasOneUse()) 
+      return failure(); // Check if Sub has exactly one user (Div)
+    
+    // The succeeding operation must be Div.
+    Operation *divOp = *subResult.getUsers().begin();
+    if (!isa<ONNXDivOp>(divOp)) 
+      return failure(); // If the succeeding op is not Div, fail.
+
+    // Retrieve constant operands for Sub and Div.
+    Value subOperand0 = subOp.getOperand(0);
+    Value subOperand1 = subOp.getOperand(1);
+    Value divOperand0 = divOp->getOperand(0);
+    Value divOperand1 = divOp->getOperand(1);
+    
+    if (!isConstant(subOperand1) || !isConstant(divOperand1))
+      return failure(); // Ensure constants are available.
+    
+    // Calculate the scale and bias for BatchNorm.
+    auto subValue = getConstantValue(subOperand1);
+    auto divValue = getConstantValue(divOperand1);
+    
+    float scale = 1.0f / divValue;
+    float bias = -subValue / divValue;
+    
+    // Create the new BatchNorm operation.
+    auto batchNormOp = rewriter.create<ONNXBatchNormOp>(
+      subOp.getLoc(), // Location of the original operation.
+      subOperand0,    // Input for BatchNorm is the first operand of Sub.
+      createConstantTensor(rewriter, scale, subOp.getLoc()),  // Scale tensor
+      createConstantTensor(rewriter, bias, subOp.getLoc()),   // Bias tensor
+      /* mean */ createConstantTensor(rewriter, 0.0f, subOp.getLoc()), // Mean
+      /* variance */ createConstantTensor(rewriter, 1.0f, subOp.getLoc()) // Variance
+    );
+    
+    // Replace the Div result with the result of BatchNorm.
+    rewriter.replaceOp(divOp, batchNormOp.getResult());
+    // Erase the Sub operation as well.
+    rewriter.eraseOp(subOp);
+
+    return success();
+  }
+};
+
