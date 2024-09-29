@@ -1,0 +1,89 @@
+# Copyright 2023-2024 Synopsys, Inc.
+# This Synopsys software and all associated documentation are proprietary
+# to Synopsys, Inc. and may only be used pursuant to the terms and conditions
+# of a written license agreement with Synopsys, Inc.
+# All other use, reproduction, modification, or distribution of the Synopsys
+# software or the associated documentation is strictly prohibited.
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import networkx as nx
+import numpy as np
+
+from nnac.core.log import Logger
+
+logger = Logger("OPTIMIZATION")
+"""
+Fuse "Sub + Div" to a single "BatchNorm".
+"""
+
+
+def get_constant_operand_index(opt, layer_name):
+    # get the index of the constant operand to calculate scale and bias for BN node
+    first_operand = opt.G.nodes[layer_name]["input"][0]
+    second_operand = opt.G.nodes[layer_name]["input"][1]
+    TensorDict = opt.TensorDict
+    if first_operand in TensorDict.keys():
+        return 0
+    elif second_operand in TensorDict.keys():
+        return 1
+    else:
+        return -1
+
+
+def FuseSubAndDivIntoBN(opt):
+    G = opt.G
+    TensorDict = opt.TensorDict
+
+    layers = list(nx.topological_sort(G))
+    for layer in layers:
+        if layer not in G.nodes:
+            continue
+        succs = list(G.successors(layer))
+        if len(succs) > 0:
+            sub_layer = list(G.successors(layer))[0]
+            if G.nodes[sub_layer].get("op_type", None) == "Sub":
+                # only support for 4D input
+                if len(opt.ShapeDict[sub_layer]) == 4:
+                    div_layer = list(G.successors(sub_layer))[0]
+                    if G.nodes[div_layer].get("op_type", None) == "Div":
+                        div_succ_layer = list(G.successors(div_layer))[0]
+                        div_constant_operand_index = get_constant_operand_index(opt, div_layer)
+                        sub_constant_operand_index = get_constant_operand_index(opt, sub_layer)
+                        if sub_constant_operand_index == -1 or div_constant_operand_index == -1:
+                            # apply pass only for Sub and Div with one constant operand
+                            continue
+                        div_value = TensorDict.get(G.nodes[div_layer]["input"][div_constant_operand_index], None)
+                        sub_value = TensorDict.get(G.nodes[sub_layer]["input"][sub_constant_operand_index], None)
+
+                        bn_name = layer.rsplit('/', 1)[0] + "_BatchNorm"
+                        scale = np.array([(1/div_value)], dtype=np.float32)
+                        bias = np.array([(-sub_value/div_value)], dtype=np.float32)
+                        mean = np.array([0], dtype=np.float32)
+                        var = np.array([1], dtype=np.float32)
+                        scale_name = bn_name + "/scale"
+                        bias_name = bn_name + "/bias"
+                        mean_name = bn_name + "/mean"
+                        var_name = bn_name + "/var"
+
+                        TensorDict[scale_name] = scale
+                        TensorDict[bias_name] = bias
+                        TensorDict[mean_name] = mean
+                        TensorDict[var_name] = var
+                        bn_dict = {
+                            "input": [layer, scale_name, bias_name, mean_name, var_name],
+                            "output": [bn_name],
+                            "op_type":  "BatchNormalization"
+                        }
+
+                        G.add_node(bn_name, **bn_dict)
+                        G.add_edge(layer, bn_name)
+                        G.add_edge(bn_name, div_succ_layer)
+                        G.nodes[div_succ_layer]["input"][0] = bn_name
+                        # remove Sub and Div layers
+                        G.remove_node(sub_layer)
+                        G.remove_node(div_layer)
+
+                        opt.passes_counter["FuseSubAndDivIntoBN"] += 1
