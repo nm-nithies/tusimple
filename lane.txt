@@ -51,3 +51,48 @@ torch.onnx.export(
 )
 
 print("Model exported to simple_model_with_constants.onnx")
+
+
+
+
+import torch
+import torch.nn as nn
+import torch.onnx
+
+class SubtractionModel(nn.Module):
+    def __init__(self):
+        super(SubtractionModel, self).__init__()
+
+    def forward(self, x, y):
+        # Subtraction operation
+        sub_result = x - y
+        return sub_result
+
+# Create a model instance
+model = SubtractionModel()
+
+# Dummy input tensors
+x = torch.randn(1, 3, 3)  # Shape (batch_size, features, dimensions)
+y = torch.randn(1, 3, 3)
+
+# Perform a forward pass to test the model
+output = model(x, y)
+print("Subtraction Result:\n", output)
+
+# Export the model to ONNX format
+torch.onnx.export(
+    model,                        # The model to be exported
+    (x, y),                       # Example inputs (tuple of tensors)
+    "subtraction_model.onnx",      # Filename to save the exported model
+    export_params=True,            # Export the parameters with the model
+    opset_version=12,              # ONNX opset version
+    do_constant_folding=True,      # Optimize by folding constant nodes
+    input_names=['input_x', 'input_y'],  # Names for the input nodes
+    output_names=['output'],       # Name for the output node
+    dynamic_axes={'input_x': {0: 'batch_size'},  # Dynamic axis for batch size
+                  'input_y': {0: 'batch_size'},
+                  'output': {0: 'batch_size'}}   # Dynamic axis for the output
+)
+
+print("Model exported to subtraction_model.onnx")
+
