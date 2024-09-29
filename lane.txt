@@ -201,3 +201,20 @@ torch.onnx.export(
 
 print("Model has been exported to ONNX format.")
 
+struct AddToMulPattern : public OpRewritePattern<ONNXAddOp> {
+  using OpRewritePattern<ONNXAddOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(
+      ONNXAddOp addOp, PatternRewriter &rewriter) const final {
+    
+    // Match - Since we're targeting ONNXAddOp, no complex matching is needed.
+    
+    // Rewrite
+    // Create a new ONNXMulOp with the same operands as the original Add operation.
+    rewriter.replaceOpWithNewOp<ONNXMulOp>(
+        addOp, addOp.getType(), addOp.getOperands());
+    
+    // Since we've successfully replaced the Add operation, return success.
+    return success();
+  }
+};
