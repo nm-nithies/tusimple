@@ -83,3 +83,14 @@ def ONNXBatchNormalizationOp:ONNX_Op<"BatchNormalization",
       return {30,33,33};
     }
   }];
+
+
+
+
+
+  def _get_paths_of_input_files(self) -> list:
+        """ This method extracts image name and label for validation set and returns them in separate arrays.
+        If file with filename to be process is provided, read inputs from the file.
+        If not provided, read every file from the input directory.
+        :return: list input_names
+        """
