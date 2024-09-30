@@ -207,3 +207,87 @@ def ONNXBatchNormalizationOp : ONNX_Op<"BatchNormalization", [Pure,
   }];
 }
 
+
+#include "mlir/IR/PatternMatch.h"
+#include "mlir/Pass/Pass.h"
+#include "src/Dialect/ONNX/ONNXOps.hpp"
+#include "src/Dialect/ONNX/ONNXRewritePass.hpp"
+#include "src/Dialect/ONNX/ONNXShapeHelper.hpp"
+
+using namespace mlir;
+using namespace onnx_mlir;
+
+namespace {
+
+struct FuseSubAndDivIntoBNPattern : public OpRewritePattern<ONNXSubOp> {
+  using OpRewritePattern<ONNXSubOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(ONNXSubOp subOp, PatternRewriter &rewriter) const final {
+    // Check if the `Sub` operation is followed by a `Div` operation.
+    Operation *subOutput = subOp.getOperation();
+    if (!subOutput->hasOneUse()) return failure();
+
+    Operation *divOp = *subOutput->user_begin();
+    if (!isa<ONNXDivOp>(divOp)) return failure();
+
+    // Ensure both `Sub` and `Div` have a constant operand.
+    Value subInput0 = subOp.getOperand(0);
+    Value subInput1 = subOp.getOperand(1);
+    Value divInput1 = cast<ONNXDivOp>(divOp).getOperand(1);
+
+    if (!subInput1.getDefiningOp<ONNXConstantOp>() || !divInput1.getDefiningOp<ONNXConstantOp>()) {
+      return failure();
+    }
+
+    // Retrieve constant values for `Sub` and `Div`.
+    auto subConstValue = subInput1.getDefiningOp<ONNXConstantOp>().value().cast<DenseElementsAttr>();
+    auto divConstValue = divInput1.getDefiningOp<ONNXConstantOp>().value().cast<DenseElementsAttr>();
+
+    float subValue = subConstValue.getValues<float>()[0];
+    float divValue = divConstValue.getValues<float>()[0];
+
+    // Create the `BatchNormalization` attributes.
+    auto loc = subOp.getLoc();
+    auto scaleAttr = DenseElementsAttr::get(rewriter.getF32TensorAttr(ArrayRef<float>({1.0f / divValue})));
+    auto biasAttr = DenseElementsAttr::get(rewriter.getF32TensorAttr(ArrayRef<float>({-subValue / divValue})));
+    auto meanAttr = DenseElementsAttr::get(rewriter.getF32TensorAttr(ArrayRef<float>({0.0f})));
+    auto varAttr = DenseElementsAttr::get(rewriter.getF32TensorAttr(ArrayRef<float>({1.0f})));
+    
+    // Create the `BatchNormalization` op.
+    Value scale = rewriter.create<ONNXConstantOp>(loc, scaleAttr);
+    Value bias = rewriter.create<ONNXConstantOp>(loc, biasAttr);
+    Value mean = rewriter.create<ONNXConstantOp>(loc, meanAttr);
+    Value variance = rewriter.create<ONNXConstantOp>(loc, varAttr);
+
+    SmallVector<Value, 5> bnInputs = {subOp.getOperand(0), scale, bias, mean, variance};
+
+    // Use the same result type as `Div` for the new `BatchNormalization`.
+    Type resultType = divOp->getResult(0).getType();
+    Value bnOutput = rewriter.create<ONNXBatchNormalizationInferenceModeOp>(loc, resultType, bnInputs, /*epsilon=*/rewriter.getF64FloatAttr(1e-5), /*momentum=*/rewriter.getF64FloatAttr(0.9));
+
+    // Replace the `Sub` and `Div` with the new `BatchNormalization` operation.
+    rewriter.replaceOp(divOp, bnOutput);
+    rewriter.eraseOp(subOp);
+
+    return success();
+  }
+};
+
+struct FuseSubAndDivIntoBNPass : public PassWrapper<FuseSubAndDivIntoBNPass, FunctionPass> {
+  void runOnFunction() override {
+    auto function = getFunction();
+
+    // Apply the `FuseSubAndDivIntoBNPattern` to the function.
+    OwningRewritePatternList patterns(&getContext());
+    patterns.insert<FuseSubAndDivIntoBNPattern>(&getContext());
+    applyPatternsAndFoldGreedily(function, std::move(patterns));
+  }
+};
+
+} // end anonymous namespace
+
+// Register the pass.
+std::unique_ptr<Pass> createFuseSubAndDivIntoBNPass() {
+  return std::make_unique<FuseSubAndDivIntoBNPass>();
+}
+
