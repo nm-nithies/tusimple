@@ -20,6 +20,40 @@ Fuse "Sub + Div" to a single "BatchNorm".
 """
 
 
+def ONNXBatchNormalizationOp : ONNX_Op<"BatchNormalization", [Pure, 
+    DeclareOpInterfaceMethods<ShapeInferenceOpInterface>,
+    DeclareOpInterfaceMethods<ShapeHelperOpInterface>]> {
+  
+  let summary = "ONNX BatchNormalization operation";
+  let description = [{
+    This operator normalizes the input using a set of learnable parameters (scale, bias)
+    and a set of statistics (mean, variance), with an added epsilon for numerical stability.
+  }];
+  
+  let arguments = (ins 
+    AnyTypeOf<[TensorOf<[BF16]>, TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>]>:$X,      // Input tensor
+    AnyTypeOf<[TensorOf<[BF16]>, TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>]>:$scale,  // Scale tensor
+    AnyTypeOf<[TensorOf<[BF16]>, TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>]>:$B,      // Bias tensor
+    AnyTypeOf<[TensorOf<[BF16]>, TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>]>:$mean,   // Mean tensor
+    AnyTypeOf<[TensorOf<[BF16]>, TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>]>:$var,    // Variance tensor
+    FAttr:$epsilonAttr                                    // Small epsilon value for stability
+  );
+
+  let results = (outs 
+    AnyTypeOf<[TensorOf<[BF16]>, TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>]>:$Y       // Output tensor
+  );
+  
+  let extraClassDefinition = [{
+    onnx_mlir::ONNXOpShapeHelper * ONNXBatchNormalizationOp::getShapeHelper(mlir::Operation *op, 
+        mlir::ArrayRef<mlir::Value> oper, onnx_mlir::IndexExprBuilder *ieb, onnx_mlir::IndexExprScope *scope) {
+      onnx_mlir::ONNXOpShapeHelper *sh = new onnx_mlir::ONNXBatchNormalizationOpShapeHelper(op, oper, ieb, scope);
+      assert(sh && "failed to allocate shape helper");
+      return sh;
+    }
+  }];
+}
+
+
 def get_constant_operand_index(opt, layer_name):
     # get the index of the constant operand to calculate scale and bias for BN node
     first_operand = opt.G.nodes[layer_name]["input"][0]
