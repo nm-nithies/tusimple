@@ -88,9 +88,23 @@ def ONNXBatchNormalizationOp:ONNX_Op<"BatchNormalization",
 
 
 
-  def _get_paths_of_input_files(self) -> list:
-        """ This method extracts image name and label for validation set and returns them in separate arrays.
-        If file with filename to be process is provided, read inputs from the file.
-        If not provided, read every file from the input directory.
-        :return: list input_names
-        """
+"""
+    Calculate the accuracy of predicted line values compared to ground truth values within a given threshold.
+
+    The function replaces negative values in both predicted and ground truth arrays with -100 and calculates
+    the fraction of predictions that are within the specified threshold compared to the ground truth.
+
+    Returns the accuracy as a fraction of the total number of ground truth values.
+    """
+
+
+   """
+    Calculate the angle (in radians) of a line fitted to given points in a 2D space (xs, y_samples).
+    
+    The function filters out invalid points (where xs is negative), fits a linear regression to the remaining points,
+    and calculates the angle of the line using the slope of the fitted line.
+
+    :param xs: Array of x-coordinates (can contain negative values).
+    :param y_samples: Corresponding array of y-coordinates.
+    :return: Angle theta in radians.
+    """
