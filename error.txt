@@ -1,0 +1,85 @@
+In file included from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/PatternMatch.h:12,
+                 from ../src/Dialect/ONNX/Transforms/temp.cpp:24:
+/workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Builders.h: In instantiation of 'OpTy mlir::OpBuilder::create(mlir::Location, Args&& ...) [with OpTy = mlir::ONNXBatchNormalizationInferenceModeOp; Args = {mlir::Type, mlir::Value&, mlir::Value&, mlir::Value&, mlir::Value&, mlir::Value&, mlir::FloatAttr&}]':
+../src/Dialect/ONNX/Transforms/temp.cpp:643:77:   required from here
+/workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Builders.h:513:16: error: no matching function for call to 'mlir::ONNXBatchNormalizationInferenceModeOp::build(mlir::OpBuilder&, mlir::OperationState&, mlir::Type, mlir::Value&, mlir::Value&, mlir::Value&, mlir::Value&, mlir::Value&, mlir::FloatAttr&)'
+  513 |     OpTy::build(*this, state, std::forward<Args>(args)...);
+      |     ~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from ../src/Dialect/ONNX/ONNXOps.hpp:33,
+                 from ../src/Dialect/ONNX/Transforms/temp.cpp:30:
+./src/Dialect/ONNX/ONNXOps.hpp.inc:3692:15: note: candidate: 'static void mlir::ONNXBatchNormalizationInferenceModeOp::build(mlir::OpBuilder&, mlir::OperationState&, mlir::Type, mlir::Value, mlir::Value, mlir::Value, mlir::Value, mlir::Value, mlir::FloatAttr, mlir::FloatAttr)'
+ 3692 |   static void build(::mlir::OpBuilder &odsBuilder, ::mlir::OperationState &odsState, ::mlir::Type o_Y, ::mlir::Value X, ::mlir::Value scale, ::mlir::Value B, ::mlir::Value mean, ::mlir::Value var, ::mlir::FloatAttr epsilon, ::mlir::FloatAttr momentum);
+
+
+
+ auto batchNormResult = rewriter.create<ONNXBatchNormalizationInferenceModeOp>(
+        loc, subInput1.getType(), subInput1, scale, bias, mean, var, epsilon);
+
+
+
+def ONNXBatchNormalizationOp:ONNX_Op<"BatchNormalization",
+  [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>, DeclareOpInterfaceMethods<ShapeHelperOpInterface>]> {
+  let summary = "ONNX BatchNormalization operation";
+  let description = [{
+  Carries out batch normalization as described in the paper
+  https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
+  There are five required inputs 'X', 'scale', 'B', 'input_mean' and
+  'input_var'.
+  Note that 'input_mean' and 'input_var' are expected to be the estimated
+  statistics in inference mode (training_mode=False, default),
+  and the running statistics in training mode (training_mode=True).
+  There are multiple cases for the number of outputs, which we list below:
+  
+  * Output case #1: Y, running_mean, running_var (training_mode=True)
+  * Output case #2: Y (training_mode=False)
+  
+  When training_mode=False, extra outputs are invalid.
+  The outputs are updated as follows when training_mode=True:
+  ```
+  running_mean = input_mean * momentum + current_mean * (1 - momentum)
+  running_var = input_var * momentum + current_var * (1 - momentum)
+  
+  Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
+  ```
+  where:
+  ```
+  current_mean = ReduceMean(X, axis=all_except_channel_index)
+  current_var =  ReduceVar(X, axis=all_except_channel_index)
+  ```
+  Notice that `ReduceVar` refers to the population variance, and it equals to
+  `sum(sqrd(x_i - x_avg)) / N`
+  where `N` is the population size (this formula does not use sample size `N - 1`).
+  
+  The computation of ReduceMean and ReduceVar uses float to avoid overflow for float16 inputs.
+  
+  When training_mode=False:
+  ```
+  Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
+  ```
+  
+  For previous (depreciated) non-spatial cases, implementors are suggested
+  to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormalization Op.
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
+  }];
+  let arguments = (ins AnyTypeOf<[TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>, TensorOf<[BF16]>]>:$X,
+    AnyTypeOf<[TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>, TensorOf<[BF16]>]>:$scale,
+    AnyTypeOf<[TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>, TensorOf<[BF16]>]>:$B,
+    AnyTypeOf<[TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>, TensorOf<[BF16]>]>:$input_mean,
+    AnyTypeOf<[TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>, TensorOf<[BF16]>]>:$input_var,
+    DefaultValuedAttr<F32Attr, "1e-05">:$epsilon,
+    DefaultValuedAttr<F32Attr, "0.9">:$momentum,
+    DefaultValuedAttr<SI64Attr, "0">:$training_mode);
+  let results = (outs AnyTypeOf<[TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>, TensorOf<[BF16]>]>:$Y,
+    AnyTypeOf<[TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>, TensorOf<[BF16]>, NoneType]>:$running_mean,
+    AnyTypeOf<[TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>, TensorOf<[BF16]>, NoneType]>:$running_var);
+  let extraClassDeclaration = [{
+    static int getNumberOfOperands() {
+      return 5;
+    }
+    static int getNumberOfResults() {
+      return 3;
+    }
+    static std::vector<int> getTypeMap() {
+      return {30,33,33};
+    }
+  }];
