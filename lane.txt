@@ -247,3 +247,16 @@ struct SubDivBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
     return success();
   }
 };
+
+
+
+
+
+
+
+[1/6] Tue Oct  1 16:57:43 2024 (0s) Importing ONNX Model to MLIR Module from "subtraction_model.onnx"
+[2/6] Tue Oct  1 16:57:43 2024 (0s) Compiling and Optimizing MLIR Module
+loc("/Sub"): error: 'onnx.BatchNormalizationInferenceMode' op operand #1 must be memref of any type values or tensor of any type values, but got 'f32'
+loc("/Sub"): error: 'onnx.BatchNormalizationInferenceMode' op verification failed
+onnx-mlir: /workspace/ONNX_MLIR/llvm-project/llvm/include/llvm/Support/Casting.h:572: decltype(auto) llvm::cast(From&) [with To = mlir::ShapedType; From = mlir::Type]: Assertion `isa<To>(Val) && "cast<Ty>() argument of incompatible type!"' failed.
+Aborted (core dumped)
