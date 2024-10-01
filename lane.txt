@@ -176,3 +176,77 @@ torch.onnx.export(
 
 print("Model exported to subtraction_model.onnx")
 
+
+
+
+
+
+
+
+struct SubDivBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
+  using OpRewritePattern<ONNXSubOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(
+      ONNXSubOp subOp, PatternRewriter &rewriter) const final {
+    // Match
+    ONNXDivOp divOp;
+    if (!isSubDivBatchNormMatched(subOp, divOp))
+      return failure();
+
+    // Extract inputs
+    Value input = subOp.getOperand(0);
+    Value subConstValue = subOp.getOperand(1);  // Sub's constant operand
+    Value divConstValue = divOp.getOperand(1);  // Div's constant operand
+
+    // Ensure that the second operands of both Sub and Div are constant values
+    auto subConstOp = subConstValue.getDefiningOp<ONNXConstantOp>();
+    auto divConstOp = divConstValue.getDefiningOp<ONNXConstantOp>();
+    if (!subConstOp || !divConstOp)
+      return failure();
+
+    // Extract constant values from ONNXConstantOp (valueAttr(), not value)
+    DenseFPElementsAttr subAttr = subConstOp.valueAttr().dyn_cast<DenseFPElementsAttr>();
+    DenseFPElementsAttr divAttr = divConstOp.valueAttr().dyn_cast<DenseFPElementsAttr>();
+    if (!subAttr || !divAttr)
+      return failure();
+
+    // Assuming we are dealing with single float elements (1-element tensors)
+    float subValue = (*subAttr.getValues<APFloat>().begin()).convertToFloat();
+    float divValue = (*divAttr.getValues<APFloat>().begin()).convertToFloat();
+
+    // Calculate BatchNorm parameters (scale, bias, mean, var)
+    float scale = 1.0f / divValue;
+    float bias = -subValue / divValue;
+    float mean = 0.0f;
+    float variance = 1.0f;
+
+    // Create tensor types for the constants (assuming rank 1 tensors for BatchNorm parameters)
+    RankedTensorType tensorType = RankedTensorType::get({1}, rewriter.getF32Type());
+
+    // Create ONNXConstantOps for scale, bias, mean, and variance
+    Value scaleValue = rewriter.create<ONNXConstantOp>(
+        subOp.getLoc(), tensorType, DenseFPElementsAttr::get(tensorType, scale));
+    
+    Value biasValue = rewriter.create<ONNXConstantOp>(
+        subOp.getLoc(), tensorType, DenseFPElementsAttr::get(tensorType, bias));
+    
+    Value meanValue = rewriter.create<ONNXConstantOp>(
+        subOp.getLoc(), tensorType, DenseFPElementsAttr::get(tensorType, mean));
+    
+    Value varValue = rewriter.create<ONNXConstantOp>(
+        subOp.getLoc(), tensorType, DenseFPElementsAttr::get(tensorType, variance));
+
+    // Create the new BatchNorm operation
+    auto bnOp = rewriter.create<ONNXBatchNormInferenceOp>(
+        subOp.getLoc(), divOp.getResult().getType(), input,
+        scaleValue, biasValue, meanValue, varValue, rewriter.getF32FloatAttr(1e-5f));  // epsilon
+
+    // Replace the Div operation with the result of BatchNorm
+    rewriter.replaceOp(divOp, bnOp.getResult());
+    // Remove the Sub operation
+    rewriter.eraseOp(subOp);
+
+    return success();
+  }
+};
+
