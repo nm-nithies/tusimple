@@ -181,7 +181,21 @@ print("Model exported to subtraction_model.onnx")
 
 
 
+#include "mlir/Dialect/Arith/IR/Arith.h"
+#include "mlir/IR/Builders.h"
+#include "mlir/IR/Location.h"
+#include "mlir/IR/Value.h"
 
+mlir::Value createFloatConstant(mlir::OpBuilder &builder, mlir::Location loc, float value) {
+    // Create an MLIR Float Type (32-bit float)
+    auto floatType = builder.getF32Type();
+    
+    // Create an attribute for the float value
+    mlir::FloatAttr floatAttr = builder.getF32FloatAttr(value);
+    
+    // Use the arithmetic dialect's ConstantOp to create a constant value
+    return builder.create<mlir::arith::ConstantOp>(loc, floatType, floatAttr).getResult();
+}
 
 struct SubDivBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
   using OpRewritePattern<ONNXSubOp>::OpRewritePattern;
@@ -204,15 +218,9 @@ struct SubDivBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
     if (!subConstOp || !divConstOp)
       return failure();
 
-    // Extract constant values from ONNXConstantOp via DenseElementsAttr
-    auto subDenseAttr = subConstOp.value().dyn_cast<DenseElementsAttr>();
-    auto divDenseAttr = divConstOp.value().dyn_cast<DenseElementsAttr>();
-    if (!subDenseAttr || !divDenseAttr)
-      return failure();
-
-    // Assuming the tensors are 1-element (scalars), extract the first element
-    float subValue = (*subDenseAttr.getValues<APFloat>().begin()).convertToFloat();
-    float divValue = (*divDenseAttr.getValues<APFloat>().begin()).convertToFloat();
+    // Extract constant float values manually (assuming single float constants)
+    float subValue = ...;  // Retrieve the float from subConstOp
+    float divValue = ...;  // Retrieve the float from divConstOp
 
     // Calculate BatchNorm parameters (scale, bias, mean, var)
     float scale = 1.0f / divValue;
@@ -220,21 +228,11 @@ struct SubDivBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
     float mean = 0.0f;
     float variance = 1.0f;
 
-    // Create tensor types for the constants (assuming rank 1 tensors for BatchNorm parameters)
-    RankedTensorType tensorType = RankedTensorType::get({1}, rewriter.getF32Type());
-
-    // Create ONNXConstantOps for scale, bias, mean, and variance
-    Value scaleValue = rewriter.create<ONNXConstantOp>(
-        subOp.getLoc(), tensorType, DenseElementsAttr::get(tensorType, rewriter.getF32FloatAttr(scale)));
-    
-    Value biasValue = rewriter.create<ONNXConstantOp>(
-        subOp.getLoc(), tensorType, DenseElementsAttr::get(tensorType, rewriter.getF32FloatAttr(bias)));
-    
-    Value meanValue = rewriter.create<ONNXConstantOp>(
-        subOp.getLoc(), tensorType, DenseElementsAttr::get(tensorType, rewriter.getF32FloatAttr(mean)));
-    
-    Value varValue = rewriter.create<ONNXConstantOp>(
-        subOp.getLoc(), tensorType, DenseElementsAttr::get(tensorType, rewriter.getF32FloatAttr(variance)));
+    // Use the provided `createFloatConstant` function to create constant values
+    Value scaleValue = createFloatConstant(rewriter, subOp.getLoc(), scale);
+    Value biasValue = createFloatConstant(rewriter, subOp.getLoc(), bias);
+    Value meanValue = createFloatConstant(rewriter, subOp.getLoc(), mean);
+    Value varValue = createFloatConstant(rewriter, subOp.getLoc(), variance);
 
     // Create the new BatchNorm operation
     auto bnOp = rewriter.create<ONNXBatchNormInferenceOp>(
@@ -249,4 +247,3 @@ struct SubDivBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
     return success();
   }
 };
-
