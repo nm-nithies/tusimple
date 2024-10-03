@@ -156,3 +156,21 @@ float extractFloatFromTensorValue(mlir::Value value) {
     // If the value isn't a constant tensor with floats, throw an error or return default.
     throw std::runtime_error("Value is not a constant float tensor!");
 }
+
+
+
+auto subConstOp = dyn_cast_or_null<ONNXConstantOp>(subConstValue.getDefiningOp());
+auto divConstOp = dyn_cast_or_null<ONNXConstantOp>(divConstValue.getDefiningOp());
+
+
+
+if (subConstOp && divConstOp) {
+    // Now we know both subConstValue and divConstValue are constants.
+    // You can extract the constant float values here.
+    auto subAttr = subConstOp.getValueAttr();
+    auto divAttr = divConstOp.getValueAttr();
+    
+    // Assuming they are scalar floats, you can extract them like this:
+    float subValue = subAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
+    float divValue = divAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
+}
