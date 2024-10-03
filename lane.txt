@@ -116,3 +116,43 @@ struct SubDivFuseBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
 ../src/Dialect/ONNX/Transforms/temp.cpp:686:42: error: expected ')' before 'float'
   686 |     float divValue = (*divAttr.getValues<float>().begin());
       |                      ~                   ^~~~~
+
+
+
+
+
+#include "mlir/IR/BuiltinAttributes.h"
+#include "mlir/IR/BuiltinOps.h"
+#include "mlir/IR/BuiltinTypes.h"
+#include "mlir/IR/PatternMatch.h"
+#include "mlir/Dialect/Arith/IR/Arith.h"
+
+float extractFloatFromValue(mlir::Value value) {
+    // Check if the value is defined by a constant operation.
+    if (auto constOp = value.getDefiningOp<mlir::arith::ConstantOp>()) {
+        // Get the constant attribute (could be a FloatAttr or DenseElementsAttr).
+        if (auto floatAttr = constOp.getValue().dyn_cast<mlir::FloatAttr>()) {
+            // Return the float value.
+            return floatAttr.getValueAsDouble();  // Convert to float if needed.
+        }
+    }
+    
+    // If the value isn't a constant or isn't float, return some default or error.
+    throw std::runtime_error("Value is not a constant float!");
+}
+
+
+
+float extractFloatFromTensorValue(mlir::Value value) {
+    if (auto constOp = value.getDefiningOp<ONNXConstantOp>()) {
+        auto denseAttr = constOp.getValueAttr().dyn_cast<mlir::DenseFPElementsAttr>();
+        if (denseAttr) {
+            // Extract the float value from the tensor (assuming it's a scalar tensor).
+            auto floatValue = *denseAttr.getFloatValues().begin();
+            return floatValue.convertToFloat();
+        }
+    }
+
+    // If the value isn't a constant tensor with floats, throw an error or return default.
+    throw std::runtime_error("Value is not a constant float tensor!");
+}
