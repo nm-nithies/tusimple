@@ -487,3 +487,86 @@ In file included from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Loc
       |                                                                  ^
 ../src/Dialect/ONNX/Transforms/temp.cpp:708:71: error: invalid use of 'void'
   708 |   divValue = divAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
+
+
+
+
+
+
+
+mlir::Value createFloatTensorConstant(mlir::OpBuilder &builder, mlir::Location loc, float value) {
+    auto elementType = builder.getF32Type();
+    auto tensorType = mlir::RankedTensorType::get({}, elementType); 
+    auto denseAttr = mlir::DenseElementsAttr::get(tensorType, llvm::ArrayRef<float>(&value, 1));
+    return builder.create<mlir::arith::ConstantOp>(loc, tensorType, denseAttr).getResult();
+}
+
+struct SubDivFuseBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
+  using OpRewritePattern<ONNXSubOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(
+      ONNXSubOp subOp, PatternRewriter &rewriter) const final {
+   
+    ONNXDivOp divOp;
+    if (!isSubDivBatchNormMatched(subOp, divOp))
+     { cout<<"643";
+      return failure();}
+    
+    //   // Ensure both `Sub` and `Div` have a constant operand.
+    // Value subInput0 = subOp.getOperand(0);
+    // Value subInput1 = subOp.getOperand(1);
+    // Value divInput1 = cast<ONNXDivOp>(divOp).getOperand(1);
+
+    // if (!subInput1.getDefiningOp<ONNXConstantOp>() || !divInput1.getDefiningOp<ONNXConstantOp>()) {
+    //   return failure();
+    // }
+
+    // // Retrieve constant values for `Sub` and `Div`.
+    // auto subConstValue = subInput1.getDefiningOp<ONNXConstantOp>().value().cast<DenseElementsAttr>();
+    // auto divConstValue = divInput1.getDefiningOp<ONNXConstantOp>().value().cast<DenseElementsAttr>();
+    Value input = subOp.getOperand(0);
+    Value subConstValue = subOp.getOperand(1);
+    Value divConstValue = divOp.getOperand(1); 
+   
+  
+    cout<<"655655";
+   
+    // float subValue = 0.5;  
+    // float divValue = 0.2 ;  
+   
+    float scale = 1.0f / divValue;
+    float bias = -subValue / divValue;
+    float mean = 0.0f;
+    float variance = 1.0f;
+    FloatAttr epsilonAttr = rewriter.getF32FloatAttr(1e-5f); 
+    FloatAttr momentumAttr =  rewriter.getF32FloatAttr(0.9);
+    
+   llvm::APFloat epsilon = epsilonAttr.getValue();
+   llvm::APFloat momentum = momentumAttr.getValue();
+
+  
+    Value scaleValue = createFloatTensorConstant(rewriter, subOp.getLoc(), scale);
+    Value biasValue = createFloatTensorConstant(rewriter, subOp.getLoc(), bias);
+    Value meanValue = createFloatTensorConstant(rewriter, subOp.getLoc(), mean);
+    Value varValue = createFloatTensorConstant(rewriter, subOp.getLoc(), variance);
+    cout<<"679679";
+    
+    SmallVector<Type, 3> outputTypes;
+    outputTypes.emplace_back(input.getType());
+    outputTypes.emplace_back(meanValue.getType());
+    outputTypes.emplace_back(varValue.getType());
+    
+
+    auto bnOp = rewriter.create<ONNXBatchNormalizationOp>(
+        subOp.getLoc(),outputTypes,input,
+        scaleValue, biasValue, meanValue, varValue, epsilon, momentum);  // epsilon
+
+    // Replace the Div operation with the result of BatchNorm
+    rewriter.replaceOp(divOp, bnOp.getResult(0));
+    // Remove the Sub operation
+    rewriter.eraseOp(subOp);
+    cout<<"689689";
+    return success();
+  }
+};
+
