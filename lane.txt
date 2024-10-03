@@ -77,3 +77,42 @@ struct SubDivFuseBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
     return success();
   }
 };
+
+
+
+
+
+
+
+
+../src/Dialect/ONNX/Transforms/temp.cpp:668:31: error: 'class mlir::ONNXConstantOp' has no member named 'dyn_cast'
+  668 |     auto subAttr = subConstOp.dyn_cast<mlir::DenseElementsAttr>();
+      |                               ^~~~~~~~
+../src/Dialect/ONNX/Transforms/temp.cpp:668:63: error: expected primary-expression before '>' token
+  668 |     auto subAttr = subConstOp.dyn_cast<mlir::DenseElementsAttr>();
+      |                                                               ^
+../src/Dialect/ONNX/Transforms/temp.cpp:668:65: error: expected primary-expression before ')' token
+  668 |     auto subAttr = subConstOp.dyn_cast<mlir::DenseElementsAttr>();
+      |                                                                 ^
+../src/Dialect/ONNX/Transforms/temp.cpp:672:42: error: expected primary-expression before 'float'
+  672 |     float subValue = (*subAttr.getValues<float>().begin());
+      |                                          ^~~~~
+../src/Dialect/ONNX/Transforms/temp.cpp:672:42: error: expected ')' before 'float'
+  672 |     float subValue = (*subAttr.getValues<float>().begin());
+      |                      ~                   ^~~~~
+      |                                          )
+../src/Dialect/ONNX/Transforms/temp.cpp:682:31: error: 'class mlir::ONNXConstantOp' has no member named 'value'
+  682 |     auto divAttr = divConstOp.value().dyn_cast<mlir::DenseElementsAttr>();
+      |                               ^~~~~
+../src/Dialect/ONNX/Transforms/temp.cpp:682:71: error: expected primary-expression before '>' token
+  682 |     auto divAttr = divConstOp.value().dyn_cast<mlir::DenseElementsAttr>();
+      |                                                                       ^
+../src/Dialect/ONNX/Transforms/temp.cpp:682:73: error: expected primary-expression before ')' token
+  682 |     auto divAttr = divConstOp.value().dyn_cast<mlir::DenseElementsAttr>();
+      |                                                                         ^
+../src/Dialect/ONNX/Transforms/temp.cpp:686:42: error: expected primary-expression before 'float'
+  686 |     float divValue = (*divAttr.getValues<float>().begin());
+      |                                          ^~~~~
+../src/Dialect/ONNX/Transforms/temp.cpp:686:42: error: expected ')' before 'float'
+  686 |     float divValue = (*divAttr.getValues<float>().begin());
+      |                      ~                   ^~~~~
