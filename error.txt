@@ -436,3 +436,54 @@ struct SubDivFuseBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
     return success();
   }
 };
+
+
+
+
+../src/Dialect/ONNX/Transforms/temp.cpp:707:51: warning: 'U mlir::Attribute::cast() const [with U = mlir::DenseFPElementsAttr]' is deprecated: Use mlir::cast<U>() instead [-Wdeprecated-declarations]
+  707 |      subValue = subAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
+      |                                                   ^
+In file included from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Location.h:17,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/UseDefLists.h:16,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Value.h:17,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/AffineMap.h:18,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/BuiltinAttributeInterfaces.h:12,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/BuiltinAttributes.h:12,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Matchers.h:18,
+                 from ../src/Dialect/ONNX/Transforms/temp.cpp:23:
+/workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Attributes.h:194:3: note: declared here
+  194 | U Attribute::cast() const {
+      |   ^~~~~~~~~
+../src/Dialect/ONNX/Transforms/temp.cpp:707:53: error: 'class mlir::DenseFPElementsAttr' has no member named 'getValue'; did you mean 'getValues'?
+  707 |      subValue = subAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
+      |                                                     ^~~~~~~~
+      |                                                     getValues
+../src/Dialect/ONNX/Transforms/temp.cpp:707:69: error: expected primary-expression before '>' token
+  707 |      subValue = subAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
+      |                                                                     ^
+../src/Dialect/ONNX/Transforms/temp.cpp:707:74: error: invalid use of 'void'
+  707 |      subValue = subAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
+      |                                                                          ^
+../src/Dialect/ONNX/Transforms/temp.cpp:708:48: warning: 'U mlir::Attribute::cast() const [with U = mlir::DenseFPElementsAttr]' is deprecated: Use mlir::cast<U>() instead [-Wdeprecated-declarations]
+  708 |   divValue = divAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
+      |                                                ^
+In file included from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Location.h:17,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/UseDefLists.h:16,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Value.h:17,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/AffineMap.h:18,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/BuiltinAttributeInterfaces.h:12,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/BuiltinAttributes.h:12,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Matchers.h:18,
+                 from ../src/Dialect/ONNX/Transforms/temp.cpp:23:
+/workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Attributes.h:194:3: note: declared here
+  194 | U Attribute::cast() const {
+      |   ^~~~~~~~~
+../src/Dialect/ONNX/Transforms/temp.cpp:708:50: error: 'class mlir::DenseFPElementsAttr' has no member named 'getValue'; did you mean 'getValues'?
+  708 |   divValue = divAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
+      |                                                  ^~~~~~~~
+      |                                                  getValues
+../src/Dialect/ONNX/Transforms/temp.cpp:708:66: error: expected primary-expression before '>' token
+  708 |   divValue = divAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
+      |                                                                  ^
+../src/Dialect/ONNX/Transforms/temp.cpp:708:71: error: invalid use of 'void'
+  708 |   divValue = divAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
