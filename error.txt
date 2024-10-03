@@ -316,3 +316,7 @@ mlir::Value createFloatTensorConstant(mlir::OpBuilder &builder, mlir::Location l
     // Create the constant tensor operation using arith::ConstantOp.
     return builder.create<mlir::arith::ConstantOp>(loc, tensorType, floatAttr).getResult();
 }
+
+
+
+loc("/Sub"): error: 'arith.constant' op failed to verify that all of {value, result} have same type
