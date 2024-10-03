@@ -226,3 +226,68 @@ ninja: build stopped: subcommand failed.
 
 
 static void mlir::ONNXBatchNormalizationOp::build(mlir::OpBuilder&, mlir::OperationState&, mlir::TypeRange, mlir::Value, mlir::Value, mlir::Value, mlir::Value, mlir::Value, llvm::APFloat, llvm::APFloat, int64_t): Assertion `resultTypes.size() == 3u && "mismatched number of results"' failed.
+
+
+
+
+
+
+loc("/Sub"): error: 'onnx.BatchNormalization' op operand #1 must be tensor of 16-bit float values or tensor of 32-bit float values or tensor of 64-bit float values or tensor of bfloat16 type values, but got 'f32'
+loc("/Sub"): error: 'onnx.BatchNormalization' op verification failed
+loc("/Sub"): error: 'onnx.BatchNormalization' op operand #1 must be tensor of 16-bit float values or tensor of 32-bit float values or tensor of 64-bit float values or tensor of bfloat16 type values, but got 'f32'
+loc("/Sub"): error: 'onnx.BatchNormalization' op verification failed
+loc("/Sub"): error: 'onnx.BatchNormalization' op operand #1 must be tensor of 16-bit float values or tensor of 32-bit float values or tensor of 64-bit float values or tensor of bfloat16 type values, but got 'f32'
+
+
+
+
+import torch
+import torch.nn as nn
+import torch.onnx
+
+class SimpleModel(nn.Module):
+    def __init__(self):
+        super(SimpleModel, self).__init__()
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, x, y):
+        # Add operatio
+        
+        # Subtract with constant 0.5
+        
+        sub_result = x - y 
+        
+        # Divide with constant 0.2
+        output = sub_result / y
+        
+        # Reshape operation
+       
+        return output
+
+# Create a model instance
+model = SimpleModel()
+
+# Dummy input tensors
+x = torch.randn(1, 3, 28, 28)
+y = torch.randn(1, 3, 28, 28)
+
+# Perform a forward pass to test the model
+output = model(x, y)
+print("Model output:", output)
+
+# Export the model to ONNX format
+torch.onnx.export(
+    model,                        # Model being run
+    (x, y),                       # Model input (dummy inputs for export)
+    "simple_model_with_constants.onnx",  # File name to export the model
+    export_params=True,           # Store trained parameters
+    opset_version=12,             # ONNX opset version
+    do_constant_folding=True,     # Fold constant values for optimization
+    input_names=['input_x', 'input_y'],  # Input names
+    output_names=['output'],      # Output names
+    dynamic_axes={'input_x': {0: 'batch_size'},  # Dynamic axes for input
+                  'input_y': {0: 'batch_size'},
+                  'output': {0: 'batch_size'}}   # Dynamic axes for output
+)
+
+print("Model exported to simple_model_with_constants.onnx")
