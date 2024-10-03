@@ -225,5 +225,4 @@ ninja: build stopped: subcommand failed.
 
 
 
-llvm::APFloat epsilon = epsilonAttr.getValue();
-llvm::APFloat momentum = momentumAttr.getValue();
+static void mlir::ONNXBatchNormalizationOp::build(mlir::OpBuilder&, mlir::OperationState&, mlir::TypeRange, mlir::Value, mlir::Value, mlir::Value, mlir::Value, mlir::Value, llvm::APFloat, llvm::APFloat, int64_t): Assertion `resultTypes.size() == 3u && "mismatched number of results"' failed.
