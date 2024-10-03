@@ -207,3 +207,18 @@ In file included from ../src/Dialect/ONNX/ONNXOps.hpp:33,
  3969 |   static void build(::mlir::OpBuilder &odsBuilder, ::mlir::OperationState &odsState, ::mlir::TypeRange resultTypes, ::mlir::Value X, ::mlir::Value scale, ::mlir::Value B, ::mlir::Value input_mean, ::mlir::Value input_var, ::llvm::APFloat epsilon, ::llvm::APFloat momentum, int64_t training_mode = 0);
       |               ^~~~~
 ./src/Dialect/ONNX/ONNXOps.hpp.inc:3969:239: note:   no known conversion for argument 9 from 'mlir::FloatAttr' to 'llvm::APFloat'
+
+
+
+
+
+
+
+
+../src/Dialect/ONNX/Transforms/temp.cpp:669:53: error: conversion from 'mlir::FloatAttr' to non-scalar type 'llvm::APFloat' requested
+  669 |     llvm::APFloat epsilon = rewriter.getF32FloatAttr(1e-5f);
+      |                             ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~
+../src/Dialect/ONNX/Transforms/temp.cpp:670:55: error: conversion from 'mlir::FloatAttr' to non-scalar type 'llvm::APFloat' requested
+  670 |     llvm::APFloat momentum =  rewriter.getF32FloatAttr(0.9);
+      |                               ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+ninja: build stopped: subcommand failed.
