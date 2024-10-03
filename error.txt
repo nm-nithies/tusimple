@@ -319,4 +319,18 @@ mlir::Value createFloatTensorConstant(mlir::OpBuilder &builder, mlir::Location l
 
 
 
-loc("/Sub"): error: 'arith.constant' op failed to verify that all of {value, result} have same type
+mlir::Value createFloatTensorConstant(mlir::OpBuilder &builder, mlir::Location loc, float value) {
+    // Define the element type as f32 (float).
+    auto elementType = builder.getF32Type();
+    
+    // Create a RankedTensorType for a 1-element tensor.
+    auto tensorType = mlir::RankedTensorType::get({}, elementType);  // Shape {} means a scalar tensor.
+    
+    // Create an attribute for the constant value.
+    // Using DenseElementsAttr to create a tensor with the specified constant value.
+    auto denseAttr = mlir::DenseElementsAttr::get(tensorType, llvm::ArrayRef<float>(&value, 1));
+    
+    // Create the constant operation using arith::ConstantOp.
+    return builder.create<mlir::arith::ConstantOp>(loc, tensorType, denseAttr).getResult();
+}
+
