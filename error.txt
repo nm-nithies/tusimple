@@ -299,3 +299,20 @@ mlir::Value createFloatConstant(mlir::OpBuilder &builder, mlir::Location loc, fl
     mlir::FloatAttr floatAttr = builder.getF32FloatAttr(value);
     return builder.create<mlir::arith::ConstantOp>(loc, floatType, floatAttr).getResult();
 }
+
+
+
+
+mlir::Value createFloatTensorConstant(mlir::OpBuilder &builder, mlir::Location loc, float value) {
+    // Define the element type as f32 (float).
+    auto elementType = builder.getF32Type();
+    
+    // Create a RankedTensorType for a 1-element tensor.
+    auto tensorType = mlir::RankedTensorType::get({}, elementType);  // Empty array means scalar tensor.
+    
+    // Create a FloatAttr for the constant value.
+    mlir::FloatAttr floatAttr = builder.getF32FloatAttr(value);
+    
+    // Create the constant tensor operation using arith::ConstantOp.
+    return builder.create<mlir::arith::ConstantOp>(loc, tensorType, floatAttr).getResult();
+}
