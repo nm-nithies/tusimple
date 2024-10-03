@@ -1,262 +1,79 @@
-import torch
-import torch.nn as nn
-import torch.onnx
-
-class SimpleModel(nn.Module):
-    def __init__(self):
-        super(SimpleModel, self).__init__()
-        self.softmax = nn.Softmax(dim=1)
-
-    def forward(self, x, y):
-        # Add operation
-        add_result = x + y
-        
-        # Subtract with constant 0.5
-        sub_result = add_result - 0.5
-        
-        # Divide with constant 0.2
-        div_result = sub_result / 0.2
-        
-        # Reshape operation
-        reshape_result = div_result.view(div_result.size(0), -1)
-
-
-
-
-
-static bool isSubDivBatchNormMatched(
-    ONNXSubOp subOp, ONNXDivOp &divOp) {
-  divOp = nullptr;
-  for (Operation *user : subOp->getUsers()) {
-    if (isa<ONNXDivOp>(user) && !divOp)
-      divOp = cast<ONNXDivOp>(user);
-    else
-      return false;
-  }
-  return divOp != nullptr;
-}
-
-
-
-struct SubDivBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
+struct SubDivFuseBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
   using OpRewritePattern<ONNXSubOp>::OpRewritePattern;
 
   LogicalResult matchAndRewrite(
       ONNXSubOp subOp, PatternRewriter &rewriter) const final {
-    // Match
+
+    // Match the DivOp corresponding to the SubOp
     ONNXDivOp divOp;
-    if (!isSubDivBatchNormMatched(subOp, divOp))
+    if (!isSubDivBatchNormMatched(subOp, divOp)) {
+      cout << "643";
       return failure();
+    }
 
-    // Extract inputs
     Value input = subOp.getOperand(0);
-    Value subConstValue = subOp.getOperand(1);  // Sub's constant operand
-    Value divConstValue = divOp.getOperand(1);  // Div's constant operand
+    Type resType = subOp.getResult().getType();
 
-    // Ensure that the second operands of both Sub and Div are constant values
-    auto subConstAttr = subConstValue.getDefiningOp<ONNXConstantOp>();
-    auto divConstAttr = divConstValue.getDefiningOp<ONNXConstantOp>();
-    if (!subConstAttr || !divConstAttr)
-      return failure();
-
-    // Extract constant values (assuming float for simplicity)
-    float subValue = subConstAttr.value().cast<FloatAttr>().getValueAsDouble();
-    float divValue = divConstAttr.value().cast<FloatAttr>().getValueAsDouble();
-
-    // Calculate BatchNorm parameters (scale, bias, mean, var)
-    float scale = 1.0f / divValue;
-    float bias = -subValue / divValue;
-    float mean = 0.0f;
-    float variance = 1.0f;
-
-    // Create tensor types for the constants (assuming rank 1 tensors for BatchNorm parameters)
-    RankedTensorType tensorType = RankedTensorType::get({1}, rewriter.getF32Type());
-
-    // Create ONNXConstantOps for scale, bias, mean, and variance
-    Value scaleValue = rewriter.create<ONNXConstantOp>(
-        subOp.getLoc(), tensorType, rewriter.getF32FloatAttr(scale));
-    
-    Value biasValue = rewriter.create<ONNXConstantOp>(
-        subOp.getLoc(), tensorType, rewriter.getF32FloatAttr(bias));
-    
-    Value meanValue = rewriter.create<ONNXConstantOp>(
-        subOp.getLoc(), tensorType, rewriter.getF32FloatAttr(mean));
-    
-    Value varValue = rewriter.create<ONNXConstantOp>(
-        subOp.getLoc(), tensorType, rewriter.getF32FloatAttr(variance));
-
-    // Create the new BatchNorm operation
-    auto bnOp = rewriter.create<ONNXBatchNormInferenceOp>(
-        subOp.getLoc(), divOp.getResult().getType(), input,
-        scaleValue, biasValue, meanValue, varValue, rewriter.getF32FloatAttr(1e-5f));  // epsilon
-
-    // Replace the Div operation with the result of BatchNorm
-    rewriter.replaceOp(divOp, bnOp.getResult());
-    // Remove the Sub operation
-    rewriter.eraseOp(subOp);
-
-    return success();
-  }
-};
-
-        
-        # Softmax operation
-        output = self.softmax(reshape_result)
-        return output
-
-# Create a model instance
-model = SimpleModel()
-
-# Dummy input tensors
-x = torch.randn(1, 3, 28, 28)
-y = torch.randn(1, 3, 28, 28)
-
-# Perform a forward pass to test the model
-output = model(x, y)
-print("Model output:", output)
-
-# Export the model to ONNX format
-torch.onnx.export(
-    model,                        # Model being run
-    (x, y),                       # Model input (dummy inputs for export)
-    "simple_model_with_constants.onnx",  # File name to export the model
-    export_params=True,           # Store trained parameters
-    opset_version=12,             # ONNX opset version
-    do_constant_folding=True,     # Fold constant values for optimization
-    input_names=['input_x', 'input_y'],  # Input names
-    output_names=['output'],      # Output names
-    dynamic_axes={'input_x': {0: 'batch_size'},  # Dynamic axes for input
-                  'input_y': {0: 'batch_size'},
-                  'output': {0: 'batch_size'}}   # Dynamic axes for output
-)
-
-print("Model exported to simple_model_with_constants.onnx")
-
-
-
-
-import torch
-import torch.nn as nn
-import torch.onnx
-
-class SubtractionModel(nn.Module):
-    def __init__(self):
-        super(SubtractionModel, self).__init__()
-
-    def forward(self, x, y):
-        # Subtraction operation
-        sub_result = x - y
-        return sub_result
-
-# Create a model instance
-model = SubtractionModel()
-
-# Dummy input tensors
-x = torch.randn(1, 3, 3)  # Shape (batch_size, features, dimensions)
-y = torch.randn(1, 3, 3)
-
-# Perform a forward pass to test the model
-output = model(x, y)
-print("Subtraction Result:\n", output)
-
-# Export the model to ONNX format
-torch.onnx.export(
-    model,                        # The model to be exported
-    (x, y),                       # Example inputs (tuple of tensors)
-    "subtraction_model.onnx",      # Filename to save the exported model
-    export_params=True,            # Export the parameters with the model
-    opset_version=12,              # ONNX opset version
-    do_constant_folding=True,      # Optimize by folding constant nodes
-    input_names=['input_x', 'input_y'],  # Names for the input nodes
-    output_names=['output'],       # Name for the output node
-    dynamic_axes={'input_x': {0: 'batch_size'},  # Dynamic axis for batch size
-                  'input_y': {0: 'batch_size'},
-                  'output': {0: 'batch_size'}}   # Dynamic axis for the output
-)
-
-print("Model exported to subtraction_model.onnx")
-
-
-
-
-
-
-#include "mlir/Dialect/Arith/IR/Arith.h"
-#include "mlir/IR/Builders.h"
-#include "mlir/IR/Location.h"
-#include "mlir/IR/Value.h"
-
-mlir::Value createFloatConstant(mlir::OpBuilder &builder, mlir::Location loc, float value) {
-    // Create an MLIR Float Type (32-bit float)
-    auto floatType = builder.getF32Type();
-    
-    // Create an attribute for the float value
-    mlir::FloatAttr floatAttr = builder.getF32FloatAttr(value);
-    
-    // Use the arithmetic dialect's ConstantOp to create a constant value
-    return builder.create<mlir::arith::ConstantOp>(loc, floatType, floatAttr).getResult();
-}
-
-struct SubDivBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
-  using OpRewritePattern<ONNXSubOp>::OpRewritePattern;
-
-  LogicalResult matchAndRewrite(
-      ONNXSubOp subOp, PatternRewriter &rewriter) const final {
-    // Match
-    ONNXDivOp divOp;
-    if (!isSubDivBatchNormMatched(subOp, divOp))
-      return failure();
-
-    // Extract inputs
-    Value input = subOp.getOperand(0);
-    Value subConstValue = subOp.getOperand(1);  // Sub's constant operand
-    Value divConstValue = divOp.getOperand(1);  // Div's constant operand
-
-    // Ensure that the second operands of both Sub and Div are constant values
+    // Extract constant from the second operand of SubOp
+    Value subConstValue = subOp.getOperand(1);
     auto subConstOp = subConstValue.getDefiningOp<ONNXConstantOp>();
-    auto divConstOp = divConstValue.getDefiningOp<ONNXConstantOp>();
-    if (!subConstOp || !divConstOp)
+    if (!subConstOp) {
+      return failure();  // Ensure the operand is a constant.
+    }
+    
+    // Extract the float value from subConstOp
+    auto subAttr = subConstOp.value().dyn_cast<mlir::DenseElementsAttr>();
+    if (!subAttr || !subAttr.getType().getElementType().isF32()) {
       return failure();
+    }
+    float subValue = (*subAttr.getValues<float>().begin());
 
-    // Extract constant float values manually (assuming single float constants)
-    float subValue = ...;  // Retrieve the float from subConstOp
-    float divValue = ...;  // Retrieve the float from divConstOp
+    // Extract constant from the second operand of DivOp
+    Value divConstValue = divOp.getOperand(1);
+    auto divConstOp = divConstValue.getDefiningOp<ONNXConstantOp>();
+    if (!divConstOp) {
+      return failure();  // Ensure the operand is a constant.
+    }
+    
+    // Extract the float value from divConstOp
+    auto divAttr = divConstOp.value().dyn_cast<mlir::DenseElementsAttr>();
+    if (!divAttr || !divAttr.getType().getElementType().isF32()) {
+      return failure();
+    }
+    float divValue = (*divAttr.getValues<float>().begin());
 
-    // Calculate BatchNorm parameters (scale, bias, mean, var)
+    // Now that we have both subValue and divValue, proceed with BatchNorm fusion logic
     float scale = 1.0f / divValue;
     float bias = -subValue / divValue;
     float mean = 0.0f;
     float variance = 1.0f;
+    FloatAttr epsilon = rewriter.getF32FloatAttr(1e-5f);
+    FloatAttr momentum = rewriter.getF32FloatAttr(0.9);
 
-    // Use the provided `createFloatConstant` function to create constant values
-    Value scaleValue = createFloatConstant(rewriter, subOp.getLoc(), scale);
-    Value biasValue = createFloatConstant(rewriter, subOp.getLoc(), bias);
-    Value meanValue = createFloatConstant(rewriter, subOp.getLoc(), mean);
-    Value varValue = createFloatConstant(rewriter, subOp.getLoc(), variance);
+    // Create the constants as tensor values.
+    Value scaleValue = createFloatTensorConstant(rewriter, subOp.getLoc(), scale);
+    Value biasValue = createFloatTensorConstant(rewriter, subOp.getLoc(), bias);
+    Value meanValue = createFloatTensorConstant(rewriter, subOp.getLoc(), mean);
+    Value varValue = createFloatTensorConstant(rewriter, subOp.getLoc(), variance);
+    
+    cout << "679679";
 
-    // Create the new BatchNorm operation
-    auto bnOp = rewriter.create<ONNXBatchNormInferenceOp>(
-        subOp.getLoc(), divOp.getResult().getType(), input,
-        scaleValue, biasValue, meanValue, varValue, rewriter.getF32FloatAttr(1e-5f));  // epsilon
+    // Define the output types
+    SmallVector<Type, 2> outputTypes;
+    outputTypes.emplace_back(subOp.getResult().getType());
+    outputTypes.emplace_back(divOp.getResult().getType());
+
+    // Create the BatchNormalization operation
+    auto bnOp = rewriter.create<ONNXBatchNormalizationOp>(
+        subOp.getLoc(), input.getType(), input, scaleValue, biasValue, meanValue, varValue, epsilon, momentum);
 
     // Replace the Div operation with the result of BatchNorm
     rewriter.replaceOp(divOp, bnOp.getResult());
+    
     // Remove the Sub operation
     rewriter.eraseOp(subOp);
 
+    cout << "689689";
     return success();
   }
 };
-
-
-
-
-
-
-
-[1/6] Tue Oct  1 16:57:43 2024 (0s) Importing ONNX Model to MLIR Module from "subtraction_model.onnx"
-[2/6] Tue Oct  1 16:57:43 2024 (0s) Compiling and Optimizing MLIR Module
-loc("/Sub"): error: 'onnx.BatchNormalizationInferenceMode' op operand #1 must be memref of any type values or tensor of any type values, but got 'f32'
-loc("/Sub"): error: 'onnx.BatchNormalizationInferenceMode' op verification failed
-onnx-mlir: /workspace/ONNX_MLIR/llvm-project/llvm/include/llvm/Support/Casting.h:572: decltype(auto) llvm::cast(From&) [with To = mlir::ShapedType; From = mlir::Type]: Assertion `isa<To>(Val) && "cast<Ty>() argument of incompatible type!"' failed.
-Aborted (core dumped)
