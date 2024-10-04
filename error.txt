@@ -570,3 +570,14 @@ struct SubDivFuseBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
   }
 };
 
+
+
+
+
+../src/Dialect/ONNX/Transforms/temp.cpp: In member function 'virtual llvm::LogicalResult {anonymous}::SubDivFuseBatchNormPattern::matchAndRewrite(mlir::ONNXSubOp, mlir::PatternRewriter&) const':
+../src/Dialect/ONNX/Transforms/temp.cpp:708:30: error: insufficient contextual information to determine type
+  708 |     Value scaleValue = create.onnx.div(temp, divConstValue);
+      |                              ^
+../src/Dialect/ONNX/Transforms/temp.cpp:709:29: error: insufficient contextual information to determine type
+  709 |     Value biasValue = create.onnx.div(subConstValue, divConstValue);
+      |                             ^
