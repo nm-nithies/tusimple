@@ -1,0 +1,23 @@
+Found onnx dialect ops created in passes (batchNorm) needed to be included in AdditionalONNXOps.td. 
+Currently trying to add functionality for batchNorm in  AdditionalONNXOps.td. 
+
+Found the functionality for batchNorm in ONNXOps.td.in .
+Faced data type issue while adding batchnorm( Sub + Div fusion to BatchNorm) in new pass and resolve it. 
+Currently understanding the attributes to initiliaze the BatchNorm paramaters in mlir::Value
+Made MR changes mentioned in comments for Resanet.
+
+Able to convert float value to mlir::Value using mlir::arith::ConstantOp in onnx_mlir
+When converting onnx model to mlir faced an LLVM Cast Failure (which expecting a mlir ::ShapedType(tensor or memref) .
+ 
+{ERROR] loc("/Sub"): error: 'onnx.BatchNormalizationInferenceMode' op operand #1 must be memref of any type values or tensor of any type values, but got 'f32'
+loc("/Sub"): error: 'onnx.BatchNormalizationInferenceMode' op verification failed
+onnx-mlir: /workspace/ONNX_MLIR/llvm-project/llvm/include/llvm/Support/Casting.h:566: decltype(auto) llvm::cast(const From&) [with To = mlir::ShapedType; From = mlir::Type]: Assertion `isa<To>(Val) && "cast<Ty>() argument of incompatible type!"' failed.
+ 
+I tried to use SmallVector<Type>,getResult(), onnx_mlir::getElementType() in ONNXBatchNormalizationInferenceModeOp to resolve the error . Yet to debug it.
+ 
+
+
+Found the API and datatype to retrieve & store epsilon and momentum attributes of BatchNorm to create the ONNXBatchNormalizationOp in rewriter function
+Fixed the FP32 datatype issue by creating constant op with DenseElementsAttr for the FP32 constant values.
+With above changes able to fuse sub+div node to Batchnorm and it reflected in mlir file
+Currently trying to replace the hardcoded values of sub & div inputs by APIs to extract the values from the nodes
