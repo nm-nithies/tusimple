@@ -14,3 +14,17 @@ prediction  9 = 8.650948e-15
 [array([[9.9999988e-01, 6.4702637e-17, 5.3113327e-09, 2.3830793e-10,
         1.5467400e-15, 1.6361314e-07, 2.7768482e-11, 8.2112089e-13,
         2.9605862e-09, 8.6509482e-15]], dtype=float32)]
+
+
+
+
+import numpy as np
+
+# Example model output
+output = np.array([[9.9999988e-01, 6.4702637e-17, 5.3113327e-09, 2.3830793e-10,
+                    1.5467400e-15, 1.6361314e-07, 2.7768482e-11, 8.2112089e-13,
+                    2.9605862e-09, 8.6509482e-15]], dtype=np.float32)
+
+# Loop through each prediction and print with formatting
+for i, prediction in enumerate(output[0]):
+    print(f"prediction {i} = {prediction:.7g}")
