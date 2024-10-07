@@ -78,3 +78,13 @@ In file included from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Aff
 /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Value.h:619:55: error: no matching function for call to 'mlir::FloatAttr::FloatAttr(mlir::detail::ValueImpl*)'
   619 |   static inline To doCast(mlir::Value value) { return To(value.getImpl()); }
       |                                                       ^~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+
+
+FloatAttr a = mlir::dyn_cast<FloatAttr>(bias);
+    float b = a.getValueAsDouble();
+    cout<<b;
