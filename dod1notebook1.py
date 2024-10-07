@@ -88,25 +88,25 @@ In file included from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Aff
 #include "mlir/IR/Attributes.h"
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/IR/BuiltinTypes.h"
-#include <vector>
 
-// Function to extract float values from a tensor<32xf32> if it's a constant.
-std::vector<float> getFloatsFromTensor(mlir::Value val) {
-    std::vector<float> floatValues;
-
+// Function to extract a single float value from a tensor if it's a constant.
+float getSingleFloatFromTensor(mlir::Value val) {
     // Check if the value is defined by a constant operation.
     if (auto constOp = val.getDefiningOp<mlir::arith::ConstantOp>()) {
         // Extract the attribute from the constant op.
         if (auto denseAttr = constOp.getValue().dyn_cast<mlir::DenseFPElementsAttr>()) {
-            // Iterate over each float element in the tensor and push it into the vector.
-            for (auto floatValue : denseAttr.getValues<float>()) {
-                floatValues.push_back(floatValue);
+            // Make sure the tensor has exactly one element.
+            if (denseAttr.getNumElements() == 1) {
+                // Return the single float value.
+                return (*denseAttr.getValues<float>().begin());
+            } else {
+                throw std::runtime_error("Tensor has more than one element.");
             }
         }
-    } else {
-        throw std::runtime_error("Value is not a constant tensor of floats.");
     }
 
-    return floatValues;
+    // If it's not a constant or not a valid tensor, throw an error.
+    throw std::runtime_error("Value is not a constant tensor or doesn't contain a single float.");
 }
+
 
