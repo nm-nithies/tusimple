@@ -28,3 +28,36 @@ output = np.array([[9.9999988e-01, 6.4702637e-17, 5.3113327e-09, 2.3830793e-10,
 # Loop through each prediction and print with formatting
 for i, prediction in enumerate(output[0]):
     print(f"prediction {i} = {prediction:.7g}")
+
+
+
+
+
+../src/Dialect/ONNX/Transforms/temp.cpp:718:61: error: no match for 'operator+' (operand types are 'mlir::FloatAttr' and 'mlir::FloatAttr')
+  718 |     FloatAttr momentumAttr =  rewriter.getF32FloatAttr(0.9) + a;
+      |                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^ ~
+      |                                                       |       |
+      |                                                       |       mlir::FloatAttr
+      |                                                       mlir::FloatAttr
+../src/Dialect/ONNX/Transforms/temp.cpp:718:61: note: candidate: 'operator+(int, int)' <built-in>
+  718 |     FloatAttr momentumAttr =  rewriter.getF32FloatAttr(0.9) + a;
+      |                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~
+../src/Dialect/ONNX/Transforms/temp.cpp:718:61: note:   no known conversion for argument 2 from 'mlir::FloatAttr' to 'int'
+In file included from /usr/include/c++/9/bits/stl_algobase.h:67,
+                 from /usr/include/c++/9/memory:62,
+                 from /workspace/ONNX_MLIR/llvm-project/llvm/include/llvm/Support/Casting.h:20,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/Support/LLVM.h:23,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Visitors.h:16,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/AffineExpr.h:17,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/AffineMap.h:17,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/BuiltinAttributeInterfaces.h:12,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/BuiltinAttributes.h:12,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Matchers.h:18,
+                 from ../src/Dialect/ONNX/Transforms/temp.cpp:23:
+/usr/include/c++/9/bits/stl_iterator.h:423:5: note: candidate: 'template<class _Iterator> constexpr std::reverse_iterator<_Iterator> std::operator+(typename std::reverse_iterator<_Iterator>::difference_type, const std::reverse_iterator<_Iterator>&)'
+  423 |     operator+(typename reverse_iterator<_Iterator>::difference_type __n,
+      |     ^~~~~~~~
+/usr/include/c++/9/bits/stl_iterator.h:423:5: note:   template argument deduction/substitution failed:
+../src/Dialect/ONNX/Transforms/temp.cpp:718:63: note:   'mlir::FloatAttr' is not derived from 'const std::reverse_iterator<_Iterator>'
+  718 |     FloatAttr momentumAttr =  rewriter.getF32FloatAttr(0.9) + a;
+      |                                                               ^
