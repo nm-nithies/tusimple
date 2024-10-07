@@ -110,3 +110,21 @@ float getSingleFloatFromTensor(mlir::Value val) {
 }
 
 
+
+../src/Dialect/ONNX/Transforms/temp.cpp: In function 'float {anonymous}::getSingleFloatFromTensor(mlir::Value)':
+../src/Dialect/ONNX/Transforms/temp.cpp:651:85: warning: 'U mlir::Attribute::dyn_cast() const [with U = mlir::DenseFPElementsAttr]' is deprecated: Use mlir::dyn_cast<U>() instead [-Wdeprecated-declarations]
+  651 |         if (auto denseAttr = constOp.getValue().dyn_cast<mlir::DenseFPElementsAttr>()) {
+      |                                                                                     ^
+In file included from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Location.h:17,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/UseDefLists.h:16,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Value.h:17,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/AffineMap.h:18,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/BuiltinAttributeInterfaces.h:12,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/BuiltinAttributes.h:12,
+                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Matchers.h:18,
+                 from ../src/Dialect/ONNX/Transforms/temp.cpp:23:
+/workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Attributes.h:184:3: note: declared here
+  184 | U Attribute::dyn_cast() const {
+      |   ^~~~~~~~~
+/workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Attributes.h: In instantiation of 'static bool llvm::CastInfo<To, From, typename std::enable_if<(is_same_v<mlir::Attribute, typename std::remove_const<From>::type> || is_base_of_v<mlir::Attribute, From>), void>::type>::isPossible(mlir::Attribute) [with To = mlir::StringAttr; From = mlir::StringAttr]':
+
