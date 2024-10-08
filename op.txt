@@ -318,8 +318,6 @@ def ReplaceSum(opt):
 
 
 
-
-
 # Copyright 2023-2024 Synopsys, Inc.
 # This Synopsys software and all associated documentation are proprietary
 # to Synopsys, Inc. and may only be used pursuant to the terms and conditions
@@ -331,538 +329,349 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import math
+from math import isclose
+
+import networkx as nx
+from onnx import OperatorSetIdProto
 import numpy as np
 
+from nnac.core.customized_local_functions.onnx_local_functions import get_local_function_GELU
 from nnac.core.log import Logger
 
-from .single_layer_transforms import remove_one_layer
-
-""" This pass fuses primitive operators into LayerNormalization.
-In ONNX dialect it's the MeanVarianceNormalization.
-https://github.com/onnx/onnx/blob/main/docs/Operators.md#meanvariancenormalization
-(2022/06/17) ONNX v17 adds LayerNormalization
-https://github.com/onnx/onnx/blob/main/docs/Operators.md#layernormalization
-Checkout their numpy implementation:
-https://github.com/onnx/onnx/blob/main/onnx/backend/test/case/node/layernormalization.py
-"""
-
+from .single_layer_transforms import get_single_input_initializer
 
 logger = Logger("OPTIMIZATION")
 
-"""      X
-       /   |
-     /       |
-ReduceMean     |
-    | |        |  |
-    | |_____   |    |
-    |       |  |      |
-    |         Sub       |
-    |          |          |
-    |     Mul (i.e. Pow^2) |
-    |          |            |
-    |      ReduceMean       |
-    |          |            |
-    |       Add(,epsilon)   |
-    |          |            |
-    |        Pow(,-0.5)     |
-    |          |            |
-    |      Mul(,vec(1))     |
-    |      broadcasting    /
-    |          |         /
-     |        / |      /
-       |    /     |  /
-        Mul        Mul
-         |          |
-      Sub(0,)       |
-     negating      /
-         |       /
-          |    /
-           Add
-            |
-       LayerNorm_out
-"""
+
+def FuseGeLU(opt):
+    detect_gelu(opt)
 
 
-def FusePrimitivesIntoLayerNorm(opt):
-    """We extract opset_v because we use (un)squeeze nodes around the MVN node,
-    And they moved the "axes" parameter from attribute to input when upgraded to v13.
-    """
-    node_graph = opt.G
-    tensor_dict = opt.TensorDict
-    shape_dict = opt.ShapeDict
-    type_dict = opt.TypeDict
+def detect_gelu(opt):
+    # custom_domain = ["ai.onnx.contrib", "snps.onnx.local"][1]
+    G = opt.G
+
+    layers = list(nx.topological_sort(G))  # [-1::-1]
+    for layer in layers:
+        if not G.has_node(layer):  # it's fused in previous loop
+            continue
+        succs = list(G.successors(layer))
+        children = {"Mul": [], "Add": [], "Pow": [], "Div": []}
+        for succ in succs:
+            if "op_type" not in G.nodes[succ]:
+                continue
+            else:
+                if G.nodes[succ]["op_type"] not in children:
+                    continue
+                children[G.nodes[succ]["op_type"]].append(succ)
+
+        if (
+            len(children["Mul"]) == 4 and len(children["Add"]) == 1 and len(succs) == 5
+        ) or (
+            len(children["Mul"]) == 1
+            and len(children["Add"]) == 1
+            and len(children["Pow"]) == 1
+            and len(succs) == 3
+        ):
+            detect_tanh(opt, layer, children)
+        elif (
+            len(children["Mul"]) == 1 and len(children["Div"]) == 1 and len(succs) == 2
+        ):
+            detect_erf(opt, layer, children)
+
+
+def detect_tanh(opt, layer, children):
+    G = opt.G
+    tensorDict = opt.TensorDict
     graph_attrs = opt.graph_attrs
 
-    opset_v = [n.version for n in graph_attrs["opset_import"] if n.domain == ""][0]
-    any_fused = find_layernorm_nodes(opt, node_graph, tensor_dict, shape_dict, type_dict, opset_v)
+    remove_node = []
+    remove_tensor = []
 
-    if any_fused:
-        # Now the models always have 3D LayerNorm; it can be
-        # checked with shape_dict
-        tensor_dict["neg_one"] = np.array([-1]).astype(np.int64)
-        pass
-        # if the server has onnx updated to v11, we can try function_proto
-        # graph_attrs["functions"] = generate_layer_norm_function_proto
+    add_1 = children["Add"][0]
+    add_pred_1 = find_non_root_pred(G, layer, add_1)
+    if add_pred_1 is None or G.nodes[add_pred_1]["op_type"] != "Mul":
+        logger.debug("[DEBUG] Can not find pred of (+0.44715*x^3)\n")
+        return
 
-
-def add_layernorm_to_graph(
-    optimizer, node_graph, tensor_dict, shape_dict, type_dict,
-    ln_ip, ln_op, ln_succs, ln_nodes, ln_eps, ln_axis, opset_v
-):
-    """Alternate LayerNorm implementations
-    1. MeanVarianceNormalization (only supports 4D, so we have to insert Unsqueeze&Squeeze)
-    2. Local function (alternative of the above)
-    3. ai.onnx v17 LayerNormalization (not tested, not sure other operator works in v17)
-    """
-    for n in set(ln_nodes):
-        node_graph.remove_node(n)
-
-    ln_name = ln_op[0]
-    layernorm_node = ln_name + "/layernorm"
-    optimizer.compare_dict[layernorm_node] = optimizer.compare_dict[ln_name]
-    if opset_v >= 13 and "neg_one" not in tensor_dict:
-        tensor_dict["neg_one"] = np.array([-1]).astype(np.int64)
-
-    assert ln_eps is not None, "Can not find epsilon value\n"
-
-    # TODO: check if the input model has layernorm-weight and bias.
-    # Now I assume None and generate dummy 1s and 0s.
-
-    ip_shape = shape_dict[ln_ip[0]]
-    norm_shape = ip_shape[ln_axis:]  # both +ve and -ve axis could work
-    tensor_dict[ln_name + "/layernorm_scale"] = np.ones(norm_shape, dtype=np.float32)
-    tensor_dict[ln_name + "/layernorm_bias"] = np.zeros(norm_shape, dtype=np.float32)
-    shape_dict[layernorm_node] = ip_shape
-    type_dict[layernorm_node] = type_dict[ln_ip[0]]
-    node_graph.add_node(
-        layernorm_node,
-        **{
-            "op_type": "LayerNormalization",
-            "input": [
-                ln_ip[0],
-                ln_name + "/layernorm_scale",
-                ln_name + "/layernorm_bias",
-            ],  # [X, SCALE, B], set SCALE and B as 1 and 0 now, and after the fusion of layernorm,
-            # we merge the original SCALE and B into the fused layernorm layer
-            # "output":[ln_name, ln_name+"/output1", ln_name+"/output2"], # [Y, Mean, InvStdDev],
-            # we don't need outputs Mean and InvStdDev
-            "output": [
-                layernorm_node
-            ],  # [Y, Mean, InvStdDev], we don't need outputs Mean and InvStdDev
-            "attr_dict": {"axis": ln_axis, "epsilon": ln_eps},
-            "domain": "",  # there is only ai.onnx domain now, we expect there is com.microsoft?
-        }
-    )
-
-    for ip in ln_ip:
-        node_graph.add_edge(ip, layernorm_node)
-    for op in ln_succs:
-        node_graph.add_edge(layernorm_node, op)
-    for succ in ln_succs:
-        for i in range(len(node_graph.nodes[succ]["input"])):
-            if node_graph.nodes[succ]["input"][i] == ln_name:
-                node_graph.nodes[succ]["input"][i] = layernorm_node
-
-    optimizer.passes_counter["FusePrimitivesIntoLayerNorm"] += 1
-
-    return layernorm_node
-
-
-"""
-Mean = ReduceMean<axes=normalized_axes>(X)
-D = Sub(X, Mean)
-DD = Mul(Diff, Diff)
-Var = ReduceMean<axes=normalized_axes>(DD)
-VarEps = Add(Var, epsilon)
-StdDev = Sqrt(VarEps)
-InvStdDev = Reciprocal(StdDev)
-Normalized = Mul(D, InvStdDev)
-"""
-
-
-def find_layernorm_nodes(optimizer, graph, tensors, shapes, types, opset_v):
-    # graph: nx.DiGraph, tensors: tensor_dict, shapes: shape_dict
-    any_fused = False
-    # pattern inputs, outputs, nodes
-    mean_nodes = [n for n, t in graph.nodes(data="op_type") if t == "ReduceMean"]
-    for mean_node in mean_nodes:
-        if mean_node not in graph.nodes:
-            # Var = Mean(SquaredDiff(X-E[x])) can be fused already
-            continue
-        # pat_in, pat_out, pat_nodes = [], [], []
-        # pattern = [pat_in, pat_out, pat_nodes]
-        pattern = dict(pattern_inputs=[], pattern_outputs=[], pattern_nodes=[])
-        mean_node_out_shape = shapes[mean_node]
-
-        if opset_v < 18:
-            pattern["axes"] = graph.nodes[mean_node]["attr_dict"]["axes"].copy()
-            for i in range(len(pattern["axes"])):
-                if pattern["axes"][i] < 0:
-                    pattern["axes"][i] += len(mean_node_out_shape)
-            pattern["axes"].sort()
-            axes_reduce_on = [i for i in range(pattern["axes"][0], len(mean_node_out_shape))]
-            if [mean_node_out_shape[axis] for axis in axes_reduce_on] != [1] * len(axes_reduce_on):
-                continue
-        else:
-            # in opset 18, axes is moved to input field
-            pattern["axes"] = None
-            if graph.nodes[mean_node]["input"][1] in tensors:
-                pattern["axes"] = tensors[graph.nodes[mean_node]["input"][1]].copy()
-            if pattern["axes"] is None:
-                logger.debug("[DEBUG] Can not find pattern axes in tensor_dict.")
-                continue
-
-        for i in range(len(pattern["axes"])):
-            if pattern["axes"][i] < 0:
-                pattern["axes"][i] += len(mean_node_out_shape)
-        pattern["axes"].sort()
-        axes_reduce_on = [i for i in range(pattern["axes"][0], len(mean_node_out_shape))]
-        if [mean_node_out_shape[axis] for axis in axes_reduce_on] != [1] * len(axes_reduce_on):
-            continue
-
-        params = [graph, tensors, mean_node, pattern]
-        if not check_Mean(*params):
-            continue
-        params[2] = pattern["next_node"]  # sub_node =  (X - E[X])
-        if not check_D(*params):
-            continue
-        params[2] = pattern["next_node"]  # DD_node = (X - E[X])^2
-        if not check_DD(*params):
-            continue
-        params[2] = pattern["next_node"]  # Var = Mean( (X - E[X])^2 )
-        if not check_Var(*params):
-            continue
-        params[2] = pattern["next_node"]  # EpsVar = Add(Var, Eps) or Max(Var, 0)
-        if not check_VarEps(*params):
-            continue
-        params[2] = pattern["next_node"]  # StdDev = Sqrt(VarEps)
-        if not check_StdDev(*params):
-            continue
-        params[2] = pattern["next_node"]
-        # InvStdDev = Reciprocal(StdDev), Normalized = Mul(D, InvStdDev)
-        # 1st pattern is: Div(D, StdDev)
-        # 2nd pattern is: StdDev_broad = Mul(StdDev, broadcast);
-        #              D*StdDev = Mul(D, StdDev_Broad), X*StdDev = Mul(X, StdDev_Broad);
-        # Neg_D*StdDev = Sub(0, D*StdDev),
-        # LayerNorm = Add(Neg_D*StdDev, X*StdDev).
-        semantics = pattern["semantics"]
-        if semantics == "StdDev":
-            if not check_StdDev_Normalized(*params):
-                assert False, "ENHANCE:already detected StdDev but it's not LayerNorm?"
-                continue
-        elif semantics == "InvStdDev":
-            if not check_InvStdDev_Normalized(*params):
-                assert (
-                    False
-                ), "ENHANCE:already detected InvStdDev but it's not LayerNorm?"
-                continue
-        else:
-            continue
-        ln_ip = pattern["pattern_inputs"]
-        ln_op = pattern["pattern_outputs"]
-        ln_nodes = pattern["pattern_nodes"]
-        ln_succs = list(graph.successors(ln_op[0]))
-        eps = pattern["epsilon"]
-        reduce_axes = pattern["axes"]
-        # Just pick the first axis because all dimensions in shape[axis:] are reduced.
-        ln_axis = np.min(reduce_axes)
-        layernorm_node = add_layernorm_to_graph(
-            optimizer, graph, tensors, shapes, types, ln_ip, ln_op, ln_succs, ln_nodes, eps, ln_axis, opset_v
-        )
-        any_fused = True
-
-        # Check if there are Mul + Add layers can bu fused in LayerNorm
-        succs = list(graph.successors(layernorm_node))
-        if len(succs) != 1:
-            continue
-        succ_op_type = graph.nodes[succs[0]].get("op_type", None)
-        if succ_op_type == "Mul":
-            mul_layer = succs[0]
-            succ_succs = list(graph.successors(succs[0]))
-            if len(succ_succs) == 1 and graph.nodes[succ_succs[0]].get("op_type", None) == "Add":
-                add_layer = succ_succs[0]
-                if fuse_mul_into_ln(optimizer, layernorm_node, mul_layer):
-                    remove_one_layer(optimizer, mul_layer)
-                    optimizer.compare_dict[layernorm_node] = optimizer.compare_dict[mul_layer]
-                if fuse_add_into_ln(optimizer, layernorm_node, add_layer):
-                    remove_one_layer(optimizer, add_layer)
-                    optimizer.compare_dict[layernorm_node] = optimizer.compare_dict[add_layer]
-            else:
-                if fuse_mul_into_ln(optimizer, layernorm_node, mul_layer):
-                    remove_one_layer(optimizer, mul_layer)
-                    optimizer.compare_dict[layernorm_node] = optimizer.compare_dict[mul_layer]
-        elif succ_op_type == "Add":
-            add_layer = succs[0]
-            if fuse_add_into_ln(optimizer, layernorm_node, add_layer):
-                remove_one_layer(optimizer, add_layer)
-                optimizer.compare_dict[layernorm_node] = optimizer.compare_dict[add_layer]
-
-    return any_fused
-
-
-def get_init(opt, layer):
-    G = opt.G
-    TensorDict = opt.TensorDict
-    for input in G.nodes[layer]["input"]:
-        if input in TensorDict:
-            return TensorDict[input]
-    return None
-
-
-def fuse_mul_into_ln(opt, ln_layer, mul_layer):
-    G = opt.G
-    TensorDict = opt.TensorDict
-    ln_inputs = G.nodes[ln_layer]["input"]
-    scale = TensorDict.get(ln_inputs[1])
-    mul_init = get_init(opt, mul_layer)
-    if mul_init is None:
-        logger.debug(
-            "Failed to fuse Mul {} into LayerNorm {}, it's not a constant multiplication.".format(
-                mul_layer, ln_layer
-            )
-        )
-        return False
-    if mul_init.size != scale.size:
-        logger.debug(
-            "Failed to fuse Mul {} into LayerNorm {}, the scale size {} v.s. {} doesn't match.".format(
-                mul_layer, ln_layer, mul_init.size, scale.size
-            )
-        )
-        return False
-    fused_scale = scale * mul_init
-    fused_scale_name = ln_inputs[1] + '/fused_mul'
-    TensorDict[fused_scale_name] = fused_scale
-    del TensorDict[ln_inputs[1]]
-    ln_inputs[1] = fused_scale_name
-    if len(ln_inputs) > 2:
-        B = TensorDict[ln_inputs[2]]
-        fused_B = B * mul_init
-        fused_B_name = ln_inputs[2] + '/fused_mul'
-        TensorDict[fused_B_name] = fused_B
-        del TensorDict[ln_inputs[2]]
-        ln_inputs[2] = fused_B_name
-    logger.debug(
-        "Fuse Mul {} into LayerNorm {}.".format(
-            mul_layer, ln_layer
-        )
-    )
-    return True
-
-
-def fuse_add_into_ln(opt, ln_layer, add_layer):
-    G = opt.G
-    TensorDict = opt.TensorDict
-    ln_inputs = G.nodes[ln_layer]["input"]
-    add_init = get_init(opt, add_layer)
-    if add_init is None:
-        logger.debug(
-            "Failed to fuse Add {} into LayerNorm {}, it's not a constant addition.".format(
-                add_layer, ln_layer
-            )
-        )
-        return False
-    if len(ln_inputs) > 2:
-        B = TensorDict[ln_inputs[2]]
-        fused_B = B + add_init
-        fused_B_name = ln_inputs[2] + '/fused_add'
-        del TensorDict[ln_inputs[2]]
-        ln_inputs[2] = fused_B_name
+    if G.nodes[add_pred_1]["op_type"] == "Mul" and len(children["Pow"]) == 1:
+        add_pred_1_initializer = get_single_input_initializer(opt, add_pred_1)
+        if (
+            add_pred_1_initializer is None
+            or not isclose(tensorDict[add_pred_1_initializer], 0.044715, abs_tol=1e-5)
+        ):
+            logger.debug("[DEBUG] The value of initializer is not equal to 0.044715\n")
+            return
+        remove_tensor.append(add_pred_1_initializer)
+        remove_node.append(add_1)
+        remove_node.append(add_pred_1)
     else:
-        fused_B = B
-        fused_B_name = ln_layer + '/fused_add_B'
-        ln_inputs.append(fused_B_name)
-    TensorDict[fused_B_name] = fused_B
-    logger.debug(
-        "Fuse Add {} into LayerNorm {}.".format(
-            add_layer, ln_layer
-        )
-    )
-    return True
-
-
-def check_InvStdDev_Normalized(graph, tensors, mul_node, pattern):
-    # MulBy1: InvStdDev1 = Mul(InvStdDev, 1) for broadcasting
-    succs = list(graph.successors(mul_node))
-    if len(succs) != 2:
-        return False
-
-    if (
-        graph.nodes[succs[0]]["op_type"] != "Mul"
-        or graph.nodes[succs[1]]["op_type"] != "Mul"
-    ):
-        return False
-
-    mul_sub = None
-    mul_add = None
-    mul0_succ = list(graph.successors(succs[0]))
-    if len(mul0_succ) != 1:
-        return False
-    mul1_succ = list(graph.successors(succs[1]))
-    if len(mul1_succ) != 1:
-        return False
-    mul0_succ_type = graph.nodes[mul0_succ[0]]["op_type"]
-    mul1_succ_type = graph.nodes[mul1_succ[0]]["op_type"]
-
-    if mul0_succ_type == "Sub" and mul1_succ_type == "Add":
-        mul_sub = succs[0]
-        mul_add = succs[1]
-    elif mul0_succ_type == "Add" and mul1_succ_type == "Sub":
-        mul_sub = succs[1]
-        mul_add = succs[0]
-    else:
-        return False
-
-    sub = list(graph.successors(mul_sub))[0]
-    add = list(graph.successors(mul_add))[0]
-
-    if list(graph.successors(sub))[0] != add:
-        return False
-
-    pattern["pattern_nodes"].append(mul_node)
-    pattern["pattern_nodes"].extend(succs)
-    pattern["pattern_nodes"].append(sub)
-    pattern["pattern_nodes"].append(add)
-    pattern["pattern_outputs"].append(add)
-    return True
-
-
-def check_StdDev_Normalized(graph, tensors, div_node, pattern):
-    # Normalized = Div(D, StdDev)
-    preds = list(graph.predecessors(div_node))
-    if preds[0] != pattern["pattern_nodes"][0]:
-        # when we check Mean = ReduceMean(X), we also appended the second D = Sub(X, Mean)
-        return False
-    # A general check
-    for pred in preds:
-        if pred not in pattern["pattern_nodes"]:
-            return False
-    op_type = graph.nodes[div_node]["op_type"]
-    if op_type != "Div":
-        return False
-
-    pattern["pattern_nodes"].append(div_node)
-    pattern["pattern_outputs"].append(div_node)
-    return True
-
-
-def check_StdDev(graph, tensors, stddev_node, pattern):
-    succs = list(graph.successors(stddev_node))
-    if len(succs) != 1:
-        return False
-    # it should be a sqrt
-    op_type = graph.nodes[stddev_node]["op_type"]
-    pattern["semantics"] = "StdDev"
-    if op_type == "Pow":
-        inputs = graph.nodes[stddev_node]["input"]
-        exp = tensors[inputs[1]]
-        if exp != -0.5:  # It's actually InvStdDev
-            return False
-        pattern["semantics"] = "InvStdDev"
-    elif op_type != "Sqrt":  # StdDev
-        return False
-    pattern["pattern_nodes"].append(stddev_node)
-    pattern["next_node"] = succs[0]
-    return True
-
-
-def check_VarEps(graph, tensors, vareps_node, pattern):
-    succs = list(graph.successors(vareps_node))
-    if len(succs) != 1:
-        return False
-    op_type = graph.nodes[vareps_node]["op_type"]
-    # VarEps is [Add(Var,Eps~=1e-12)] or [Max(Var,0)]
-    if op_type not in ["Add", "Max"]:
-        return False
-    eps = None
-    if op_type == "Max":
-        eps = 1e-12
-    elif op_type == "Add":
-        for input in graph.nodes[vareps_node]["input"]:
-            if input in tensors:
-                # In detr_resnet50 the Eps of Add(Var, Eps) has shape of (768,1,1)
-                # here we utilize np.mean() to easily get the eps value.
-                eps = np.mean(tensors[input])
+        add_pred_2 = find_non_root_pred(G, layer, add_pred_1)
+        if (
+            add_pred_2 is None
+            or G.nodes[add_pred_2]["op_type"] != "Mul"
+        ):
+            logger.debug("[DEBUG] Can not find pred of (+0.44715*x^3)\n")
+            return
+        add_pred_3 = find_non_root_pred(G, layer, add_pred_2)
+        if (
+            add_pred_3 is None
+            or G.nodes[add_pred_3]["op_type"] != "Mul"
+        ):
+            logger.debug("[DEBUG] Can not find pred of (+0.44715*x^3)\n")
+            return
+        add_pred_1_initializer = get_single_input_initializer(opt, add_pred_1)
+        add_pred_2_initializer = get_single_input_initializer(opt, add_pred_2)
+        add_pred_3_initializer = get_single_input_initializer(opt, add_pred_3)
+        initializer = None
+        for i in [
+            add_pred_1_initializer,
+            add_pred_2_initializer,
+            add_pred_3_initializer,
+        ]:
+            if i is not None:
+                initializer = i
                 break
-    pattern["pattern_nodes"].append(vareps_node)
-    pattern["next_node"] = succs[0]
-    pattern["epsilon"] = float(eps)
-    return True
+        if (
+            initializer is None
+            or not isclose(tensorDict[initializer], 0.044715, abs_tol=1e-5)
+        ):
+            logger.debug(
+                "[DEBUG] The value of initializer is not equal to 0.044715 or the initializer does not exist\n"
+            )
+            return
+        remove_node.append(add_1)
+        remove_node.append(add_pred_1)
+        remove_node.append(add_pred_2)
+        remove_node.append(add_pred_3)
+        remove_tensor.append(initializer)
+    # so far we have (x + 0.044715x^3)
 
+    mul_1 = list(G.successors(add_1))
+    if len(mul_1) != 1 or G.nodes[mul_1[0]]["op_type"] != "Mul":
+        logger.debug("[DEBUG] Can not find Mul of math.sqrt(2./math.pi)\n")
+        return
+    mul_1 = mul_1[0]
+    mul_1_initializer = get_single_input_initializer(opt, mul_1)
+    if (
+        mul_1_initializer is None
+        or not isclose(tensorDict[mul_1_initializer], math.sqrt(2.0 / math.pi), abs_tol=1e-5)
+    ):
+        logger.debug(
+            "[DEBUG] The value of initializer is not equal to math.sqrt(2./math.pi)"
+            "or mul_1_initializer does not exist\n"
+        )
+        return
+    remove_node.append(mul_1)
+    remove_tensor.append(mul_1_initializer)
+    # so far we have (math.sqrt(2./math.pi)*(x + 0.044715x^3))
 
-def check_Var(graph, tensors, var_node, pattern):
-    if graph.nodes[var_node]["op_type"] != "ReduceMean":
-        return False
-    succs = list(graph.successors(var_node))
-    if len(succs) != 1:
-        return False
-    pattern["pattern_nodes"].append(var_node)
-    pattern["next_node"] = succs[0]
-    return True
+    tanh = list(G.successors(mul_1))
+    if len(tanh) != 1 or G.nodes[tanh[0]]["op_type"] != "Tanh":
+        logger.debug("[DEBUG] Can not find Tanh\n")
+        return
+    tanh = tanh[0]
+    remove_node.append(tanh)
+    # so far we have tanh[math.sqrt(2./math.pi)*(x + 0.044715x^3))]
 
+    add_2 = list(G.successors(tanh))
+    if len(add_2) != 1 or G.nodes[add_2[0]]["op_type"] != "Add":
+        logger.debug("[DEBUG] Can not find Add after Tanh\n")
+        return
+    add_2 = add_2[0]
+    remove_node.append(add_2)
+    # so far we have 1 + tanh[math.sqrt(2./math.pi)*(x + 0.044715x^3))]
 
-def check_DD(graph, tensors, square_node, pattern):
-    succs = list(graph.successors(square_node))
-    if len(succs) != 1:
-        return False
-    op_type = graph.nodes[square_node]["op_type"]
-    if op_type not in ["Pow", "Mul"]:
-        return False
+    mul_2 = None
+    mul_3 = None
+    output_layer = None
 
-    inputs = graph.nodes[square_node]["input"]
-    if op_type == "Pow":
-        exp = tensors[inputs[1]]
-        if exp != 2:
-            return False
-    elif op_type == "Mul":
-        if inputs[0] != inputs[1]:
-            return False
+    mul_2 = list(G.successors(add_2))
+    if len(mul_2) != 1 or G.nodes[mul_2[0]]["op_type"] != "Mul":
+        logger.debug("[DEBUG] Can not find Mul after add_2\n")
+        return
+    mul_2 = mul_2[0]
+    mul_2_initializer = get_single_input_initializer(opt, mul_2)
+
+    # mul_2 is the end of the GELU node, and one of the inputs of mul_2 is Mul with initializer value equals to 0.5
+    if mul_2_initializer is None:
+        mul_3 = find_non_root_pred(G, add_2, mul_2)
+        if mul_3 is None or G.nodes[mul_3]["op_type"] != "Mul":
+            logger.debug("[DEBUG] Can not find the Mul before last Mul\n")
+            return
+        mul_3_initializer = get_single_input_initializer(opt, mul_3)
+        if (
+            mul_3_initializer is None
+            or not isclose(tensorDict[mul_3_initializer], 0.5, abs_tol=1e-5)
+        ):
+            return
+        remove_tensor.append(mul_3_initializer)
+        output_layer = mul_2
+    # There must be a Mul after mul_2. The succeeding Mul is one of the succ node of root and is also the end of the
+    # GELU node.
     else:
-        return False
-    pattern["pattern_nodes"].append(square_node)
-    pattern["next_node"] = succs[0]
-    return True
+        if not isclose(tensorDict[mul_2_initializer], 0.5, abs_tol=1e-5):
+            return
+        mul_3 = list(G.successors(mul_2))
+        if len(mul_3) != 1 or G.nodes[mul_3[0]]["op_type"] != "Mul":
+            logger.debug("[DEBUG] Can not find the last Mul\n")
+            return
+        mul_3 = mul_3[0]
+        output_layer = mul_3
+        remove_tensor.append(mul_2_initializer)
+
+    if mul_2 is None or mul_3 is None:
+        logger.debug("[DEBUG] Can not find correct pattern in the end\n")
+        return
+    remove_node.append(mul_2)
+    remove_node.append(mul_3)
+    # so far we have 0.5x (1 + tanh[math.sqrt(2./math.pi)*(x + 0.044715x^3))])  Done!!
+
+    # keep the output_layer, and replace its info as Gelu node
+    remove_node.remove(output_layer)
+
+    for node in remove_node:
+        G.remove_node(node)
+    # some graph reuses the initializer 0.044715, if we remove it, we can not found in other gelu pattern
+    # for tensor in remove_tensor:
+    #     del tensorDict[tensor]
+
+    # add local function to insure the inference results are consistent with original graph
+    custom_domain = ["ai.onnx.contrib", "snps.onnx.local"][1]
+
+    # change node info of output_layer to info of Gelu
+    G.nodes[output_layer]["op_type"] = "Gelu"
+    G.nodes[output_layer]["input"] = [
+        layer,
+        "initializer_mul_1",
+        "initializer_mul_2_1",
+        "initializer_mul_2_4",
+        "initializer_add_2",
+    ]
+    # G.nodes[output_layer]["domain"] = "com.microsoft"  # using onnxruntime kernel
+    G.nodes[output_layer]["domain"] = custom_domain  # using local function
+
+    G.add_edge(layer, output_layer)
+    tensorDict["initializer_mul_1"] = np.array(0.5, dtype=np.float32)
+    tensorDict["initializer_mul_2_1"] = np.array(0.044714998453855515, dtype=np.float32)
+    tensorDict["initializer_mul_2_4"] = np.array(0.7978845834732056, dtype=np.float32)
+    tensorDict["initializer_add_2"] = np.array([[[1]]], dtype=np.float32)
+
+    cur_doms = [d.domain for d in graph_attrs["opset_import"]]
+    if custom_domain not in cur_doms:
+        graph_attrs["opset_import"].append(
+            OperatorSetIdProto(version=1, domain=custom_domain)
+        )
+    if custom_domain == "snps.onnx.local":
+        local_funcs = graph_attrs.get("functions", [])
+        if "Gelu" not in [func.name for func in local_funcs]:
+            func = get_local_function_GELU()
+            local_funcs.append(func)
+            graph_attrs["functions"] = local_funcs
+
+    opt.passes_counter["FuseGeLU"] += 1
 
 
-def check_D(graph, tensors, sub_node, pattern):
-    if graph.nodes[sub_node]["op_type"] != "Sub":
-        return False
-    succs = list(graph.successors(sub_node))
-    # Either succs=[Mul], [Pow], or [Pow, Div]. In the 3rd pattern, Div is used for (X-EX)/Var.
-    # In the first two patterns they use other nodes for that division.
-    # We select the Square node as next_node. (Mul/Pow)
-    if len(succs) < 1 or len(succs) > 2:
-        return False
-    pattern["pattern_nodes"].append(sub_node)
-    pattern["next_node"] = succs[0]
-    return True
+def detect_erf(opt, layer, children):
+    G = opt.G
+    tensorDict = opt.TensorDict
+    graph_attrs = opt.graph_attrs
+
+    div = children["Div"][0]
+    erf = list(G.successors(div))
+    if len(erf) != 1 or G.nodes[erf[0]]["op_type"] != "Erf":
+        logger.debug("[DEBUG] Can not find Erf after Div\n")
+        return
+    erf = erf[0]
+    add = list(G.successors(erf))
+    if len(add) != 1 or G.nodes[add[0]]["op_type"] != "Add":
+        logger.debug("[DEBUG] Can not find Add after Erf\n")
+        return
+    add = add[0]
+
+    mul_add = list(G.successors(add))
+    if len(mul_add) != 1 or G.nodes[mul_add[0]]["op_type"] != "Mul":
+        logger.debug("[DEBUG] Can not find Mul after Add\n")
+        return
+    mul_add = mul_add[0]
+
+    remove_node = [div, erf, add, mul_add]
+
+    output_layer = None
+    if children["Mul"][0] == mul_add:
+        # format: https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/test/testdata/transform/fusion/
+        # gelu_format2_0.onnx
+        #       x
+        #     /   \
+        #    |    Div
+        #    |     |
+        #    |    Erf
+        #    |     |
+        #    |    Add
+        #     \   /
+        #      Mul1
+        #       |
+        #      Mul2
+        mul_end = list(G.successors(mul_add))
+        if len(mul_end) != 1 or G.nodes[mul_end[0]]["op_type"] != "Mul":
+            logger.debug("[DEBUG] Can not find Mul\n")
+            return
+        mul_end = mul_end[0]
+        mul_initializer = get_single_input_initializer(opt, mul_end)
+        if mul_initializer is None:
+            mul_initializer = get_single_input_initializer(opt, mul_add)
+        if not isclose(tensorDict[mul_initializer], 0.5, abs_tol=1e-5):
+            logger.debug("[DEBUG] The value is not equal to 0.5\n")
+            return
+        remove_node.append(mul_end)
+        output_layer = mul_end
+    else:
+        # format: https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/test/testdata/transform/
+        # fusion/gelu.onnx
+        #       x
+        #     /   \
+        #    |    Div
+        #    |     |
+        #    |    Erf
+        #    |     |
+        #  Mul1   Add
+        #     \   /
+        #      Mul2
+        mul_initializer = get_single_input_initializer(opt, children["Mul"][0])
+        if mul_initializer is None:
+            mul_initializer = get_single_input_initializer(opt, mul_add)
+        if not isclose(tensorDict[mul_initializer], 0.5, abs_tol=1e-5):
+            logger.debug("[DEBUG] The value is not equal to 0.5\n")
+            return
+        remove_node.append(children["Mul"][0])
+        output_layer = mul_add
+
+    # keep the output_layer, and replace its info as Gelu node
+    remove_node.remove(output_layer)
+
+    for node in remove_node:
+        G.remove_node(node)
+
+    # change node info of output_layer to info of Gelu
+    G.nodes[output_layer]["op_type"] = "Gelu"
+    G.nodes[output_layer]["input"] = [layer]
+    G.nodes[output_layer]["domain"] = "com.microsoft"
+    G.add_edge(layer, output_layer)
+
+    cur_doms = [d.domain for d in graph_attrs["opset_import"]]
+    if "com.microsoft" not in cur_doms:
+        graph_attrs["opset_import"].append(
+            OperatorSetIdProto(version=1, domain="com.microsoft")
+        )
+
+    opt.passes_counter["FuseGeLU"] += 1
 
 
-def check_Mean(graph, tensors, mean_node, pattern):
-    """We will have two dependency to Mean:
-    D = Sub(X, Mean)
-    Normalized = Mul(D, InvStdDev)
-    So the #sucessors should be two, and one of them must be Sub for D
-    another is Div (or the same Sub? -> this can be optimized by fuse_identical_sibling_layers.py)
-    """
-    # We'll have two suceesors, so check len
-    succs = list(graph.successors(mean_node))
-    # Either succs=[Sub,Mul], [Sub, Sub] or [Sub]
-    if len(succs) < 1 or len(succs) > 2:
-        return False
-    if graph.nodes[succs[0]]["op_type"] != "Sub":
-        return False
-    if len(succs) == 2:
-        succ1_type = graph.nodes[succs[1]]["op_type"]
-        if succ1_type == "Sub":
-            # the second input can be Div, or [Sub -> Div],
-            # just fuse the dummpy Sub here
-            pattern["pattern_nodes"].append(succs[1])
-        elif succ1_type != "Mul":  # another pattern is Mul
-            return False
-    else:  # len(succs) == 1, (model: mmlab/vit)
-        # we will use this node to indicate the operand of the Division (X-EX)/StdDev
-        pattern["pattern_nodes"].append(succs[0])
-    pattern["pattern_nodes"].append(mean_node)
-    pattern["pattern_inputs"].extend(list(graph.predecessors(mean_node)))
-    pattern["next_node"] = succs[0]
-    return True
+def find_non_root_pred(G, root, layer):
+    non_root_pred = None
+    for pred in list(G.predecessors(layer)):
+        if pred != root:
+            non_root_pred = pred
+            break
+    return non_root_pred
