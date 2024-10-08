@@ -1,11 +1,9 @@
-The RecomposeLayerNormFromMulPattern pass identifies ONNX Layer Normalization patterns by analyzing operations like Mul, Div, Sqrt, and ReduceMean.
-It replaces the matched patterns with optimized ONNX LayerNorm or RMSLayerNorm operations, enhancing performance and reducing complexity in the computation graph.
-
+The RecomposeLayerNormFromMulPattern pass detects and replaces ONNX Layer Normalization patterns with optimized LayerNorm or RMSLayerNorm operations, improving performance and reducing computation complexity.
 
 
 The RecomposeGeluFromMulPattern pass rewrites Gelu activation functions represented as multiplications in ONNX by identifying exact or approximate forms. 
 It replaces matched structures with a concise Gelu operation, maintaining the intended behavior of the computational graph.
-
+he RecomposeGeluFromMulPattern pass rewrites GELU (Gaussian Error Linear Unit) operations by identifying ONNXMulOp patterns that match the GELU formula and replacing them with a direct ONNX GELU operation. This optimization simplifies the expression into a single ONNX operation for better execution efficiency.
 
 
 This pass identifies a pattern of DequantizeLinear + MatMul + QuantizeLinear operations and rewrites it into a more efficient QLinearMatMul operation. 
