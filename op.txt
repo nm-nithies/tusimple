@@ -291,3 +291,23 @@ std::unique_ptr<Pass> createFuseSubAndDivIntoBNPass() {
   return std::make_unique<FuseSubAndDivIntoBNPass>();
 }
 
+
+
+
+
+
+
+
+
+
+
+def ReplaceSum(opt):
+    G = opt.G
+    layers = list(nx.topological_sort(G))
+    for layer in layers:
+        if G.nodes[layer].get("op_type", "") == "Sum":
+            if len(G.nodes[layer]["input"]) != 2:
+                continue
+            G.nodes[layer]["op_type"] = "Add"
+
+            opt.passes_counter["ReplaceSum"] += 1
