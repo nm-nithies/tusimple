@@ -27,3 +27,8 @@ The ReplaceCastLikeByCastPattern transforms ONNXCastLikeOp into an appropriate c
 This pass replaces a 1x1 convolution with a matrix multiplication, reshaping inputs and outputs for efficiency. Bias is handled if present.
 
 The provided C++ code parses the Einsum equation and computes the axes for summation and contraction to facilitate the decomposition of the Einsum operation into MatMul and ReduceSum operations.
+
+
+
+Pattern 1 transforms ONNXGroupNormalizationOp into LayerNorm.
+Pattern 2 transforms ONNXGroupNormalizationV18Op into LayerNorm.
