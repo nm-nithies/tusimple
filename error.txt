@@ -1,583 +1,546 @@
-In file included from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/PatternMatch.h:12,
-                 from ../src/Dialect/ONNX/Transforms/temp.cpp:24:
-/workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Builders.h: In instantiation of 'OpTy mlir::OpBuilder::create(mlir::Location, Args&& ...) [with OpTy = mlir::ONNXBatchNormalizationInferenceModeOp; Args = {mlir::Type, mlir::Value&, mlir::Value&, mlir::Value&, mlir::Value&, mlir::Value&, mlir::FloatAttr&}]':
-../src/Dialect/ONNX/Transforms/temp.cpp:643:77:   required from here
-/workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Builders.h:513:16: error: no matching function for call to 'mlir::ONNXBatchNormalizationInferenceModeOp::build(mlir::OpBuilder&, mlir::OperationState&, mlir::Type, mlir::Value&, mlir::Value&, mlir::Value&, mlir::Value&, mlir::Value&, mlir::FloatAttr&)'
-  513 |     OpTy::build(*this, state, std::forward<Args>(args)...);
-      |     ~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In file included from ../src/Dialect/ONNX/ONNXOps.hpp:33,
-                 from ../src/Dialect/ONNX/Transforms/temp.cpp:30:
-./src/Dialect/ONNX/ONNXOps.hpp.inc:3692:15: note: candidate: 'static void mlir::ONNXBatchNormalizationInferenceModeOp::build(mlir::OpBuilder&, mlir::OperationState&, mlir::Type, mlir::Value, mlir::Value, mlir::Value, mlir::Value, mlir::Value, mlir::FloatAttr, mlir::FloatAttr)'
- 3692 |   static void build(::mlir::OpBuilder &odsBuilder, ::mlir::OperationState &odsState, ::mlir::Type o_Y, ::mlir::Value X, ::mlir::Value scale, ::mlir::Value B, ::mlir::Value mean, ::mlir::Value var, ::mlir::FloatAttr epsilon, ::mlir::FloatAttr momentum);
+# Copyright 2023-2024 Synopsys, Inc.
+# This Synopsys software and all associated documentation are proprietary
+# to Synopsys, Inc. and may only be used pursuant to the terms and conditions
+# of a written license agreement with Synopsys, Inc.
+# All other use, reproduction, modification, or distribution of the Synopsys
+# software or the associated documentation is strictly prohibited.
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import numpy as np
+
+from nnac.core.log import Logger
+
+from .single_layer_transforms import remove_one_layer
+
+""" This pass fuses primitive operators into LayerNormalization.
+In ONNX dialect it's the MeanVarianceNormalization.
+https://github.com/onnx/onnx/blob/main/docs/Operators.md#meanvariancenormalization
+(2022/06/17) ONNX v17 adds LayerNormalization
+https://github.com/onnx/onnx/blob/main/docs/Operators.md#layernormalization
+Checkout their numpy implementation:
+https://github.com/onnx/onnx/blob/main/onnx/backend/test/case/node/layernormalization.py
+"""
 
 
+logger = Logger("OPTIMIZATION")
 
- auto batchNormResult = rewriter.create<ONNXBatchNormalizationInferenceModeOp>(
-        loc, subInput1.getType(), subInput1, scale, bias, mean, var, epsilon);
-
-
-
-def ONNXBatchNormalizationOp:ONNX_Op<"BatchNormalization",
-  [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>, DeclareOpInterfaceMethods<ShapeHelperOpInterface>]> {
-  let summary = "ONNX BatchNormalization operation";
-  let description = [{
-  Carries out batch normalization as described in the paper
-  https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-  There are five required inputs 'X', 'scale', 'B', 'input_mean' and
-  'input_var'.
-  Note that 'input_mean' and 'input_var' are expected to be the estimated
-  statistics in inference mode (training_mode=False, default),
-  and the running statistics in training mode (training_mode=True).
-  There are multiple cases for the number of outputs, which we list below:
-  
-  * Output case #1: Y, running_mean, running_var (training_mode=True)
-  * Output case #2: Y (training_mode=False)
-  
-  When training_mode=False, extra outputs are invalid.
-  The outputs are updated as follows when training_mode=True:
-  ```
-  running_mean = input_mean * momentum + current_mean * (1 - momentum)
-  running_var = input_var * momentum + current_var * (1 - momentum)
-  
-  Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
-  ```
-  where:
-  ```
-  current_mean = ReduceMean(X, axis=all_except_channel_index)
-  current_var =  ReduceVar(X, axis=all_except_channel_index)
-  ```
-  Notice that `ReduceVar` refers to the population variance, and it equals to
-  `sum(sqrd(x_i - x_avg)) / N`
-  where `N` is the population size (this formula does not use sample size `N - 1`).
-  
-  The computation of ReduceMean and ReduceVar uses float to avoid overflow for float16 inputs.
-  
-  When training_mode=False:
-  ```
-  Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
-  ```
-  
-  For previous (depreciated) non-spatial cases, implementors are suggested
-  to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormalization Op.
-  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
-  }];
-  let arguments = (ins AnyTypeOf<[TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>, TensorOf<[BF16]>]>:$X,
-    AnyTypeOf<[TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>, TensorOf<[BF16]>]>:$scale,
-    AnyTypeOf<[TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>, TensorOf<[BF16]>]>:$B,
-    AnyTypeOf<[TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>, TensorOf<[BF16]>]>:$input_mean,
-    AnyTypeOf<[TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>, TensorOf<[BF16]>]>:$input_var,
-    DefaultValuedAttr<F32Attr, "1e-05">:$epsilon,
-    DefaultValuedAttr<F32Attr, "0.9">:$momentum,
-    DefaultValuedAttr<SI64Attr, "0">:$training_mode);
-  let results = (outs AnyTypeOf<[TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>, TensorOf<[BF16]>]>:$Y,
-    AnyTypeOf<[TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>, TensorOf<[BF16]>, NoneType]>:$running_mean,
-    AnyTypeOf<[TensorOf<[F16]>, TensorOf<[F32]>, TensorOf<[F64]>, TensorOf<[BF16]>, NoneType]>:$running_var);
-  let extraClassDeclaration = [{
-    static int getNumberOfOperands() {
-      return 5;
-    }
-    static int getNumberOfResults() {
-      return 3;
-    }
-    static std::vector<int> getTypeMap() {
-      return {30,33,33};
-    }
-  }];
+"""      X
+       /   |
+     /       |
+ReduceMean     |
+    | |        |  |
+    | |_____   |    |
+    |       |  |      |
+    |         Sub       |
+    |          |          |
+    |     Mul (i.e. Pow^2) |
+    |          |            |
+    |      ReduceMean       |
+    |          |            |
+    |       Add(,epsilon)   |
+    |          |            |
+    |        Pow(,-0.5)     |
+    |          |            |
+    |      Mul(,vec(1))     |
+    |      broadcasting    /
+    |          |         /
+     |        / |      /
+       |    /     |  /
+        Mul        Mul
+         |          |
+      Sub(0,)       |
+     negating      /
+         |       /
+          |    /
+           Add
+            |
+       LayerNorm_out
+"""
 
 
+def FusePrimitivesIntoLayerNorm(opt):
+    """We extract opset_v because we use (un)squeeze nodes around the MVN node,
+    And they moved the "axes" parameter from attribute to input when upgraded to v13.
+    """
+    node_graph = opt.G
+    tensor_dict = opt.TensorDict
+    shape_dict = opt.ShapeDict
+    type_dict = opt.TypeDict
+    graph_attrs = opt.graph_attrs
 
+    opset_v = [n.version for n in graph_attrs["opset_import"] if n.domain == ""][0]
+    any_fused = find_layernorm_nodes(opt, node_graph, tensor_dict, shape_dict, type_dict, opset_v)
+
+    if any_fused:
+        # Now the models always have 3D LayerNorm; it can be
+        # checked with shape_dict
+        tensor_dict["neg_one"] = np.array([-1]).astype(np.int64)
+        pass
+        # if the server has onnx updated to v11, we can try function_proto
+        # graph_attrs["functions"] = generate_layer_norm_function_proto
+
+
+def add_layernorm_to_graph(
+    optimizer, node_graph, tensor_dict, shape_dict, type_dict,
+    ln_ip, ln_op, ln_succs, ln_nodes, ln_eps, ln_axis, opset_v
+):
+    """Alternate LayerNorm implementations
+    1. MeanVarianceNormalization (only supports 4D, so we have to insert Unsqueeze&Squeeze)
+    2. Local function (alternative of the above)
+    3. ai.onnx v17 LayerNormalization (not tested, not sure other operator works in v17)
+    """
+    for n in set(ln_nodes):
+        node_graph.remove_node(n)
+
+    ln_name = ln_op[0]
+    layernorm_node = ln_name + "/layernorm"
+    optimizer.compare_dict[layernorm_node] = optimizer.compare_dict[ln_name]
+    if opset_v >= 13 and "neg_one" not in tensor_dict:
+        tensor_dict["neg_one"] = np.array([-1]).astype(np.int64)
+
+    assert ln_eps is not None, "Can not find epsilon value\n"
+
+    # TODO: check if the input model has layernorm-weight and bias.
+    # Now I assume None and generate dummy 1s and 0s.
+
+    ip_shape = shape_dict[ln_ip[0]]
+    norm_shape = ip_shape[ln_axis:]  # both +ve and -ve axis could work
+    tensor_dict[ln_name + "/layernorm_scale"] = np.ones(norm_shape, dtype=np.float32)
+    tensor_dict[ln_name + "/layernorm_bias"] = np.zeros(norm_shape, dtype=np.float32)
+    shape_dict[layernorm_node] = ip_shape
+    type_dict[layernorm_node] = type_dict[ln_ip[0]]
+    node_graph.add_node(
+        layernorm_node,
+        **{
+            "op_type": "LayerNormalization",
+            "input": [
+                ln_ip[0],
+                ln_name + "/layernorm_scale",
+                ln_name + "/layernorm_bias",
+            ],  # [X, SCALE, B], set SCALE and B as 1 and 0 now, and after the fusion of layernorm,
+            # we merge the original SCALE and B into the fused layernorm layer
+            # "output":[ln_name, ln_name+"/output1", ln_name+"/output2"], # [Y, Mean, InvStdDev],
+            # we don't need outputs Mean and InvStdDev
+            "output": [
+                layernorm_node
+            ],  # [Y, Mean, InvStdDev], we don't need outputs Mean and InvStdDev
+            "attr_dict": {"axis": ln_axis, "epsilon": ln_eps},
+            "domain": "",  # there is only ai.onnx domain now, we expect there is com.microsoft?
+        }
+    )
+
+    for ip in ln_ip:
+        node_graph.add_edge(ip, layernorm_node)
+    for op in ln_succs:
+        node_graph.add_edge(layernorm_node, op)
+    for succ in ln_succs:
+        for i in range(len(node_graph.nodes[succ]["input"])):
+            if node_graph.nodes[succ]["input"][i] == ln_name:
+                node_graph.nodes[succ]["input"][i] = layernorm_node
+
+    optimizer.passes_counter["FusePrimitivesIntoLayerNorm"] += 1
+
+    return layernorm_node
 
 
 """
-    Calculate the accuracy of predicted line values compared to ground truth values within a given threshold.
+Mean = ReduceMean<axes=normalized_axes>(X)
+D = Sub(X, Mean)
+DD = Mul(Diff, Diff)
+Var = ReduceMean<axes=normalized_axes>(DD)
+VarEps = Add(Var, epsilon)
+StdDev = Sqrt(VarEps)
+InvStdDev = Reciprocal(StdDev)
+Normalized = Mul(D, InvStdDev)
+"""
 
-    The function replaces negative values in both predicted and ground truth arrays with -100 and calculates
-    the fraction of predictions that are within the specified threshold compared to the ground truth.
 
-    Returns the accuracy as a fraction of the total number of ground truth values.
+def find_layernorm_nodes(optimizer, graph, tensors, shapes, types, opset_v):
+    # graph: nx.DiGraph, tensors: tensor_dict, shapes: shape_dict
+    any_fused = False
+    # pattern inputs, outputs, nodes
+    mean_nodes = [n for n, t in graph.nodes(data="op_type") if t == "ReduceMean"]
+    for mean_node in mean_nodes:
+        if mean_node not in graph.nodes:
+            # Var = Mean(SquaredDiff(X-E[x])) can be fused already
+            continue
+        # pat_in, pat_out, pat_nodes = [], [], []
+        # pattern = [pat_in, pat_out, pat_nodes]
+        pattern = dict(pattern_inputs=[], pattern_outputs=[], pattern_nodes=[])
+        mean_node_out_shape = shapes[mean_node]
+
+        if opset_v < 18:
+            pattern["axes"] = graph.nodes[mean_node]["attr_dict"]["axes"].copy()
+            for i in range(len(pattern["axes"])):
+                if pattern["axes"][i] < 0:
+                    pattern["axes"][i] += len(mean_node_out_shape)
+            pattern["axes"].sort()
+            axes_reduce_on = [i for i in range(pattern["axes"][0], len(mean_node_out_shape))]
+            if [mean_node_out_shape[axis] for axis in axes_reduce_on] != [1] * len(axes_reduce_on):
+                continue
+        else:
+            # in opset 18, axes is moved to input field
+            pattern["axes"] = None
+            if graph.nodes[mean_node]["input"][1] in tensors:
+                pattern["axes"] = tensors[graph.nodes[mean_node]["input"][1]].copy()
+            if pattern["axes"] is None:
+                logger.debug("[DEBUG] Can not find pattern axes in tensor_dict.")
+                continue
+
+        for i in range(len(pattern["axes"])):
+            if pattern["axes"][i] < 0:
+                pattern["axes"][i] += len(mean_node_out_shape)
+        pattern["axes"].sort()
+        axes_reduce_on = [i for i in range(pattern["axes"][0], len(mean_node_out_shape))]
+        if [mean_node_out_shape[axis] for axis in axes_reduce_on] != [1] * len(axes_reduce_on):
+            continue
+
+        params = [graph, tensors, mean_node, pattern]
+        if not check_Mean(*params):
+            continue
+        params[2] = pattern["next_node"]  # sub_node =  (X - E[X])
+        if not check_D(*params):
+            continue
+        params[2] = pattern["next_node"]  # DD_node = (X - E[X])^2
+        if not check_DD(*params):
+            continue
+        params[2] = pattern["next_node"]  # Var = Mean( (X - E[X])^2 )
+        if not check_Var(*params):
+            continue
+        params[2] = pattern["next_node"]  # EpsVar = Add(Var, Eps) or Max(Var, 0)
+        if not check_VarEps(*params):
+            continue
+        params[2] = pattern["next_node"]  # StdDev = Sqrt(VarEps)
+        if not check_StdDev(*params):
+            continue
+        params[2] = pattern["next_node"]
+        # InvStdDev = Reciprocal(StdDev), Normalized = Mul(D, InvStdDev)
+        # 1st pattern is: Div(D, StdDev)
+        # 2nd pattern is: StdDev_broad = Mul(StdDev, broadcast);
+        #              D*StdDev = Mul(D, StdDev_Broad), X*StdDev = Mul(X, StdDev_Broad);
+        # Neg_D*StdDev = Sub(0, D*StdDev),
+        # LayerNorm = Add(Neg_D*StdDev, X*StdDev).
+        semantics = pattern["semantics"]
+        if semantics == "StdDev":
+            if not check_StdDev_Normalized(*params):
+                assert False, "ENHANCE:already detected StdDev but it's not LayerNorm?"
+                continue
+        elif semantics == "InvStdDev":
+            if not check_InvStdDev_Normalized(*params):
+                assert (
+                    False
+                ), "ENHANCE:already detected InvStdDev but it's not LayerNorm?"
+                continue
+        else:
+            continue
+        ln_ip = pattern["pattern_inputs"]
+        ln_op = pattern["pattern_outputs"]
+        ln_nodes = pattern["pattern_nodes"]
+        ln_succs = list(graph.successors(ln_op[0]))
+        eps = pattern["epsilon"]
+        reduce_axes = pattern["axes"]
+        # Just pick the first axis because all dimensions in shape[axis:] are reduced.
+        ln_axis = np.min(reduce_axes)
+        layernorm_node = add_layernorm_to_graph(
+            optimizer, graph, tensors, shapes, types, ln_ip, ln_op, ln_succs, ln_nodes, eps, ln_axis, opset_v
+        )
+        any_fused = True
+
+        # Check if there are Mul + Add layers can bu fused in LayerNorm
+        succs = list(graph.successors(layernorm_node))
+        if len(succs) != 1:
+            continue
+        succ_op_type = graph.nodes[succs[0]].get("op_type", None)
+        if succ_op_type == "Mul":
+            mul_layer = succs[0]
+            succ_succs = list(graph.successors(succs[0]))
+            if len(succ_succs) == 1 and graph.nodes[succ_succs[0]].get("op_type", None) == "Add":
+                add_layer = succ_succs[0]
+                if fuse_mul_into_ln(optimizer, layernorm_node, mul_layer):
+                    remove_one_layer(optimizer, mul_layer)
+                    optimizer.compare_dict[layernorm_node] = optimizer.compare_dict[mul_layer]
+                if fuse_add_into_ln(optimizer, layernorm_node, add_layer):
+                    remove_one_layer(optimizer, add_layer)
+                    optimizer.compare_dict[layernorm_node] = optimizer.compare_dict[add_layer]
+            else:
+                if fuse_mul_into_ln(optimizer, layernorm_node, mul_layer):
+                    remove_one_layer(optimizer, mul_layer)
+                    optimizer.compare_dict[layernorm_node] = optimizer.compare_dict[mul_layer]
+        elif succ_op_type == "Add":
+            add_layer = succs[0]
+            if fuse_add_into_ln(optimizer, layernorm_node, add_layer):
+                remove_one_layer(optimizer, add_layer)
+                optimizer.compare_dict[layernorm_node] = optimizer.compare_dict[add_layer]
+
+    return any_fused
+
+
+def get_init(opt, layer):
+    G = opt.G
+    TensorDict = opt.TensorDict
+    for input in G.nodes[layer]["input"]:
+        if input in TensorDict:
+            return TensorDict[input]
+    return None
+
+
+def fuse_mul_into_ln(opt, ln_layer, mul_layer):
+    G = opt.G
+    TensorDict = opt.TensorDict
+    ln_inputs = G.nodes[ln_layer]["input"]
+    scale = TensorDict.get(ln_inputs[1])
+    mul_init = get_init(opt, mul_layer)
+    if mul_init is None:
+        logger.debug(
+            "Failed to fuse Mul {} into LayerNorm {}, it's not a constant multiplication.".format(
+                mul_layer, ln_layer
+            )
+        )
+        return False
+    if mul_init.size != scale.size:
+        logger.debug(
+            "Failed to fuse Mul {} into LayerNorm {}, the scale size {} v.s. {} doesn't match.".format(
+                mul_layer, ln_layer, mul_init.size, scale.size
+            )
+        )
+        return False
+    fused_scale = scale * mul_init
+    fused_scale_name = ln_inputs[1] + '/fused_mul'
+    TensorDict[fused_scale_name] = fused_scale
+    del TensorDict[ln_inputs[1]]
+    ln_inputs[1] = fused_scale_name
+    if len(ln_inputs) > 2:
+        B = TensorDict[ln_inputs[2]]
+        fused_B = B * mul_init
+        fused_B_name = ln_inputs[2] + '/fused_mul'
+        TensorDict[fused_B_name] = fused_B
+        del TensorDict[ln_inputs[2]]
+        ln_inputs[2] = fused_B_name
+    logger.debug(
+        "Fuse Mul {} into LayerNorm {}.".format(
+            mul_layer, ln_layer
+        )
+    )
+    return True
+
+
+def fuse_add_into_ln(opt, ln_layer, add_layer):
+    G = opt.G
+    TensorDict = opt.TensorDict
+    ln_inputs = G.nodes[ln_layer]["input"]
+    add_init = get_init(opt, add_layer)
+    if add_init is None:
+        logger.debug(
+            "Failed to fuse Add {} into LayerNorm {}, it's not a constant addition.".format(
+                add_layer, ln_layer
+            )
+        )
+        return False
+    if len(ln_inputs) > 2:
+        B = TensorDict[ln_inputs[2]]
+        fused_B = B + add_init
+        fused_B_name = ln_inputs[2] + '/fused_add'
+        del TensorDict[ln_inputs[2]]
+        ln_inputs[2] = fused_B_name
+    else:
+        fused_B = B
+        fused_B_name = ln_layer + '/fused_add_B'
+        ln_inputs.append(fused_B_name)
+    TensorDict[fused_B_name] = fused_B
+    logger.debug(
+        "Fuse Add {} into LayerNorm {}.".format(
+            add_layer, ln_layer
+        )
+    )
+    return True
+
+
+def check_InvStdDev_Normalized(graph, tensors, mul_node, pattern):
+    # MulBy1: InvStdDev1 = Mul(InvStdDev, 1) for broadcasting
+    succs = list(graph.successors(mul_node))
+    if len(succs) != 2:
+        return False
+
+    if (
+        graph.nodes[succs[0]]["op_type"] != "Mul"
+        or graph.nodes[succs[1]]["op_type"] != "Mul"
+    ):
+        return False
+
+    mul_sub = None
+    mul_add = None
+    mul0_succ = list(graph.successors(succs[0]))
+    if len(mul0_succ) != 1:
+        return False
+    mul1_succ = list(graph.successors(succs[1]))
+    if len(mul1_succ) != 1:
+        return False
+    mul0_succ_type = graph.nodes[mul0_succ[0]]["op_type"]
+    mul1_succ_type = graph.nodes[mul1_succ[0]]["op_type"]
+
+    if mul0_succ_type == "Sub" and mul1_succ_type == "Add":
+        mul_sub = succs[0]
+        mul_add = succs[1]
+    elif mul0_succ_type == "Add" and mul1_succ_type == "Sub":
+        mul_sub = succs[1]
+        mul_add = succs[0]
+    else:
+        return False
+
+    sub = list(graph.successors(mul_sub))[0]
+    add = list(graph.successors(mul_add))[0]
+
+    if list(graph.successors(sub))[0] != add:
+        return False
+
+    pattern["pattern_nodes"].append(mul_node)
+    pattern["pattern_nodes"].extend(succs)
+    pattern["pattern_nodes"].append(sub)
+    pattern["pattern_nodes"].append(add)
+    pattern["pattern_outputs"].append(add)
+    return True
+
+
+def check_StdDev_Normalized(graph, tensors, div_node, pattern):
+    # Normalized = Div(D, StdDev)
+    preds = list(graph.predecessors(div_node))
+    if preds[0] != pattern["pattern_nodes"][0]:
+        # when we check Mean = ReduceMean(X), we also appended the second D = Sub(X, Mean)
+        return False
+    # A general check
+    for pred in preds:
+        if pred not in pattern["pattern_nodes"]:
+            return False
+    op_type = graph.nodes[div_node]["op_type"]
+    if op_type != "Div":
+        return False
+
+    pattern["pattern_nodes"].append(div_node)
+    pattern["pattern_outputs"].append(div_node)
+    return True
+
+
+def check_StdDev(graph, tensors, stddev_node, pattern):
+    succs = list(graph.successors(stddev_node))
+    if len(succs) != 1:
+        return False
+    # it should be a sqrt
+    op_type = graph.nodes[stddev_node]["op_type"]
+    pattern["semantics"] = "StdDev"
+    if op_type == "Pow":
+        inputs = graph.nodes[stddev_node]["input"]
+        exp = tensors[inputs[1]]
+        if exp != -0.5:  # It's actually InvStdDev
+            return False
+        pattern["semantics"] = "InvStdDev"
+    elif op_type != "Sqrt":  # StdDev
+        return False
+    pattern["pattern_nodes"].append(stddev_node)
+    pattern["next_node"] = succs[0]
+    return True
+
+
+def check_VarEps(graph, tensors, vareps_node, pattern):
+    succs = list(graph.successors(vareps_node))
+    if len(succs) != 1:
+        return False
+    op_type = graph.nodes[vareps_node]["op_type"]
+    # VarEps is [Add(Var,Eps~=1e-12)] or [Max(Var,0)]
+    if op_type not in ["Add", "Max"]:
+        return False
+    eps = None
+    if op_type == "Max":
+        eps = 1e-12
+    elif op_type == "Add":
+        for input in graph.nodes[vareps_node]["input"]:
+            if input in tensors:
+                # In detr_resnet50 the Eps of Add(Var, Eps) has shape of (768,1,1)
+                # here we utilize np.mean() to easily get the eps value.
+                eps = np.mean(tensors[input])
+                break
+    pattern["pattern_nodes"].append(vareps_node)
+    pattern["next_node"] = succs[0]
+    pattern["epsilon"] = float(eps)
+    return True
+
+
+def check_Var(graph, tensors, var_node, pattern):
+    if graph.nodes[var_node]["op_type"] != "ReduceMean":
+        return False
+    succs = list(graph.successors(var_node))
+    if len(succs) != 1:
+        return False
+    pattern["pattern_nodes"].append(var_node)
+    pattern["next_node"] = succs[0]
+    return True
+
+
+def check_DD(graph, tensors, square_node, pattern):
+    succs = list(graph.successors(square_node))
+    if len(succs) != 1:
+        return False
+    op_type = graph.nodes[square_node]["op_type"]
+    if op_type not in ["Pow", "Mul"]:
+        return False
+
+    inputs = graph.nodes[square_node]["input"]
+    if op_type == "Pow":
+        exp = tensors[inputs[1]]
+        if exp != 2:
+            return False
+    elif op_type == "Mul":
+        if inputs[0] != inputs[1]:
+            return False
+    else:
+        return False
+    pattern["pattern_nodes"].append(square_node)
+    pattern["next_node"] = succs[0]
+    return True
+
+
+def check_D(graph, tensors, sub_node, pattern):
+    if graph.nodes[sub_node]["op_type"] != "Sub":
+        return False
+    succs = list(graph.successors(sub_node))
+    # Either succs=[Mul], [Pow], or [Pow, Div]. In the 3rd pattern, Div is used for (X-EX)/Var.
+    # In the first two patterns they use other nodes for that division.
+    # We select the Square node as next_node. (Mul/Pow)
+    if len(succs) < 1 or len(succs) > 2:
+        return False
+    pattern["pattern_nodes"].append(sub_node)
+    pattern["next_node"] = succs[0]
+    return True
+
+
+def check_Mean(graph, tensors, mean_node, pattern):
+    """We will have two dependency to Mean:
+    D = Sub(X, Mean)
+    Normalized = Mul(D, InvStdDev)
+    So the #sucessors should be two, and one of them must be Sub for D
+    another is Div (or the same Sub? -> this can be optimized by fuse_identical_sibling_layers.py)
     """
-
-
-   """
-    Calculate the angle (in radians) of a line fitted to given points in a 2D space (xs, y_samples).
-    
-    The function filters out invalid points (where xs is negative), fits a linear regression to the remaining points,
-    and calculates the angle of the line using the slope of the fitted line.
-
-    :param xs: Array of x-coordinates (can contain negative values).
-    :param y_samples: Corresponding array of y-coordinates.
-    :return: Angle theta in radians.
-    """
-
-
-
-struct SubDivFuseBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
-  using OpRewritePattern<ONNXSubOp>::OpRewritePattern;
-
-  LogicalResult matchAndRewrite(
-      ONNXSubOp subOp, PatternRewriter &rewriter) const final {
-   
-    ONNXDivOp divOp;
-    if (!isSubDivBatchNormMatched(subOp, divOp))
-     { cout<<"643";
-      return failure();}
-    
-   
-    Value input = subOp.getOperand(0);
-    Type resType = subOp.getResult().getType();
-   
-    // Value subConstValue = subOp.getOperand(1);  
-    // Value divConstValue = divOp.getOperand(1);  
-    //  cout<<"650650";
-    
-    // auto subConstOp = subConstValue.getDefiningOp<ONNXConstantOp>();
-    // auto divConstOp = divConstValue.getDefiningOp<ONNXConstantOp>();
-   
-    cout<<"655655";
-   
-    float subValue = 0.5;  
-    float divValue = 0.2;  
-   
-    float scale = 1.0f / divValue;
-    float bias = -subValue / divValue;
-    float mean = 0.0f;
-    float variance = 1.0f;
-    FloatAttr epsilon = rewriter.getF32FloatAttr(1e-5f); 
-    FloatAttr momentum =  rewriter.getF32FloatAttr(0.9);
-
-
-  
-    Value scaleValue = createFloatConstant(rewriter, subOp.getLoc(), scale);
-    Value biasValue = createFloatConstant(rewriter, subOp.getLoc(), bias);
-    Value meanValue = createFloatConstant(rewriter, subOp.getLoc(), mean);
-    Value varValue = createFloatConstant(rewriter, subOp.getLoc(), variance);
-     cout<<"679679";
-    
-    SmallVector<Type, 2> outputTypes;
-    outputTypes.emplace_back(subOp.getResult().getType());
-    outputTypes.emplace_back(divOp.getResult().getType());
-    
-
-    auto bnOp = rewriter.create<ONNXBatchNormalizationOp>(
-        subOp.getLoc(),input.getType(),input,
-        scaleValue, biasValue, meanValue, varValue, epsilon, momentum);  // epsilon
-
-    // Replace the Div operation with the result of BatchNorm
-    rewriter.replaceOp(divOp, bnOp.getResult());
-    // Remove the Sub operation
-    rewriter.eraseOp(subOp);
-    cout<<"689689";
-    return success();
-  }
-};
-
-src/Dialect/ONNX/Transforms/temp.cpp
-../src/Dialect/ONNX/Transforms/temp.cpp: In member function 'virtual llvm::LogicalResult {anonymous}::SubDivFuseBatchNormPattern::matchAndRewrite(mlir::ONNXSubOp, mlir::PatternRewriter&) const':
-../src/Dialect/ONNX/Transforms/temp.cpp:690:46: error: no matching function for call to 'mlir::ONNXBatchNormalizationOp::getResult()'
-  690 |     rewriter.replaceOp(divOp, bnOp.getResult());
-      |                                              ^
-In file included from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Matchers.h:20,
-                 from ../src/Dialect/ONNX/Transforms/temp.cpp:23:
-/workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/OpDefinition.h:630:9: note: candidate: 'mlir::Value mlir::OpTrait::detail::MultiResultTraitBase<ConcreteType, TraitType>::getResult(unsigned int) [with ConcreteType = mlir::ONNXBatchNormalizationOp; TraitType = mlir::OpTrait::NResults<3>::Impl]'
-  630 |   Value getResult(unsigned i) { return this->getOperation()->getResult(i); }
-      |         ^~~~~~~~~
-/workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/OpDefinition.h:630:9: note:   candidate expects 1 argument, 0 provided
-In file included from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/PatternMatch.h:12,
-                 from ../src/Dialect/ONNX/Transforms/temp.cpp:24:
-/workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Builders.h: In instantiation of 'OpTy mlir::OpBuilder::create(mlir::Location, Args&& ...) [with OpTy = mlir::ONNXBatchNormalizationOp; Args = {mlir::Type, mlir::Value&, mlir::Value&, mlir::Value&, mlir::Value&, mlir::Value&, mlir::FloatAttr&, mlir::FloatAttr&}]':
-../src/Dialect/ONNX/Transforms/temp.cpp:687:70:   required from here
-/workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Builders.h:513:16: error: no matching function for call to 'mlir::ONNXBatchNormalizationOp::build(mlir::OpBuilder&, mlir::OperationState&, mlir::Type, mlir::Value&, mlir::Value&, mlir::Value&, mlir::Value&, mlir::Value&, mlir::FloatAttr&, mlir::FloatAttr&)'
-  513 |     OpTy::build(*this, state, std::forward<Args>(args)...);
-      |     ~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In file included from ../src/Dialect/ONNX/ONNXOps.hpp:33,
-                 from ../src/Dialect/ONNX/Transforms/temp.cpp:30:
-./src/Dialect/ONNX/ONNXOps.hpp.inc:3966:15: note: candidate: 'static void mlir::ONNXBatchNormalizationOp::build(mlir::OpBuilder&, mlir::OperationState&, mlir::Type, mlir::Type, mlir::Type, mlir::Value, mlir::Value, mlir::Value, mlir::Value, mlir::Value, mlir::FloatAttr, mlir::FloatAttr, mlir::IntegerAttr)'
- 3966 |   static void build(::mlir::OpBuilder &odsBuilder, ::mlir::OperationState &odsState, ::mlir::Type Y, ::mlir::Type running_mean, ::mlir::Type running_var, ::mlir::Value X, ::mlir::Value scale, ::mlir::Value B, ::mlir::Value input_mean, ::mlir::Value input_var, ::mlir::FloatAttr epsilon, ::mlir::FloatAttr momentum, ::mlir::IntegerAttr training_mode);
-      |               ^~~~~
-./src/Dialect/ONNX/ONNXOps.hpp.inc:3966:15: note:   candidate expects 13 arguments, 10 provided
-./src/Dialect/ONNX/ONNXOps.hpp.inc:3967:15: note: candidate: 'static void mlir::ONNXBatchNormalizationOp::build(mlir::OpBuilder&, mlir::OperationState&, mlir::TypeRange, mlir::Value, mlir::Value, mlir::Value, mlir::Value, mlir::Value, mlir::FloatAttr, mlir::FloatAttr, mlir::IntegerAttr)'
- 3967 |   static void build(::mlir::OpBuilder &odsBuilder, ::mlir::OperationState &odsState, ::mlir::TypeRange resultTypes, ::mlir::Value X, ::mlir::Value scale, ::mlir::Value B, ::mlir::Value input_mean, ::mlir::Value input_var, ::mlir::FloatAttr epsilon, ::mlir::FloatAttr momentum, ::mlir::IntegerAttr training_mode);
-      |               ^~~~~
-./src/Dialect/ONNX/ONNXOps.hpp.inc:3967:15: note:   candidate expects 11 arguments, 10 provided
-./src/Dialect/ONNX/ONNXOps.hpp.inc:3968:15: note: candidate: 'static void mlir::ONNXBatchNormalizationOp::build(mlir::OpBuilder&, mlir::OperationState&, mlir::Type, mlir::Type, mlir::Type, mlir::Value, mlir::Value, mlir::Value, mlir::Value, mlir::Value, llvm::APFloat, llvm::APFloat, int64_t)'
- 3968 |   static void build(::mlir::OpBuilder &odsBuilder, ::mlir::OperationState &odsState, ::mlir::Type Y, ::mlir::Type running_mean, ::mlir::Type running_var, ::mlir::Value X, ::mlir::Value scale, ::mlir::Value B, ::mlir::Value input_mean, ::mlir::Value input_var, ::llvm::APFloat epsilon, ::llvm::APFloat momentum, int64_t training_mode = 0);
-      |               ^~~~~
-./src/Dialect/ONNX/ONNXOps.hpp.inc:3968:15: note:   candidate expects 13 arguments, 10 provided
-./src/Dialect/ONNX/ONNXOps.hpp.inc:3969:15: note: candidate: 'static void mlir::ONNXBatchNormalizationOp::build(mlir::OpBuilder&, mlir::OperationState&, mlir::TypeRange, mlir::Value, mlir::Value, mlir::Value, mlir::Value, mlir::Value, llvm::APFloat, llvm::APFloat, int64_t)'
- 3969 |   static void build(::mlir::OpBuilder &odsBuilder, ::mlir::OperationState &odsState, ::mlir::TypeRange resultTypes, ::mlir::Value X, ::mlir::Value scale, ::mlir::Value B, ::mlir::Value input_mean, ::mlir::Value input_var, ::llvm::APFloat epsilon, ::llvm::APFloat momentum, int64_t training_mode = 0);
-      |               ^~~~~
-./src/Dialect/ONNX/ONNXOps.hpp.inc:3969:239: note:   no known conversion for argument 9 from 'mlir::FloatAttr' to 'llvm::APFloat'
-
-
-
-
-
-
-
-
-../src/Dialect/ONNX/Transforms/temp.cpp:669:53: error: conversion from 'mlir::FloatAttr' to non-scalar type 'llvm::APFloat' requested
-  669 |     llvm::APFloat epsilon = rewriter.getF32FloatAttr(1e-5f);
-      |                             ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~
-../src/Dialect/ONNX/Transforms/temp.cpp:670:55: error: conversion from 'mlir::FloatAttr' to non-scalar type 'llvm::APFloat' requested
-  670 |     llvm::APFloat momentum =  rewriter.getF32FloatAttr(0.9);
-      |                               ~~~~~~~~~~~~~~~~~~~~~~~~^~~~~
-ninja: build stopped: subcommand failed.
-
-
-
-static void mlir::ONNXBatchNormalizationOp::build(mlir::OpBuilder&, mlir::OperationState&, mlir::TypeRange, mlir::Value, mlir::Value, mlir::Value, mlir::Value, mlir::Value, llvm::APFloat, llvm::APFloat, int64_t): Assertion `resultTypes.size() == 3u && "mismatched number of results"' failed.
-
-
-
-
-
-
-loc("/Sub"): error: 'onnx.BatchNormalization' op operand #1 must be tensor of 16-bit float values or tensor of 32-bit float values or tensor of 64-bit float values or tensor of bfloat16 type values, but got 'f32'
-loc("/Sub"): error: 'onnx.BatchNormalization' op verification failed
-loc("/Sub"): error: 'onnx.BatchNormalization' op operand #1 must be tensor of 16-bit float values or tensor of 32-bit float values or tensor of 64-bit float values or tensor of bfloat16 type values, but got 'f32'
-loc("/Sub"): error: 'onnx.BatchNormalization' op verification failed
-loc("/Sub"): error: 'onnx.BatchNormalization' op operand #1 must be tensor of 16-bit float values or tensor of 32-bit float values or tensor of 64-bit float values or tensor of bfloat16 type values, but got 'f32'
-
-
-
-
-import torch
-import torch.nn as nn
-import torch.onnx
-
-class SimpleModel(nn.Module):
-    def __init__(self):
-        super(SimpleModel, self).__init__()
-        self.softmax = nn.Softmax(dim=1)
-
-    def forward(self, x, y):
-        # Add operatio
-        
-        # Subtract with constant 0.5
-        
-        sub_result = x - y 
-        
-        # Divide with constant 0.2
-        output = sub_result / y
-        
-        # Reshape operation
-       
-        return output
-
-# Create a model instance
-model = SimpleModel()
-
-# Dummy input tensors
-x = torch.randn(1, 3, 28, 28)
-y = torch.randn(1, 3, 28, 28)
-
-# Perform a forward pass to test the model
-output = model(x, y)
-print("Model output:", output)
-
-# Export the model to ONNX format
-torch.onnx.export(
-    model,                        # Model being run
-    (x, y),                       # Model input (dummy inputs for export)
-    "simple_model_with_constants.onnx",  # File name to export the model
-    export_params=True,           # Store trained parameters
-    opset_version=12,             # ONNX opset version
-    do_constant_folding=True,     # Fold constant values for optimization
-    input_names=['input_x', 'input_y'],  # Input names
-    output_names=['output'],      # Output names
-    dynamic_axes={'input_x': {0: 'batch_size'},  # Dynamic axes for input
-                  'input_y': {0: 'batch_size'},
-                  'output': {0: 'batch_size'}}   # Dynamic axes for output
-)
-
-print("Model exported to simple_model_with_constants.onnx")
-
-
-
-mlir::Value createFloatConstant(mlir::OpBuilder &builder, mlir::Location loc, float value) {
-    auto floatType = builder.getF32Type();
-    mlir::FloatAttr floatAttr = builder.getF32FloatAttr(value);
-    return builder.create<mlir::arith::ConstantOp>(loc, floatType, floatAttr).getResult();
-}
-
-
-
-
-mlir::Value createFloatTensorConstant(mlir::OpBuilder &builder, mlir::Location loc, float value) {
-    // Define the element type as f32 (float).
-    auto elementType = builder.getF32Type();
-    
-    // Create a RankedTensorType for a 1-element tensor.
-    auto tensorType = mlir::RankedTensorType::get({}, elementType);  // Empty array means scalar tensor.
-    
-    // Create a FloatAttr for the constant value.
-    mlir::FloatAttr floatAttr = builder.getF32FloatAttr(value);
-    
-    // Create the constant tensor operation using arith::ConstantOp.
-    return builder.create<mlir::arith::ConstantOp>(loc, tensorType, floatAttr).getResult();
-}
-
-
-
-mlir::Value createFloatTensorConstant(mlir::OpBuilder &builder, mlir::Location loc, float value) {
-    // Define the element type as f32 (float).
-    auto elementType = builder.getF32Type();
-    
-    // Create a RankedTensorType for a 1-element tensor.
-    auto tensorType = mlir::RankedTensorType::get({}, elementType);  // Shape {} means a scalar tensor.
-    
-    // Create an attribute for the constant value.
-    // Using DenseElementsAttr to create a tensor with the specified constant value.
-    auto denseAttr = mlir::DenseElementsAttr::get(tensorType, llvm::ArrayRef<float>(&value, 1));
-    
-    // Create the constant operation using arith::ConstantOp.
-    return builder.create<mlir::arith::ConstantOp>(loc, tensorType, denseAttr).getResult();
-}
-
-
-
-
-
-
-
-
-
-static bool isSubDivBatchNormMatched(
-    ONNXSubOp subOp, ONNXDivOp &divOp) {
-  divOp = nullptr;
-  for (Operation *user : subOp->getUsers()) {
-    if (isa<ONNXDivOp>(user) && !divOp)
-    {
-      cout<<"If condition";
-      divOp = cast<ONNXDivOp>(user);
-    }
-    else
-      return false;
-  }
-  return divOp != nullptr;
-}
-
-
-
-mlir::Value createFloatTensorConstant(mlir::OpBuilder &builder, mlir::Location loc, float value) {
-    // Define the element type as f32 (float).
-    auto elementType = builder.getF32Type();
-    
-    // Create a RankedTensorType for a 1-element tensor.
-    auto tensorType = mlir::RankedTensorType::get({}, elementType);  // Shape {} means a scalar tensor.
-    
-    // Create an attribute for the constant value.
-    // Using DenseElementsAttr to create a tensor with the specified constant value.
-    auto denseAttr = mlir::DenseElementsAttr::get(tensorType, llvm::ArrayRef<float>(&value, 1));
-    
-    // Create the constant operation using arith::ConstantOp.
-    return builder.create<mlir::arith::ConstantOp>(loc, tensorType, denseAttr).getResult();
-}
-
-struct SubDivFuseBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
-  using OpRewritePattern<ONNXSubOp>::OpRewritePattern;
-
-  LogicalResult matchAndRewrite(
-      ONNXSubOp subOp, PatternRewriter &rewriter) const final {
-   
-    ONNXDivOp divOp;
-    if (!isSubDivBatchNormMatched(subOp, divOp))
-     { cout<<"643";
-      return failure();}
-    
-   
-    Value input = subOp.getOperand(0);
-    Type resType = subOp.getResult().getType();
-   
-    // Value subConstValue = subOp.getOperand(1);  
-    // Value divConstValue = divOp.getOperand(1);  
-    //  cout<<"650650";
-    
-    // auto subConstOp = subConstValue.getDefiningOp<ONNXConstantOp>();
-    // auto divConstOp = divConstValue.getDefiningOp<ONNXConstantOp>();
-   
-    cout<<"655655";
-   
-    float subValue = 0.5;  
-    float divValue = 0.2;  
-   
-    float scale = 1.0f / divValue;
-    float bias = -subValue / divValue;
-    float mean = 0.0f;
-    float variance = 1.0f;
-    FloatAttr epsilonAttr = rewriter.getF32FloatAttr(1e-5f); 
-    FloatAttr momentumAttr =  rewriter.getF32FloatAttr(0.9);
-    
-   llvm::APFloat epsilon = epsilonAttr.getValue();
-   llvm::APFloat momentum = momentumAttr.getValue();
-
-  
-    Value scaleValue = createFloatTensorConstant(rewriter, subOp.getLoc(), scale);
-    Value biasValue = createFloatTensorConstant(rewriter, subOp.getLoc(), bias);
-    Value meanValue = createFloatTensorConstant(rewriter, subOp.getLoc(), mean);
-    Value varValue = createFloatTensorConstant(rewriter, subOp.getLoc(), variance);
-     cout<<"679679";
-    
-    SmallVector<Type, 3> outputTypes;
-    outputTypes.emplace_back(input.getType());
-    outputTypes.emplace_back(meanValue.getType());
-    outputTypes.emplace_back(varValue.getType());
-    
-
-    auto bnOp = rewriter.create<ONNXBatchNormalizationOp>(
-        subOp.getLoc(),outputTypes,input,
-        scaleValue, biasValue, meanValue, varValue, epsilon, momentum);  // epsilon
-
-    // Replace the Div operation with the result of BatchNorm
-    rewriter.replaceOp(divOp, bnOp.getResult(0));
-    // Remove the Sub operation
-    rewriter.eraseOp(subOp);
-    cout<<"689689";
-    return success();
-  }
-};
-
-
-
-
-../src/Dialect/ONNX/Transforms/temp.cpp:707:51: warning: 'U mlir::Attribute::cast() const [with U = mlir::DenseFPElementsAttr]' is deprecated: Use mlir::cast<U>() instead [-Wdeprecated-declarations]
-  707 |      subValue = subAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
-      |                                                   ^
-In file included from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Location.h:17,
-                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/UseDefLists.h:16,
-                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Value.h:17,
-                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/AffineMap.h:18,
-                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/BuiltinAttributeInterfaces.h:12,
-                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/BuiltinAttributes.h:12,
-                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Matchers.h:18,
-                 from ../src/Dialect/ONNX/Transforms/temp.cpp:23:
-/workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Attributes.h:194:3: note: declared here
-  194 | U Attribute::cast() const {
-      |   ^~~~~~~~~
-../src/Dialect/ONNX/Transforms/temp.cpp:707:53: error: 'class mlir::DenseFPElementsAttr' has no member named 'getValue'; did you mean 'getValues'?
-  707 |      subValue = subAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
-      |                                                     ^~~~~~~~
-      |                                                     getValues
-../src/Dialect/ONNX/Transforms/temp.cpp:707:69: error: expected primary-expression before '>' token
-  707 |      subValue = subAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
-      |                                                                     ^
-../src/Dialect/ONNX/Transforms/temp.cpp:707:74: error: invalid use of 'void'
-  707 |      subValue = subAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
-      |                                                                          ^
-../src/Dialect/ONNX/Transforms/temp.cpp:708:48: warning: 'U mlir::Attribute::cast() const [with U = mlir::DenseFPElementsAttr]' is deprecated: Use mlir::cast<U>() instead [-Wdeprecated-declarations]
-  708 |   divValue = divAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
-      |                                                ^
-In file included from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Location.h:17,
-                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/UseDefLists.h:16,
-                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Value.h:17,
-                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/AffineMap.h:18,
-                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/BuiltinAttributeInterfaces.h:12,
-                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/BuiltinAttributes.h:12,
-                 from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Matchers.h:18,
-                 from ../src/Dialect/ONNX/Transforms/temp.cpp:23:
-/workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Attributes.h:194:3: note: declared here
-  194 | U Attribute::cast() const {
-      |   ^~~~~~~~~
-../src/Dialect/ONNX/Transforms/temp.cpp:708:50: error: 'class mlir::DenseFPElementsAttr' has no member named 'getValue'; did you mean 'getValues'?
-  708 |   divValue = divAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
-      |                                                  ^~~~~~~~
-      |                                                  getValues
-../src/Dialect/ONNX/Transforms/temp.cpp:708:66: error: expected primary-expression before '>' token
-  708 |   divValue = divAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
-      |                                                                  ^
-../src/Dialect/ONNX/Transforms/temp.cpp:708:71: error: invalid use of 'void'
-  708 |   divValue = divAttr.cast<DenseFPElementsAttr>().getValue<APFloat>({}).convertToFloat();
-
-
-
-
-
-
-
-mlir::Value createFloatTensorConstant(mlir::OpBuilder &builder, mlir::Location loc, float value) {
-    auto elementType = builder.getF32Type();
-    auto tensorType = mlir::RankedTensorType::get({}, elementType); 
-    auto denseAttr = mlir::DenseElementsAttr::get(tensorType, llvm::ArrayRef<float>(&value, 1));
-    return builder.create<mlir::arith::ConstantOp>(loc, tensorType, denseAttr).getResult();
-}
-
-struct SubDivFuseBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
-  using OpRewritePattern<ONNXSubOp>::OpRewritePattern;
-
-  LogicalResult matchAndRewrite(
-      ONNXSubOp subOp, PatternRewriter &rewriter) const final {
-   
-    ONNXDivOp divOp;
-    if (!isSubDivBatchNormMatched(subOp, divOp))
-     { cout<<"643";
-      return failure();}
-    
-    //   // Ensure both `Sub` and `Div` have a constant operand.
-    // Value subInput0 = subOp.getOperand(0);
-    // Value subInput1 = subOp.getOperand(1);
-    // Value divInput1 = cast<ONNXDivOp>(divOp).getOperand(1);
-
-    // if (!subInput1.getDefiningOp<ONNXConstantOp>() || !divInput1.getDefiningOp<ONNXConstantOp>()) {
-    //   return failure();
-    // }
-
-    // // Retrieve constant values for `Sub` and `Div`.
-    // auto subConstValue = subInput1.getDefiningOp<ONNXConstantOp>().value().cast<DenseElementsAttr>();
-    // auto divConstValue = divInput1.getDefiningOp<ONNXConstantOp>().value().cast<DenseElementsAttr>();
-    Value input = subOp.getOperand(0);
-    Value subConstValue = subOp.getOperand(1);
-    Value divConstValue = divOp.getOperand(1); 
-   
-  
-    cout<<"655655";
-   
-    // float subValue = 0.5;  
-    // float divValue = 0.2 ;  
-   
-    float scale = 1.0f / divValue;
-    float bias = -subValue / divValue;
-    float mean = 0.0f;
-    float variance = 1.0f;
-    FloatAttr epsilonAttr = rewriter.getF32FloatAttr(1e-5f); 
-    FloatAttr momentumAttr =  rewriter.getF32FloatAttr(0.9);
-    
-   llvm::APFloat epsilon = epsilonAttr.getValue();
-   llvm::APFloat momentum = momentumAttr.getValue();
-
-  
-    Value scaleValue = createFloatTensorConstant(rewriter, subOp.getLoc(), scale);
-    Value biasValue = createFloatTensorConstant(rewriter, subOp.getLoc(), bias);
-    Value meanValue = createFloatTensorConstant(rewriter, subOp.getLoc(), mean);
-    Value varValue = createFloatTensorConstant(rewriter, subOp.getLoc(), variance);
-    cout<<"679679";
-    
-    SmallVector<Type, 3> outputTypes;
-    outputTypes.emplace_back(input.getType());
-    outputTypes.emplace_back(meanValue.getType());
-    outputTypes.emplace_back(varValue.getType());
-    
-
-    auto bnOp = rewriter.create<ONNXBatchNormalizationOp>(
-        subOp.getLoc(),outputTypes,input,
-        scaleValue, biasValue, meanValue, varValue, epsilon, momentum);  // epsilon
-
-    // Replace the Div operation with the result of BatchNorm
-    rewriter.replaceOp(divOp, bnOp.getResult(0));
-    // Remove the Sub operation
-    rewriter.eraseOp(subOp);
-    cout<<"689689";
-    return success();
-  }
-};
-
-
-
-
-
-../src/Dialect/ONNX/Transforms/temp.cpp: In member function 'virtual llvm::LogicalResult {anonymous}::SubDivFuseBatchNormPattern::matchAndRewrite(mlir::ONNXSubOp, mlir::PatternRewriter&) const':
-../src/Dialect/ONNX/Transforms/temp.cpp:708:30: error: insufficient contextual information to determine type
-  708 |     Value scaleValue = create.onnx.div(temp, divConstValue);
-      |                              ^
-../src/Dialect/ONNX/Transforms/temp.cpp:709:29: error: insufficient contextual information to determine type
-  709 |     Value biasValue = create.onnx.div(subConstValue, divConstValue);
-      |                             ^
+    # We'll have two suceesors, so check len
+    succs = list(graph.successors(mean_node))
+    # Either succs=[Sub,Mul], [Sub, Sub] or [Sub]
+    if len(succs) < 1 or len(succs) > 2:
+        return False
+    if graph.nodes[succs[0]]["op_type"] != "Sub":
+        return False
+    if len(succs) == 2:
+        succ1_type = graph.nodes[succs[1]]["op_type"]
+        if succ1_type == "Sub":
+            # the second input can be Div, or [Sub -> Div],
+            # just fuse the dummpy Sub here
+            pattern["pattern_nodes"].append(succs[1])
+        elif succ1_type != "Mul":  # another pattern is Mul
+            return False
+    else:  # len(succs) == 1, (model: mmlab/vit)
+        # we will use this node to indicate the operand of the Division (X-EX)/StdDev
+        pattern["pattern_nodes"].append(succs[0])
+    pattern["pattern_nodes"].append(mean_node)
+    pattern["pattern_inputs"].extend(list(graph.predecessors(mean_node)))
+    pattern["next_node"] = succs[0]
+    return True
