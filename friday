@@ -38,3 +38,11 @@ Faced an issue in converting mlir::value to float using mlir::dyn_cast.
  error: no matching function for call to 'mlir::FloatAttr::FloatAttr(mlir::detail::ValueImpl*)'
 
 Analysed InstanceNormIntoLayerNormPattern pass for converting mlir::value to float.
+
+
+SAI:
+Gone through the existing passes in onnx_mlir.
+
+Compared the existing passes in onnx_mlir  ( SumToAddPattern, DecomposeEinsumPattern,  RecomposeGeluFromMulPattern, RecomposeLayerNormFromMulPattern)  with NNAC legalization passes.
+Documented the existing passes in onnx_mlir.
+ 
