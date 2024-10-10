@@ -21,3 +21,7 @@ Python Pass:
 
 The rewriting mechanism in Python would likely involve modifying the nodes in the graph directly and replacing matched subgraphs with new subgraphs.
 The abstraction level is higher, and the performance impact could be more significant depending on the graph manipulation library used.
+
+
+RecomposeLayerNormFromMulPattern
+FusePrimitivesIntoLayerNorm
