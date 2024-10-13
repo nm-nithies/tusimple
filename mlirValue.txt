@@ -50,3 +50,9 @@ The pass looks for a specific set of ONNX operations (e.g., ReduceMean, Mul, Div
 It checks if the operations are used in the correct sequence to form either a full Layer Normalization pattern or an RMS Layer Normalization pattern.
 
 This code provides an optimization pass designed to fuse primitive operators into a LayerNormalization operation within an ONNX graph. The process revolves around finding patterns of operations that represent layer normalization, such as ReduceMean, Sub, Mul, Add, and Pow, and then combining them into a single LayerNormalization node to optimize the graph.
+
+
+
+Pattern1 transforms Einsum operations into MatMul by iterating through the computational graph and checking for direct shape compatibility, incorporating Transpose layers where necessary. If a valid transformation is found, it updates the graph node to MatMul and logs the change.
+
+Pattern2 addresses more complex Einsum cases by adding both Reshape and Transpose layers; it identifies and processes removed dimensions, reshapes inputs, and ensures that the results match the original Einsum output before updating the graph accordingly.
