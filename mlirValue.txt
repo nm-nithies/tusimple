@@ -64,3 +64,6 @@ This pass separates a fused operation that combines matrix multiplication (MatMu
 
 InferShapesPattern: This pattern handles shape inference for regular ONNX operations by verifying the operation and updating its output shapes using the ShapeInferenceOpInterface.
 YieldShapesPattern: This pattern infers shapes for subgraphs (like if, loop, scan) by handling ONNXYieldOp, which ensures that shapes are propagated correctly from subgraphs to the parent operation.
+
+
+The ShapeToDimConcatPattern is a pattern rewrite pass that transforms an onnx.Shape operation into a combination of onnx.Dim and onnx.Concat operations.
