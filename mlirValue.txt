@@ -67,3 +67,11 @@ YieldShapesPattern: This pattern infers shapes for subgraphs (like if, loop, sca
 
 
 The ShapeToDimConcatPattern is a pattern rewrite pass that transforms an onnx.Shape operation into a combination of onnx.Dim and onnx.Concat operations.
+
+
+The PassThroughCastPattern is a pattern rewrite pass that optimizes the combination of ONNXCastOp and ONNXConcatOp by pushing the cast operation closer to the individual dimensions or constants being concatenated.
+
+The PassThroughGatherPattern is a pattern rewrite pass designed to optimize the ONNXGatherOp by converting it into a more efficient ONNXConcatOp under certain conditions. This transformation is based on the assumption that the Gather operation is essentially performing a concatenation of specified dimensions from the input.
+
+
+The PassThroughSlicePattern is a pattern rewrite pass that optimizes the ONNXSliceOp by transforming it into an ONNXConcatOp under specific conditions. This transformation is useful when the slicing operation can be expressed as concatenating specific dimensions from the input tensor, resulting in a more efficient computation.
