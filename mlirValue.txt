@@ -61,3 +61,6 @@ Pattern2 addresses more complex Einsum cases by adding both Reshape and Transpos
 
 
 This pass separates a fused operation that combines matrix multiplication (MatMul) and multiplication by an alpha value into two distinct operations: a MatMul followed by a Mul with the alpha value.
+
+InferShapesPattern: This pattern handles shape inference for regular ONNX operations by verifying the operation and updating its output shapes using the ShapeInferenceOpInterface.
+YieldShapesPattern: This pattern infers shapes for subgraphs (like if, loop, scan) by handling ONNXYieldOp, which ensures that shapes are propagated correctly from subgraphs to the parent operation.
