@@ -56,3 +56,8 @@ This code provides an optimization pass designed to fuse primitive operators int
 Pattern1 transforms Einsum operations into MatMul by iterating through the computational graph and checking for direct shape compatibility, incorporating Transpose layers where necessary. If a valid transformation is found, it updates the graph node to MatMul and logs the change.
 
 Pattern2 addresses more complex Einsum cases by adding both Reshape and Transpose layers; it identifies and processes removed dimensions, reshapes inputs, and ensures that the results match the original Einsum output before updating the graph accordingly.
+
+
+
+
+This pass separates a fused operation that combines matrix multiplication (MatMul) and multiplication by an alpha value into two distinct operations: a MatMul followed by a Mul with the alpha value.
