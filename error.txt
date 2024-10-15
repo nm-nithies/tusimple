@@ -21,6 +21,21 @@ B ___|      |___ Slice --- B1
 
 Should become
 
+
+
+
+
+
+
+
+    PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND                                         
+3845106 eduardof  20   0  261808   5008    900 R  99.7   0.0  41556:40 tmux: server                                    
+ 515971 amajala   20   0 1358696  38264   1612 R  99.3   0.0  88595:55 node                                            
+3725727 relauto   20   0 5967124 452952 214544 R  86.6   0.1   0:29.11 python                                          
+1497274 pneto     20   0  262256  21544   1856 S  10.2   0.0  11305:27 htop                                            
+3718865 amajala   20   0   11.2g 189952  42468 S   9.5   0.0   0:27.86 node                                            
+ 337190 root      20   0  566012  63556  34452 S   6.6   0.0   3958:12 sssd_be                                         
+2111323 kath      20   0   11.4g 168500  53200 S   3.0   0.0   0:10.86 node 
 A --- A1
 B --- B1
 
