@@ -1,1 +1,1 @@
-The ONNXPreKrnlVerifyPass is an MLIR pass that ensures all ONNX operations are ready for lowering to the Krnl dialect by verifying that all input tensors are ranked.
+ It modifies a function by adding operations that print out the name and input/output types of each ONNX operation as the function is executed at runtime.
