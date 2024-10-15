@@ -1,1 +1,3 @@
- It modifies a function by adding operations that print out the name and input/output types of each ONNX operation as the function is executed at runtime.
+This code implements a pass to lower ONNX operations to the StableHLO dialect in MLIR (Multi-Level Intermediate Representation). Here's a breakdown of the key components and functionality:
+
+This file implements an analysis on dynamic dimensions in ONNX ops. - createONNXDimAnalysisPass()
