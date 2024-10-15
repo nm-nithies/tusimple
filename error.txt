@@ -139,3 +139,7 @@ def RemoveConcatSlice(opt):
         logger.debug("[DEBUG] Remove Concat {} and Slice {}.".format(concat_layer, concat_succ))
 
         opt.passes_counter["RemoveConcatSlice"] += 1
+
+
+
+This pass infers and updates shapes when ONNXYieldOp is encountered, ensuring the correctness and optimization of ONNX models through control-flow subgraphs (If, Loop, Scan) during MLIR compilation.
