@@ -1,4 +1,1 @@
-RecomposeLayerNormFromMulPattern MLIR pass can finely control each operation, ensuring that operations like ReduceMean, Mul, Div, Sqrt, Add are matched precisely and fuse to Onnx.layerNorm or onnx.RMSLayerNorm operations. 
-
- 
-FusePrimitivesIntoLayerNorm NNSDK pass would use a higher-level pattern matching approach. For example, it might use graph traversal techniques to inspect the nodes in the computational graph, looking for patterns like ReduceMean, Sub, Mul, Add, Pow, Sqrt and fuse to OnnxLayerNorm operations. 
+The ONNXPreKrnlVerifyPass is an MLIR pass that ensures all ONNX operations are ready for lowering to the Krnl dialect by verifying that all input tensors are ranked.
