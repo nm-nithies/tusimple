@@ -145,3 +145,6 @@ def RemoveConcatSlice(opt):
 This pass infers and updates shapes when ONNXYieldOp is encountered, ensuring the correctness and optimization of ONNX models through control-flow subgraphs (If, Loop, Scan) during MLIR compilation.
 
 This pass optimizes ONNXConcatOp by flattening concatenations of N-dimensional tensors into concatenations of 1-dimensional tensors.
+
+
+replace the Einsum by MatMul when the equation of Einsum is a valid MatMul computation, also insert extra Transpose/Reshape layer if needed.
