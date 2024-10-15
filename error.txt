@@ -1,6 +1,5 @@
-Replace Sum layer with Add layer. 
+SumToAddPattern: Handles multiple inputs during MLIR transformation, transforming ONNXSumOp to Add operations.
+ReplaceSum: Replaces Sum with Add only when there are exactly two inputs in the computational graph.
 
- 
-SumToAddPattern  MLIR pass  rewrites ONNXSumOp during MLIR transformation, handling sums with multiple inputs.  
- 
-ReplaceSum pass replaces Sum with Add operations in a computational graph only when there are exactly two inputs. Although both transform Sum to Add, they operate in different contexts and have different input constraints.
+
+
