@@ -75,3 +75,14 @@ The PassThroughGatherPattern is a pattern rewrite pass designed to optimize the 
 
 
 The PassThroughSlicePattern is a pattern rewrite pass that optimizes the ONNXSliceOp by transforming it into an ONNXConcatOp under specific conditions. This transformation is useful when the slicing operation can be expressed as concatenating specific dimensions from the input tensor, resulting in a more efficient computation.
+
+
+
+The ShapeToDimConcatPattern is a pattern rewrite pass that transforms an onnx.Shape operation into a combination of onnx.Dim and onnx.Concat operations.
+
+
+This pass is a pattern-based rewrite transformation in MLIR that modifies the way ONNXCastOp and ONNXConcatOp are combined to optimize the placement of Cast operations within ONNX computation graphs.
+
+This pass optimizes ONNXReshapeOp by updating its output shape if it is possible to do so safely. 
+
+This pass focuses on optimizing the ONNXConstantOfShapeOp by updating its output shape
