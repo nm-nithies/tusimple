@@ -5,3 +5,133 @@ This file implements an analysis on dynamic dimensions in ONNX ops. - createONNX
 ONNXSliceOp operations by replacing them with ONNXConcatOp operations. It applies only in certain cases where the input to the SliceOp consists of dimensions from a previous ConcatOp.
 
 This pass insert KrnlInstrumentOp before and after each ops. create instrumen
+
+
+
+# This Synopsys software and all associated documentation are proprietary
+# to Synopsys, Inc. and may only be used pursuant to the terms and conditions
+# of a written license agreement with Synopsys, Inc.
+# All other use, reproduction, modification, or distribution of the Synopsys
+# software or the associated documentation is strictly prohibited.
+
+import networkx as nx
+# import numpy as np
+
+from nnac.core.log import Logger
+
+logger = Logger("OPTIMIZATION")
+
+
+"""
+Remove Concat + Slice Ops.
+If Slice just revert Concat, and A=A1, B=B1:
+
+A --- Concat --- Slice --- A1
+B ___|      |___ Slice --- B1
+
+Should become
+
+A --- A1
+B --- B1
+
+"""
+
+
+def RemoveConcatSlice(opt):
+    G = opt.G
+    tensor_dict = opt.TensorDict
+    shape_dict = opt.ShapeDict
+
+    layers = list(nx.topological_sort(G))
+    for layer in layers:
+        if layer not in G.nodes:
+            continue
+        if G.nodes[layer].get("op_type", None) != "Concat":
+            continue
+
+        concat_pred = list(G.predecessors(layer))
+        concat_succ = list(G.successors(layer))
+        concat_layer = layer
+        # the number of Concat I/O is the same
+        if len(concat_pred) != len(concat_succ):
+            continue
+        concat_succ_op = [G.nodes[n]["op_type"] for n in concat_succ]
+        # Concat outputs are all Slice layers
+        if set(concat_succ_op) != {"Slice"}:
+            continue
+        concat_axis = G.nodes[concat_layer]["attr_dict"].get("axis")
+        if concat_axis is None:
+            continue
+        concat_pred_shapes = [shape_dict.get(pred) for pred in concat_pred]
+        if None in concat_pred_shapes:
+            continue
+
+        slice_mismatch = False
+        slice_starts = []
+        slice_ends = []
+        slice_axis_shapes = []
+        for i in range(len(concat_succ)):
+            slice_i_layer = concat_succ[i]
+            slice_i_shape = shape_dict.get(slice_i_layer)
+            if slice_i_shape is None or slice_i_shape != concat_pred_shapes[i]:
+                slice_mismatch = True
+                break
+            slice_i_inputs = G.nodes[slice_i_layer]["input"]
+            # REFINEMENT: if Slice use default steps/axes
+            if len(slice_i_inputs) != 5:
+                slice_mismatch = True
+                break
+            starts_i, ends_i, axes_i, steps_i = slice_i_inputs[1:]
+            starts_i_value = tensor_dict.get(starts_i)
+            ends_i_value = tensor_dict.get(ends_i)
+            axes_i_value = tensor_dict.get(axes_i)
+            steps_i_value = tensor_dict.get(steps_i)
+            if axes_i_value is None or starts_i_value is None or ends_i_value is None or steps_i_value is None:
+                slice_mismatch = True
+                break
+            slice_starts.extend(starts_i_value)
+            slice_ends.extend(ends_i_value)
+            if axes_i_value != [concat_axis] or steps_i_value != [1]:
+                slice_mismatch = True
+                break
+            # check slice output shape and starts & ends
+            if i == 0 and starts_i_value != [0]:
+                slice_mismatch = True
+                break
+            slice_axis_shapes.append(slice_i_shape[concat_axis])
+        # Concat axes should be equal to all Slice axis
+        for idx in range(1, len(slice_starts)):
+            if slice_starts[idx] != slice_ends[idx-1]:
+                slice_mismatch = True
+                break
+        if slice_mismatch:
+            continue
+
+        # remove edge of Concat and Slice
+        for u, v in list(G.in_edges(concat_layer)):
+            G.remove_edge(u, v)
+        slice_succ = []
+        for slice_layer in concat_succ:
+            slice_i_succ = []
+            for u, v in list(G.out_edges(slice_layer)):
+                G.remove_edge(u, v)
+                slice_i_succ.append(v)
+            slice_succ.append(slice_i_succ)
+        # add new edge for Concat inputs and Slice outputs
+        for i in range(len(concat_succ)):
+            slice_layer = concat_succ[i]
+            # if Slice has multiple successors
+            for j in range(len(slice_succ[i])):
+                G.add_edge(concat_pred[i], slice_succ[i][j])
+                slice_succ_input_list = G.nodes[slice_succ[i][j]]["input"]
+                slice_idx = [
+                    idx for idx in range(len(slice_succ_input_list)) if slice_succ_input_list[idx] == slice_layer
+                ][0]
+                G.nodes[slice_succ[i][j]]["input"][slice_idx] = concat_pred[i]
+        G.remove_node(concat_layer)
+        for slice_layer in concat_succ:
+            G.remove_node(slice_layer)
+        logger.debug("[DEBUG] Remove Concat {} and Slice {}.".format(concat_layer, concat_succ))
+
+        opt.passes_counter["RemoveConcatSlice"] += 1
+
