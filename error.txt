@@ -1,3 +1,5 @@
 This code implements a pass to lower ONNX operations to the StableHLO dialect in MLIR (Multi-Level Intermediate Representation). Here's a breakdown of the key components and functionality:
 
 This file implements an analysis on dynamic dimensions in ONNX ops. - createONNXDimAnalysisPass()
+
+ONNXSliceOp operations by replacing them with ONNXConcatOp operations. It applies only in certain cases where the input to the SliceOp consists of dimensions from a previous ConcatOp.
