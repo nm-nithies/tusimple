@@ -7,5 +7,6 @@ Pass for analyzing unknown dimension in ONNX operations.
   implements the lowering of frontend operations to a combination of
  Krnl IR and standard operations.
 
+pass for lowering to Stablehlo IR.
 
 
