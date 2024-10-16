@@ -4,8 +4,8 @@ The ProcessScfParallelPrivatePass adds an alloca_scope to scf.parallel loops to 
 The ProcessKrnlParallelClausePass integrates the parameters from KrnlParallelClauseOp into the enclosing OpenMP parallel constructs, such as setting the number of threads and processor binding. Once the relevant information is transferred, the Krnl clause operation is removed from the IR.
 
 Pass for analyzing unknown dimension in ONNX operations.
-
-This file implements the lowering of frontend operations to a combination of
+  implements the lowering of frontend operations to a combination of
+ Krnl IR and standard operations.
 
 
 
