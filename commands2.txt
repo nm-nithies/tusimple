@@ -61,3 +61,234 @@ def read_lane_file(file_name):
     :return: list[list[np.ndarray]]
         A list of lanes, where each lane is a list of (x, y) coordinate pairs represented as numpy arrays.
     """
+
+
+
+
+
+
+
+
+
+
+
+
+
+class BipartiteGraph:
+    def __init__(self):
+        """
+        Initializes the bipartite graph for the Hungarian matching algorithm.
+        """
+        self.mat = []
+        self.left_used = []
+        self.right_used = []
+        self.left_weight = []
+        self.right_weight = []
+        self.right_match = []
+        self.left_match = []
+        self.left_num = 0
+        self.right_num = 0
+
+    def match_dfs(self, u):
+        """
+        Arguments:
+        ----------
+        u: int
+            Index of the current left vertex being explored.
+
+        This method performs depth-first search (DFS) to find augmenting paths for matching.
+
+        :return: bool
+            Returns True if an augmenting path is found, else False.
+        """
+        self.left_used[u] = True
+        for v in range(self.right_num):
+            if not self.right_used[v] and abs(self.left_weight[u] + self.right_weight[v] - self.mat[u][v]) < 1e-2:
+                self.right_used[v] = True
+                if self.right_match[v] == -1 or self.match_dfs(self.right_match[v]):
+                    self.right_match[v] = u
+                    self.left_match[u] = v
+                    return True
+        return False
+
+    def resize(self, left_num, right_num):
+        """
+        Arguments:
+        ----------
+        left_num: int
+            Number of left vertices (left set size).
+        right_num: int
+            Number of right vertices (right set size).
+
+        This method resizes and initializes the graph based on the input dimensions.
+        """
+        self.left_num = left_num
+        self.right_num = right_num
+        self.left_match = [-1] * left_num
+        self.right_match = [-1] * right_num
+        self.left_used = [False] * left_num
+        self.right_used = [False] * right_num
+        self.left_weight = [0.0] * left_num
+        self.right_weight = [0.0] * right_num
+        self.mat = [[0.0] * right_num for _ in range(left_num)]
+
+    def match(self):
+        """
+        Implements the Hungarian algorithm to find the maximum matching between the two sets of vertices.
+        """
+        self.left_match = [-1] * self.left_num
+        self.right_match = [-1] * self.right_num
+        self.right_weight = [0.0] * self.right_num
+
+        for i in range(self.left_num):
+            self.left_weight[i] = -1e5
+            for j in range(self.right_num):
+                self.left_weight[i] = max(self.left_weight[i], self.mat[i][j])
+
+        for u in range(self.left_num):
+            while True:
+                self.left_used = [False] * self.left_num
+                self.right_used = [False] * self.right_num
+                if self.match_dfs(u):
+                    break
+                d = 1e10
+                for i in range(self.left_num):
+                    if self.left_used[i]:
+                        for j in range(self.right_num):
+                            if not self.right_used[j]:
+                                d = min(d, self.left_weight[i] + self.right_weight[j] - self.mat[i][j])
+                if d == 1e10:
+                    return
+                for i in range(self.left_num):
+                    if self.left_used[i]:
+                        self.left_weight[i] -= d
+                for i in range(self.right_num):
+                    if self.right_used[i]:
+                        self.right_weight[i] += d
+
+
+def get_lane_similarity(lane1, lane2):
+    """
+    Arguments:
+    ----------
+    lane1: list[np.ndarray]
+        List of points representing the first lane.
+    lane2: list[np.ndarray]
+        List of points representing the second lane.
+
+    This method calculates the similarity (Intersection over Union) between two lanes
+    using their sets of points and line interpolation.
+
+    :return: float
+        The IOU (Intersection over Union) value between the two lanes.
+    """
+    if len(lane1) < 2 or len(lane2) < 2:
+        print("Lane size must be greater or equal to 2")
+        return 0
+
+    im1 = np.zeros((cfg.im_h, cfg.im_w), dtype=np.uint8)
+    im2 = np.zeros((cfg.im_h, cfg.im_w), dtype=np.uint8)
+
+    if len(lane1) == 2:
+        p_interp1 = lane1
+    else:
+        p_interp1 = spline_interp_times(lane1, 50)
+    if len(lane2) == 2:
+        p_interp2 = lane2
+    else:
+        p_interp2 = spline_interp_times(lane2, 50)
+    color_white = 1
+    for n in range(len(p_interp1) - 1):
+        cv2.line(im1, tuple(map(int, p_interp1[n])), tuple(map(int, p_interp1[n + 1])), color_white, cfg.w_lane)
+    for n in range(len(p_interp2) - 1):
+        cv2.line(im2, tuple(map(int, p_interp2[n])), tuple(map(int, p_interp2[n + 1])), color_white, cfg.w_lane)
+
+    sum_1 = np.sum(im1)
+    sum_2 = np.sum(im2)
+    inter_sum = np.sum(im1 * im2)
+    union_sum = sum_1 + sum_2 - inter_sum
+    iou = inter_sum / union_sum if union_sum != 0 else 0
+    return iou
+
+
+def spline_interp_times(tmp_line, times):
+    """
+    Arguments:
+    ----------
+    tmp_line: list[np.ndarray]
+        List of points representing a lane.
+    times: int
+        Number of interpolation steps to perform.
+
+    This method calculates the interpolation between lane points.
+    It performs linear interpolation for two points and cubic spline interpolation for three or more points.
+
+    :return: list[list[float]]
+        List of interpolated points.
+    """
+    res = []
+    if len(tmp_line) == 2:
+        x1, y1 = tmp_line[0]
+        x2, y2 = tmp_line[1]
+        for k in range(times + 1):
+            xi = x1 + (x2 - x1) * k / times
+            yi = y1 + (y2 - y1) * k / times
+            res.append([xi, yi])
+    elif len(tmp_line) > 2:
+        tmp_func = spline_coefficients(tmp_line)
+        for func in tmp_func:
+            delta = func.h / times
+            for k in range(times):
+                t1 = delta * k
+                x1 = func.a_x + func.b_x * t1 + func.c_x * np.power(t1, 2) + func.d_x * np.power(t1, 3)
+                y1 = func.a_y + func.b_y * t1 + func.c_y * np.power(t1, 2) + func.d_y * np.power(t1, 3)
+                res.append([x1, y1])
+        res.append(tmp_line[-1])
+    return res
+
+
+def spline_coefficients(point_v):
+    """
+    Arguments:
+    ----------
+    point_v: list[np.ndarray]
+        List of points representing a lane.
+
+    This method computes the coefficients for cubic spline interpolation using the TDMA 
+    (Tridiagonal Matrix Algorithm).
+
+    :return: list[Func]
+        List of spline functions for each segment between the input points.
+    """
+    func_v = []
+    n = len(point_v)
+    if n <= 2:
+        return func_v
+    func_v = [Func() for _ in range(n - 1)]
+    Mx = np.zeros(n)
+    My = np.zeros(n)
+    A = np.zeros(n - 2)
+    B = np.zeros(n - 2)
+    C = np.zeros(n - 2)
+    Dx = np.zeros(n - 2)
+    Dy = np.zeros(n - 2)
+    h = np.zeros(n - 1)
+
+    for i in range(n - 1):
+        h[i] = np.sqrt((point_v[i + 1][0] - point_v[i][0]) ** 2 + (point_v[i + 1][1] - point_v[i][1]) ** 2)
+    for i in range(n - 2):
+        A[i] = h[i]
+        B[i] = 2 * (h[i] + h[i + 1])
+        C[i] = h[i + 1]
+        Dx[i] = 6 * ((point_v[i + 2][0] - point_v[i + 1][0]) / h[i + 1] - (point_v[i + 1][0] - point_v[i][0]) / h[i])
+        Dy[i] = 6 * ((point_v[i + 2][1] - point_v[i + 1][1]) / h[i + 1] - (point_v[i + 1][1] - point_v[i][1]) / h[i])
+    C[0] /= B[0]
+    Dx[0] /= B[0]
+    Dy[0] /= B[0]
+    for i in range(1, n - 2):
+        tmp = B[i] - A[i] * C[i - 1]
+        C[i] /= tmp
+        Dx[i] = (Dx[i] - A[i] * Dx[i - 1]) / tmp
+        Dy[i] = (Dy[i] - A[i] * Dy[i - 1]) / tmp
+
+
