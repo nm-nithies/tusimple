@@ -50,3 +50,14 @@ def count_im_pair(anno_lanes, detect_lanes):
         - _: Placeholder (currently unused).
         - fn: False negatives, the number of ground truth lanes not detected.
     """
+
+def read_lane_file(file_name):
+    """
+    Arguments:
+    ----------
+    file_name:  path to the file containing lane annotations.
+    This method reads a lane annotation file and returns the lane coordinates.
+
+    :return: list[list[np.ndarray]]
+        A list of lanes, where each lane is a list of (x, y) coordinate pairs represented as numpy arrays.
+    """
