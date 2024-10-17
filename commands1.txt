@@ -1,8 +1,7 @@
 """
     Arguments:
     ----------
-    reference_data_path: str or dict
-        Path to the reference data file (in TuSimple dataset format), or a pre-loaded dictionary of reference data.
+    reference_data_path: Path to the reference data file
 
     This method extracts image name and annotation lanes for lane_detection TuSimple dataset.
     If the input is a dictionary, it returns it as is. Otherwise, it reads and parses the data from the provided file path.
@@ -14,14 +13,10 @@
     """
     Arguments:
     ----------
-    pred: list[list[float]]
-        Predicted lane coordinates for evaluation.
-    gt: list[list[float]]
-        Ground truth lane coordinates for evaluation.
-    y_samples: list[float]
-        Y-axis sample points corresponding to the lane points.
-    running_time: float
-        Time taken for lane detection. If the running time exceeds a threshold, it affects the evaluation.
+    pred: Predicted lane coordinates for evaluation.
+    gt:  Ground truth lane coordinates for evaluation.
+    y_samples:  Y-axis sample points corresponding to the lane points.
+    running_time: Time taken for lane detection. If the running time exceeds a threshold, it affects the evaluation.
 
     This method evaluates the performance of lane detection by calculating accuracy, false positives (FP), and false negatives (FN). 
     It compares the predicted lanes against the ground truth using a pixel distance threshold and lane angle.
