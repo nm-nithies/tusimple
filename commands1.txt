@@ -1,1 +1,11 @@
+"""
+    Arguments:
+    ----------
+    reference_data_path: str or dict
+        Path to the reference data file (in TuSimple dataset format), or a pre-loaded dictionary of reference data.
 
+    This method extracts image name and annotation lanes for lane_detection TuSimple dataset.
+    If the input is a dictionary, it returns it as is. Otherwise, it reads and parses the data from the provided file path.
+
+    :return: A dictionary containing image names and their corresponding annotation lanes.
+    """
