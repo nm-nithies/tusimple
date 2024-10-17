@@ -1,2 +1,3 @@
-
-you may need to clean up out folder and resync the IDT full env first, then rebuild it using build -e BUILD_CONFIG=ev_native -co NN_ABSTRACTION=fm -j4
+Able to build Onnx_mlir repository and build files are generated in NNSDK by using below command
+build -e BUILD_CONFIG=ev_native -co NN_ABSTRACTION=fm -j4
+Tested the setup by converting ONNX file to MLIR file in the NNSDK repository
