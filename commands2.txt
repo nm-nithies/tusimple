@@ -2,28 +2,21 @@ def calculate_metrics(predictions, anno_dir, reference_data_path):
     """
     Arguments:
     ----------
-    predictions: list[str]
-        List of predicted lane images (usually file names) to evaluate.
-    anno_dir: str
-        Directory containing ground truth annotation files (e.g., in TuSimple lane detection format).
-    reference_data_path: str
-        Path to the directory containing test file lists.
+    predictions: Dict of predicted lanes
+    anno_dir: Path to Culane Dataset
+    reference_data_path: Path to the directory containing test file lists
 
     This method calculates the true positives (tp), false positives (fp), and false negatives (fn)
     for lane detection by comparing predicted lanes with ground truth annotations.
 
-    :return: dict
-        A dictionary containing 'tp' (true positives), 'fp' (false positives), and 'fn' (false negatives).
+    :return: A dictionary containing 'tp', 'fp', and 'fn'.
     """
 
  """
     Arguments:
     ----------
-    filename: str
-        The name of the image file for which detected lanes need to be retrieved.
-    predictions: dict
-        A dictionary of predictions, where keys are file names (as Path objects or strings),
-        and values contain lane detection results for each image.
+    filename: name of the image file for which detected lanes need to be retrieved.
+    predictions: A dictionary of predictions from the model 
 
     This method returns the detected lanes for a given image by searching the predictions dictionary.
 
@@ -36,7 +29,7 @@ def count_im_pair(anno_lanes, detect_lanes):
     """
     Arguments:
     ----------
-    anno_lanes:Ground truth lane coordinates
+    anno_lanes: Ground truth lane coordinates
     detect_lanes: Detected lane coordinates
 
     This method calculates the similarity matrix between the annotated (ground truth) lanes and the detected (predicted) lanes.
@@ -76,9 +69,6 @@ def read_lane_file(file_name):
 
 class BipartiteGraph:
     def __init__(self):
-        """
-        Initializes the bipartite graph for the Hungarian matching algorithm.
-        """
         self.mat = []
         self.left_used = []
         self.right_used = []
@@ -93,13 +83,11 @@ class BipartiteGraph:
         """
         Arguments:
         ----------
-        u: int
-            Index of the current left vertex being explored.
+        u:  Index of the current left vertex being explored.
 
         This method performs depth-first search (DFS) to find augmenting paths for matching.
 
-        :return: bool
-            Returns True if an augmenting path is found, else False.
+        :return: Returns True if an augmenting path is found, else False.
         """
         self.left_used[u] = True
         for v in range(self.right_num):
@@ -115,10 +103,8 @@ class BipartiteGraph:
         """
         Arguments:
         ----------
-        left_num: int
-            Number of left vertices (left set size).
-        right_num: int
-            Number of right vertices (right set size).
+        left_num: Number of left vertices (left set size).
+        right_num: Number of right vertices (right set size).
 
         This method resizes and initializes the graph based on the input dimensions.
         """
@@ -171,16 +157,13 @@ def get_lane_similarity(lane1, lane2):
     """
     Arguments:
     ----------
-    lane1: list[np.ndarray]
-        List of points representing the first lane.
-    lane2: list[np.ndarray]
-        List of points representing the second lane.
+    lane1: List of points representing the lane.
+    lane2: List of points representing the lane.
 
     This method calculates the similarity (Intersection over Union) between two lanes
     using their sets of points and line interpolation.
 
-    :return: float
-        The IOU (Intersection over Union) value between the two lanes.
+    :return: The IOU (Intersection over Union) value between the two lanes.
     """
     if len(lane1) < 2 or len(lane2) < 2:
         print("Lane size must be greater or equal to 2")
@@ -215,16 +198,13 @@ def spline_interp_times(tmp_line, times):
     """
     Arguments:
     ----------
-    tmp_line: list[np.ndarray]
-        List of points representing a lane.
-    times: int
-        Number of interpolation steps to perform.
+    tmp_line: List of points representing a lane.
+    times: Number of interpolation steps to perform.
 
     This method calculates the interpolation between lane points.
     It performs linear interpolation for two points and cubic spline interpolation for three or more points.
 
-    :return: list[list[float]]
-        List of interpolated points.
+    :return: List of interpolated points.
     """
     res = []
     if len(tmp_line) == 2:
@@ -251,14 +231,12 @@ def spline_coefficients(point_v):
     """
     Arguments:
     ----------
-    point_v: list[np.ndarray]
-        List of points representing a lane.
+    point_v: List of points representing a lane.
 
     This method computes the coefficients for cubic spline interpolation using the TDMA 
     (Tridiagonal Matrix Algorithm).
 
-    :return: list[Func]
-        List of spline functions for each segment between the input points.
+    :return: List of spline functions for each segment between the input points.
     """
     func_v = []
     n = len(point_v)
