@@ -15,3 +15,18 @@ def calculate_metrics(predictions, anno_dir, reference_data_path):
     :return: dict
         A dictionary containing 'tp' (true positives), 'fp' (false positives), and 'fn' (false negatives).
     """
+
+ """
+    Arguments:
+    ----------
+    filename: str
+        The name of the image file for which detected lanes need to be retrieved.
+    predictions: dict
+        A dictionary of predictions, where keys are file names (as Path objects or strings),
+        and values contain lane detection results for each image.
+
+    This method returns the detected lanes for a given image by searching the predictions dictionary.
+
+    :return: list
+        A list of detected lanes for the given image. If the image is not found in predictions, returns an empty list.
+    """
