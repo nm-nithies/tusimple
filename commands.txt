@@ -1,1 +1,143 @@
+import json
+from sklearn.linear_model import LinearRegression
+import numpy as np
+from pathlib import Path
+
+from nnac.core.log import Logger
+
+logger = Logger("Evaluation - Lane Detection")
+
+
+def get_reference_data(reference_data_path) -> dict:
+    """This method extracts image name and annotation lanes for lane_detection TuSimple dataset .
+    :return: image name and annotation lanes
+    """
+    if isinstance(reference_data_path, dict):
+        return reference_data_path
+    reference_data = [json.loads(line) for line in open(reference_data_path).readlines()]
+    return {data['raw_file']: data for data in reference_data}
+
+
+def get_angle(xs, y_samples):
+    """
+    Arguments:
+    ----------
+    xs:        lane coordinates
+    y_samples: y_sample coordinates
+
+    Calculate the angle (in radians) of a line fitted to given points in a 2D space (xs, y_samples).
+    The function filters out invalid points (where xs is negative), fits a linear regression to the
+    remaining points, and calculates the angle of the line using the slope of the fitted line.
+    :return:  Angle theta in radians.
+    """
+    lr = LinearRegression()
+    xs, ys = xs[xs >= 0], y_samples[xs >= 0]
+    if len(xs) > 1:
+        lr.fit(ys[:, None], xs)
+        k = lr.coef_[0]
+        theta = np.arctan(k)
+    else:
+        theta = 0
+    return theta
+
+
+def line_accuracy(pred, gt, thresh):
+    """
+    Arguments:
+    ----------
+    pred:        predicted lane coordinates
+    gt:          ground truth coordinates
+    thresh:      threshold value
+
+    Calculate the accuracy of predicted line values compared to ground truth values within a given threshold.
+    The function replaces negative values in both predicted and ground truth arrays with -100 and calculates
+    the fraction of predictions that are within the specified threshold compared to the ground truth.
+    :return:  the accuracy as a fraction of the total number of ground truth values.
+    """
+    pred = np.array([p if p >= 0 else -100 for p in pred])
+    gt = np.array([g if g >= 0 else -100 for g in gt])
+    return np.sum(np.where(np.abs(pred - gt) < thresh, 1., 0.)) / len(gt)
+
+
+def bench(pred, gt, y_samples, running_time):
+    """ This method evaluates the performance of lane detection
+    :return: Accuracy, FP, FN
+    """
+    pixel_thresh = 20
+    pt_thresh = 0.85
+    if any(len(p) != len(y_samples) for p in pred):
+        raise Exception('Format of lanes error.')
+    if running_time > 200 or len(gt) + 2 < len(pred):
+        return 0., 0., 1.
+    angles = [get_angle(np.array(x_gts), np.array(y_samples)) for x_gts in gt]
+    threshs = [pixel_thresh / np.cos(angle) for angle in angles]
+    line_accs = []
+    fp, fn, matched = 0., 0., 0.
+    for x_gts, thresh in zip(gt, threshs):
+        accs = [line_accuracy(
+            np.array(x_preds), np.array(x_gts), thresh) for x_preds in pred]
+        max_acc = np.max(accs) if len(accs) > 0 else 0.
+        if max_acc < pt_thresh:
+            fn += 1
+        else:
+            matched += 1
+        line_accs.append(max_acc)
+    fp = len(pred) - matched
+    if len(gt) > 4 and fn > 0:
+        fn -= 1
+    s = sum(line_accs)
+    if len(gt) > 4:
+        s -= min(line_accs)
+    return s / max(min(4.0, len(gt)), 1.), fp / len(pred) if len(pred) > 0 else 0., fn / max(min(len(gt), 4.), 1.)
+
+
+def lane_detection_tusimple(predictions, reference_data_path: Path):
+    """
+    # Model - RESANet_tusimple
+    # Dataset - TuSimple
+
+    ##  Accuracy Measurement
+
+    The variables below are used to shorten the command-lines, set corresponding path for each.
+    ```
+    DATASET=/path/to/TuSimple/test_set/seg_label/list/test_gt.txt
+    EXAMPLE_DIR=${NNSDK_TOP}/examples/public_models/RESANet_tusimple
+    ```
+
+    Use the following command-line to run RESANet_tusimple:
+
+    accuracy --model_path PATH_TO_ONNX_OR_NNX \
+    --inputs ${DATASET} \
+    --reference_data /path/to/TuSimple/test_label.json \
+    --preprocessing ${EXAMPLE_DIR}/model_data/preprocess.py \
+    --postprocessing ${EXAMPLE_DIR}/model_data/postprocess.py \
+    --metric lane_detection
+    """
+    reference_data = get_reference_data(reference_data_path)
+    accuracy, fp, fn = 0., 0., 0.
+
+    for pred in predictions:
+        raw_file = predictions[pred]
+        pred_lanes = raw_file['lanes']
+        run_time = raw_file['run_time']
+        img_id = str(pred)
+        gt = reference_data[img_id]
+        gt_lanes = gt['lanes']
+        y_samples = gt['h_samples']
+
+        a, p, n = bench(pred_lanes, gt_lanes, y_samples, run_time)
+
+        accuracy += a
+        fp += p
+        fn += n
+    num = len(predictions)
+
+    logger.info(
+        f"Result: \n"
+        f"Accuracy:   {accuracy/num}\n"
+        f"FP:   {fp / num}\n"
+        f"FN:   {fn / num}"
+    )
+
+    return {"Accuracy ": accuracy/num, "FP": fp / num, "FN": fn / num}
 
