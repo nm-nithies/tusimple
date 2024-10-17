@@ -30,3 +30,25 @@ def calculate_metrics(predictions, anno_dir, reference_data_path):
     :return: list
         A list of detected lanes for the given image. If the image is not found in predictions, returns an empty list.
     """
+
+
+def count_im_pair(anno_lanes, detect_lanes):
+    """
+    Arguments:
+    ----------
+    anno_lanes: list[list[float]]
+        Ground truth lane coordinates for an image.
+    detect_lanes: list[list[float]]
+        Detected lane coordinates for an image (predictions).
+
+    This method calculates the similarity matrix between the annotated (ground truth) lanes and the detected (predicted) lanes.
+    It returns a list containing information on matched lanes and the calculated true positives (tp), false positives (fp), and false negatives (fn).
+
+    :return: list
+        A list in the format [anno_match, tp, fp, _, fn] where:
+        - anno_match: List of matched annotation lanes to detection lanes.
+        - tp: True positives, the number of correctly detected lanes.
+        - fp: False positives, the number of extra lanes detected that don't correspond to ground truth.
+        - _: Placeholder (currently unused).
+        - fn: False negatives, the number of ground truth lanes not detected.
+    """
