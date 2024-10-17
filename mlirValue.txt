@@ -1,3 +1,4 @@
 Added url link for all mlir passes in the document.
 Summarized all onnx_mlir passes in the passes.hpp and updated in the document
 the summarized passes in the document into table format. 
+Shape inference and Passes for lowering Krnl dialect to LLVM dialect, TOSA dialect, Stablehlo dialect
