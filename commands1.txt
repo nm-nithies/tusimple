@@ -9,3 +9,25 @@
 
     :return: A dictionary containing image names and their corresponding annotation lanes.
     """
+
+ bench(pred, gt, y_samples, running_time):
+    """
+    Arguments:
+    ----------
+    pred: list[list[float]]
+        Predicted lane coordinates for evaluation.
+    gt: list[list[float]]
+        Ground truth lane coordinates for evaluation.
+    y_samples: list[float]
+        Y-axis sample points corresponding to the lane points.
+    running_time: float
+        Time taken for lane detection. If the running time exceeds a threshold, it affects the evaluation.
+
+    This method evaluates the performance of lane detection by calculating accuracy, false positives (FP), and false negatives (FN). 
+    It compares the predicted lanes against the ground truth using a pixel distance threshold and lane angle.
+
+    :return: Tuple containing:
+        - Accuracy: (float) The ratio of matched lanes over the ground truth.
+        - FP: (float) False positive rate, the fraction of predicted lanes that don't match any ground truth.
+        - FN: (float) False negative rate, the fraction of ground truth lanes that are not matched.
+    """
