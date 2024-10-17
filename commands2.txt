@@ -1,3 +1,19 @@
+
+def make_match(similarity, match1, match2):
+    """
+    Perform the Hungarian algorithm to find the optimal match between two sets of lanes
+    based on their similarity matrix.
+    
+    Args:
+        similarity (list of list): A 2D matrix representing the similarity between each pair
+                                   of lanes from two sets.
+        match1 (list): List to store the optimal matching for the first set of lanes.
+        match2 (list): List to store the optimal matching for the second set of lanes.
+    
+    Returns:
+        tuple: Returns the updated similarity matrix, match1, and match2 lists.
+    """
+
 def calculate_metrics(predictions, anno_dir, reference_data_path):
     """
     Arguments:
@@ -268,5 +284,8 @@ def spline_coefficients(point_v):
         C[i] /= tmp
         Dx[i] = (Dx[i] - A[i] * Dx[i - 1]) / tmp
         Dy[i] = (Dy[i] - A[i] * Dy[i - 1]) / tmp
+
+
+
 
 
