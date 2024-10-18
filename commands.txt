@@ -1,1 +1,117 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+//===-------------------------- NNACAccelerator.cpp -----------------------===//
+//
+// Copyright 2024 Synopsys Inc.
+//
+// =============================================================================
+//
+// Accelerator support for the Synopsys NPX processor.
+//
+//===----------------------------------------------------------------------===//
+
+#include "mlir/Conversion/LLVMCommon/TypeConverter.h"
+#include "mlir/IR/BuiltinTypes.h"
+#include "mlir/Transforms/Passes.h"
+#include "llvm/Support/Debug.h"
+
+#include "src/Accelerators/NNAC/Dialect/NNACOps.hpp"
+#include "src/Accelerators/NNAC/NNACAccelerator.hpp"
+#include "src/Accelerators/NNAC/Pass/NNACPasses.hpp"
+
+#include <memory>
+
+#define NNAC_VERSION 0
+#define DEBUG_TYPE "NNACAccelerator"
+
+namespace onnx_mlir {
+namespace accel {
+
+Accelerator *createNNAC() { return NNACAccelerator::getInstance(); }
+
+NNACAccelerator *NNACAccelerator::instance = nullptr;
+
+NNACAccelerator *NNACAccelerator::getInstance() {
+  if (instance == nullptr)
+    instance = new NNACAccelerator();
+  return instance;
+}
+
+NNACAccelerator::NNACAccelerator() : Accelerator(Accelerator::Kind::NNAC) {
+  LLVM_DEBUG(llvm::dbgs() << "Creating an NNAC accelerator\n");
+
+  acceleratorTargets.push_back(this);
+}
+
+NNACAccelerator::~NNACAccelerator() { delete instance; }
+
+uint64_t NNACAccelerator::getVersionNumber() const { return NNAC_VERSION; }
+
+void NNACAccelerator::addPasses(mlir::OwningOpRef<mlir::ModuleOp> &module,
+    mlir::PassManager &pm, onnx_mlir::EmissionTargetType &emissionTarget,
+    std::string outputNameNoExt) const {
+  LLVM_DEBUG(llvm::dbgs() << "Adding passes for NNAC accelerator\n");
+  // TODO Passes for NNAC
+  //addPassesNNAC(module, pm, emissionTarget, outputNameNoExt);
+}
+
+void NNACAccelerator::registerDialects(mlir::DialectRegistry &registry) const {
+  LLVM_DEBUG(llvm::dbgs() << "Registering dialects for NNAC accelerator\n");
+  registry.insert<nnac::NNACDialect>();
+}
+
+void NNACAccelerator::registerPasses(int optLevel) const {
+  LLVM_DEBUG(llvm::dbgs() << "Registering passes for NNAC accelerator\n");
+  // TODO Potential required passes for NNAC
+  //mlir::registerPass([]() -> std::unique_ptr<mlir::Pass> {
+  //  return onnx_mlir::createONNXToNNACPass();
+  //});
+
+  //mlir::registerPass([]() -> std::unique_ptr<mlir::Pass> {
+  //  return onnx_mlir::createRewriteONNXForNNACPass();
+  //});
+
+  //mlir::registerPass([]() -> std::unique_ptr<mlir::Pass> {
+  //  return onnx_mlir::createNNACToONNXPass();
+  //});
+}
+
+// TODO Do we need a MemRefType?
+mlir::MemRefType NNACAccelerator::convertTensorTypeToMemRefType(
+    const mlir::TensorType tensorType) const {
+  assert(tensorType.hasRank() && "expected only ranked shapes");
+  return nullptr;
+}
+
+void NNACAccelerator::conversionTargetONNXToKrnl(
+    mlir::ConversionTarget &target) const {
+  // TODO May need this for lowering to VPX
+  // target.addLegalDialect<vpx::VPXDialect>();
+}
+
+void NNACAccelerator::rewritePatternONNXToKrnl(
+    mlir::RewritePatternSet &patterns, mlir::TypeConverter &typeConverter,
+    mlir::MLIRContext *ctx) const {
+  // TODO May need this for lowering to VPX
+  // onnx_mlir::nnac::populateNNACToVPXConversionPattern(patterns,
+  //      typeConverter, ctx);
+}
+
+void NNACAccelerator::conversionTargetKrnlToLLVM(
+    mlir::ConversionTarget &target) const {
+  // TODO May need this for lowering to VPX
+}
+
+void NNACAccelerator::rewritePatternKrnlToLLVM(
+    mlir::RewritePatternSet &patterns, mlir::LLVMTypeConverter &typeConverter,
+    mlir::MLIRContext *ctx) const {
+  // TODO May need this for lowering to VPX
+  // onnx_mlir::vpx::populateVPXToLLVMConversionPattern(
+  //    patterns, typeConverter, ctx);
+}
+
+} // namespace accel
+} 
 
