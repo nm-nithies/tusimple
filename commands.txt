@@ -5,3 +5,10 @@ mlir::Value createFloatTensorConstant(mlir::OpBuilder &builder, mlir::Location l
     auto denseAttr = mlir::DenseElementsAttr::get(tensorType, llvm::ArrayRef<float>(&value, 1));
     return builder.create<mlir::arith::ConstantOp>(loc, tensorType, denseAttr).getResult();
 }
+
+
+../src/Dialect/ONNX/Transforms/temp.cpp: In function 'mlir::Value {anonymous}::createFloatTensorConstant(mlir::OpBuilder&, mlir::Location, float)':
+../src/Dialect/ONNX/Transforms/temp.cpp:688:54: error: cannot call member function 'mlir::Value onnx_mlir::OnnxBuilder::constant(mlir::Attribute) const' without object
+  688 |     return onnx_mlir::OnnxBuilder::constant(denseAttr).getResult();
+      |                                                      ^
+../src/Dialect/ONNX/Transforms/temp.cpp: At global scope:
