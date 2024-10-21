@@ -12,3 +12,12 @@ mlir::Value createFloatTensorConstant(mlir::OpBuilder &builder, mlir::Location l
   688 |     return onnx_mlir::OnnxBuilder::constant(denseAttr).getResult();
       |                                                      ^
 ../src/Dialect/ONNX/Transforms/temp.cpp: At global scope:
+
+cpp.o -c ../src/Dialect/ONNX/Transforms/temp.cpp
+../src/Dialect/ONNX/Transforms/temp.cpp: In function 'mlir::Value {anonymous}::createFloatTensorConstant(mlir::OpBuilder&, mlir::Location, float)':
+../src/Dialect/ONNX/Transforms/temp.cpp:688:74: error: cannot call constructor 'mlir::arith::ConstantOp::ConstantOp' directly [-fpermissive]
+  688 |     return mlir::arith::ConstantOp::ConstantOp(loc, tensorType, denseAttr).getResult();
+      |                                                                          ^
+../src/Dialect/ONNX/Transforms/temp.cpp:688:74: note: for a function-style cast, remove the redundant '::ConstantOp'
+../src/Dialect/ONNX/Transforms/temp.cpp:688:74: error: no matching function for call to 'mlir::arith::ConstantOp::ConstantOp(mlir::Location&, mlir::RankedTensorType&, mlir::DenseElementsAttr&)'
+In file included from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Matchers.h:20,
