@@ -1,31 +1,38 @@
 import torch
 import torch.nn as nn
 
-class SimpleModel(nn.Module):
+class FullyConnectedModel(nn.Module):
     def __init__(self):
-        super(SimpleModel, self).__init__()
-        self.conv = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1)
-        self.bn = nn.BatchNorm2d(16)  # BatchNorm for 2D input
-        self.relu = nn.ReLU()
+        super(FullyConnectedModel, self).__init__()
+        self.fc1 = nn.Linear(100, 50)  # First fully connected layer (100 input features, 50 output features)
+        self.bn1 = nn.BatchNorm1d(50)  # BatchNorm for 1D input (applied to 50 features)
+        self.fc2 = nn.Linear(50, 20)   # Second fully connected layer (50 input features, 20 output features)
+        self.bn2 = nn.BatchNorm1d(20)  # BatchNorm for 1D input (applied to 20 features)
+        self.relu = nn.ReLU()          # ReLU activation function
 
     def forward(self, x):
-        x = self.conv(x)
-        x = self.bn(x)
+        x = self.fc1(x)
+        x = self.bn1(x)  # Apply BatchNorm after the first fully connected layer
+        x = self.relu(x) # Apply ReLU activation
+        x = self.fc2(x)
+        x = self.bn2(x)  # Apply BatchNorm after the second fully connected layer
         x = self.relu(x)
         return x
 
 # Instantiate the model
-model = SimpleModel()
+model = FullyConnectedModel()
 
-# Create dummy input for the model (e.g., batch size of 1, 3 color channels, 64x64 image)
-dummy_input = torch.randn(1, 3, 64, 64)
+# Create dummy input for the model (e.g., batch size of 1, 100 features)
+dummy_input = torch.randn(1, 100)
 
 # Forward pass through the model
 output = model(dummy_input)
 
+# Set the model to evaluation mode (important for BatchNorm)
+model.eval()
 
 # Define the output path for the ONNX model
-onnx_path = "simple_model.onnx"
+onnx_path = "fully_connected_model_bn.onnx"
 
 # Export the model to ONNX format
 torch.onnx.export(
