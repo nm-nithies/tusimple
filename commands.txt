@@ -31,3 +31,48 @@ In file included from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Mat
 loc("/Sub"): error: Wrong rank for the scale
 loc("/Sub"): error: 'onnx.BatchNormalizationInferenceMode' op shape inference failed
 [3/6] Wed Oct 23 16:32:59 2024 (0s) Compilation completed
+
+
+
+struct SubDivFuseBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
+  using OpRewritePattern<ONNXSubOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(
+      ONNXSubOp subOp, PatternRewriter &rewriter) const final {
+
+    Location odsLoc = subOp.getLoc();
+    onnx_mlir::MultiDialectBuilder<onnx_mlir::OnnxBuilder> create(
+        rewriter, odsLoc);
+    ONNXDivOp divOp;
+    if (!isSubDivBatchNormMatched(subOp, divOp))
+     { cout<<"643";
+      return failure();}
+    
+    Value input = subOp.getOperand(0);
+    Value scaleValue = subOp.getOperand(1);
+    Value biasValue = divOp.getOperand(1);
+   
+    FloatAttr epsilonAttr = rewriter.getF32FloatAttr(1e-5f); 
+    FloatAttr momentumAttr =  rewriter.getF32FloatAttr(0.9);
+
+
+    cout<<"679679";
+    
+    SmallVector<Type, 1> outputTypes;
+    outputTypes.emplace_back(input.getType());
+ 
+    
+
+    auto bnOp = rewriter.create<ONNXBatchNormalizationInferenceModeOp>(
+        subOp.getLoc(),outputTypes,input,
+        scaleValue, biasValue, scaleValue, biasValue, epsilonAttr, momentumAttr);  // epsilon
+        
+    rewriter.replaceOp(divOp, bnOp.getResult());
+    rewriter.eraseOp(subOp);
+
+    cout<<"689689";
+    return success();
+
+
+  }
+};
