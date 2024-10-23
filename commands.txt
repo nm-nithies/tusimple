@@ -21,3 +21,7 @@ cpp.o -c ../src/Dialect/ONNX/Transforms/temp.cpp
 ../src/Dialect/ONNX/Transforms/temp.cpp:688:74: note: for a function-style cast, remove the redundant '::ConstantOp'
 ../src/Dialect/ONNX/Transforms/temp.cpp:688:74: error: no matching function for call to 'mlir::arith::ConstantOp::ConstantOp(mlir::Location&, mlir::RankedTensorType&, mlir::DenseElementsAttr&)'
 In file included from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Matchers.h:20,
+
+
+
+./src/Dialect/ONNX/ONNXOps.cpp.inc:3863: static void mlir::ONNXBatchNormalizationInferenceModeOp::build(mlir::OpBuilder&, mlir::OperationState&, mlir::TypeRange, mlir::Value, mlir::Value, mlir::Value, mlir::Value, mlir::Value, llvm::APFloat, llvm::APFloat): Assertion `resultTypes.size() == 1u && "mismatched number of results"' failed.
