@@ -1,40 +1,26 @@
 import torch
 import torch.nn as nn
 
-class FullyConnectedModel(nn.Module):
+class OnlyBatchNorm(nn.Module):
     def __init__(self):
-        super(FullyConnectedModel, self).__init__()
-        self.fc1 = nn.Linear(100, 50)  # First fully connected layer (100 input features, 50 output features)
-        self.bn1 = nn.BatchNorm1d(50)  # BatchNorm for 1D input (applied to 50 features)
-        self.fc2 = nn.Linear(50, 20)   # Second fully connected layer (50 input features, 20 output features)
-        self.bn2 = nn.BatchNorm1d(20)  # BatchNorm for 1D input (applied to 20 features)
-        self.relu = nn.ReLU()          # ReLU activation function
+        super(OnlyBatchNorm, self).__init__()
+        self.bn = nn.BatchNorm1d(100)  # BatchNorm applied to 100 features
 
     def forward(self, x):
-        x = self.fc1(x)
-        x = self.bn1(x)  # Apply BatchNorm after the first fully connected layer
-        x = self.relu(x) # Apply ReLU activation
-        x = self.fc2(x)
-        x = self.bn2(x)  # Apply BatchNorm after the second fully connected layer
-        x = self.relu(x)
+        x = self.bn(x)  # Apply BatchNorm directly to input
         return x
 
 # Instantiate the model
-model = FullyConnectedModel()
+model = OnlyBatchNorm()
 
-# Create dummy input for the model (e.g., batch size of 1, 100 features)
-dummy_input = torch.randn(1, 100)
-
-# Forward pass through the model
-output = model(dummy_input)
-
-# Set the model to evaluation mode (important for BatchNorm)
+# Set the model to evaluation mode (important for exporting BatchNorm correctly)
 model.eval()
 
-# Define the output path for the ONNX model
-onnx_path = "fully_connected_model_bn.onnx"
+# Create dummy input for the model (e.g., batch size of 10, 100 features)
+dummy_input = torch.randn(10, 100)  # Batch size of 10, 100 features
 
 # Export the model to ONNX format
+onnx_path = "batchnorm_model.onnx"
 torch.onnx.export(
     model,                            # PyTorch model
     dummy_input,                      # Input to the model
@@ -43,7 +29,7 @@ torch.onnx.export(
     opset_version=12,                 # ONNX version to export the model to
     input_names=['input'],            # Input names
     output_names=['output'],          # Output names
-    dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}  # Variable length axes
+    dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}  # Variable length axes for batch size
 )
 
 print(f"ONNX model exported to {onnx_path}")
