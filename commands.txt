@@ -25,3 +25,9 @@ In file included from /workspace/ONNX_MLIR/llvm-project/mlir/include/mlir/IR/Mat
 
 
 ./src/Dialect/ONNX/ONNXOps.cpp.inc:3863: static void mlir::ONNXBatchNormalizationInferenceModeOp::build(mlir::OpBuilder&, mlir::OperationState&, mlir::TypeRange, mlir::Value, mlir::Value, mlir::Value, mlir::Value, mlir::Value, llvm::APFloat, llvm::APFloat): Assertion `resultTypes.size() == 1u && "mismatched number of results"' failed.
+
+[1/6] Wed Oct 23 16:32:59 2024 (0s) Importing ONNX Model to MLIR Module from "new_sub_div_tensor5.onnx"
+[2/6] Wed Oct 23 16:32:59 2024 (0s) Compiling and Optimizing MLIR Module
+loc("/Sub"): error: Wrong rank for the scale
+loc("/Sub"): error: 'onnx.BatchNormalizationInferenceMode' op shape inference failed
+[3/6] Wed Oct 23 16:32:59 2024 (0s) Compilation completed
