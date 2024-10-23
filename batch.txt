@@ -1,0 +1,42 @@
+import torch
+import torch.nn as nn
+
+class SimpleModel(nn.Module):
+    def __init__(self):
+        super(SimpleModel, self).__init__()
+        self.conv = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1)
+        self.bn = nn.BatchNorm2d(16)  # BatchNorm for 2D input
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.bn(x)
+        x = self.relu(x)
+        return x
+
+# Instantiate the model
+model = SimpleModel()
+
+# Create dummy input for the model (e.g., batch size of 1, 3 color channels, 64x64 image)
+dummy_input = torch.randn(1, 3, 64, 64)
+
+# Forward pass through the model
+output = model(dummy_input)
+
+
+# Define the output path for the ONNX model
+onnx_path = "simple_model.onnx"
+
+# Export the model to ONNX format
+torch.onnx.export(
+    model,                            # PyTorch model
+    dummy_input,                      # Input to the model
+    onnx_path,                        # Where to save the ONNX model
+    export_params=True,               # Store the trained parameter weights inside the model
+    opset_version=12,                 # ONNX version to export the model to
+    input_names=['input'],            # Input names
+    output_names=['output'],          # Output names
+    dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}  # Variable length axes
+)
+
+print(f"ONNX model exported to {onnx_path}")
