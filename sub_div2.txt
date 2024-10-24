@@ -165,3 +165,20 @@ struct SubDivFuseBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
     // return success();
   }
 };
+
+
+
+
+   // auto return_scale =  elementsAttr.getValues<FloatAttr>()[0].getValueAsDouble();
+    // std::cout<<"/n ScaleValue: "<<return_scale<<std::endl;
+    //  for (auto [index, value] : llvm::enumerate(axisVec))
+  //  { scaleVec[value] =
+  //       elementsAttr.getValues<FloatAttr>()[index].getValueAsDouble();
+      
+  //     std::cout<<"/n ScaleValue: "<<scaleVec[value]<<std::endl;
+  //     }
+  
+  //  if (failed(onnx_mlir::getScaleValue(rewriter, subOp, axisVec, scaleVec, scaleValue))) {
+  //   cout << "line 666";
+  //   return failure();
+  // }
