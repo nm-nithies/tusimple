@@ -76,3 +76,9 @@ struct SubDivFuseBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
 
   }
 };
+
+
+
+
+    mlir::ElementsAttr elementsAttr = onnx_mlir::getElementAttributeFromONNXValue(scaleValue);
+    onnx_mlir::ArrayBuffer<float> Scale_Values = onnx_mlir::getElementsArray<float>(elementsAttr);
