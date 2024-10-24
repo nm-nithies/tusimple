@@ -1,48 +1,20 @@
+ 
 SAI:
-Tried to build the onnx_mlir repo in NNSDK with onnx_mlir repo commands.
-Faced an issue in  MLIR test build with LLVM IR transaltion
-[ERROR]
-# .---command stderr------------
-# | FileCheck error: '<stdin>' is empty.
-# | FileCheck command line:  /remote/us01sgnfs00562/NNSDK/amajala/amajala/nith/nnac/nnac_backend/llvm-project/build/bin/FileCheck /remote/us01sgnfs00562/NNSDK/amajala/amajala/nith/nnac/nnac_backend/llvm-project/mlir/test/Target/LLVMIR/llvmir-intrinsics.mlir
-# `-----------------------------
-# error: command failed with exit status: 2
- 
-Also tried the onnx_mlir build commands in the file shared by Yvonne
- 
-export MLIR_DIR=${NN_BASE_DIR}/out/reference/ev_native_release/lib/cmake/mlir export LLVM_DIR=${NN_BASE_DIR}/out/reference/ev_native_release/nnac/ nnac_backend/llvm/lib/cmake/llvm cmake -G Ninja -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DMLIR_DIR=$ {MLIR_DIR} -DLLVM_DIR=${LLVM_DIR} -DCMAKE_CXX_FLAGS="-Wno-unused-but-setparameter" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLLVM_ENABLE_ASSERTIONS=ON ..
- 
-Currently paused this task as Yvonne suggested.
-Started working on Sumarizing the existing pass in onnx_mlir and comparing the existing pass with NNAC legalization passes.
+Found the NNAC implementation and analyzed NNAC Accelerator in onnx_mlir within NNSDK .
+Found the NNAC Add Op implemention and tried to understand the workflow for generating NNAC IR.
 
-
- I  will build the onnx_mlir in NNSDK repo and push the sub+div-> BN pass code to new branch.
-    Summarize the remaning passes in onnx_mlir in Customize_pass_onnx_mlir.docx.
-    Compare the onnx_mlir passes with nnac legalization pass.
-
+Able to add custom pass(Sub+Div->BN) in NNSDK Onnx_mlir.
+Cleaned and pushed the code to branch (fuse_sub_and_div_into_bn)
+Faced an legalization issue with mlir::arith::ConstantOP while converting to .so file .Currently debugging it.
 
 SAI:
-Gone through the ConvOp pass for extracting input nodes from SUB and DIV Op.
-Found the method for extracting the input values and to calculate scale and bais
-Facing an issue in calculating the scale and bias
-[ERROR] -  error: insufficient contextual information to determine type
-           Value scaleValue = create.onnx.div(temp,temp);
-Currently debugging it.
-
-SAI:
-Tried to find API's for converting mlir::value to float datatype for sub+div fusion pass.
-Tried with mlir::dyn_cast(), mlir::cast(), mlir::DenseFPElementsAttr.
-Faced an issue in converting mlir::value to float using mlir::dyn_cast.
-[ERROR]
- required from 'decltype(auto) llvm::cast(From&) [with To = mlir::FloatAttr; From = mlir::Value]'
- error: no matching function for call to 'mlir::FloatAttr::FloatAttr(mlir::detail::ValueImpl*)'
-
-Analysed InstanceNormIntoLayerNormPattern pass for converting mlir::value to float.
-
-
-SAI:
-Gone through the existing passes in onnx_mlir.
-
-Compared the existing passes in onnx_mlir  ( SumToAddPattern, DecomposeEinsumPattern,  RecomposeGeluFromMulPattern, RecomposeLayerNormFromMulPattern)  with NNAC legalization passes.
-Documented the existing passes in onnx_mlir.
+Tried to resolve legalization issue with arith::ConstantOp while converting to .so file .
+Tried to replace arith::ConstantOp in custom_pass.
+Replaced arith::Constant with OnnxBuilder::constant but the output from OnnxBuilder::constant does not support BN op.
  
+ SAI:
+Faced an issue in converting .so file for custom pass 
+Issue: failed to legalize operation onnx.BatchNormalization
+Replaced onnx.BatchNormalization implementation with onnx.BatchNormalizationInferenceOp.
+Using onnx.BatchNormalizationInferenceOp implementation , BatchNormOp did not reflect in MLIR file instead got unrelated Ops.
+Currently checking this .
