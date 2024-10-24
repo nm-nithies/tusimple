@@ -38,3 +38,21 @@ def RemoveConsecutiveResizes(opt):
                 logger.debug("[DEBUG] Remove consecutive Resize layer {}.".format(n))
 
                 opt.passes_counter["RemoveConsecutiveResizes"] += 1
+
+
+
+
+static bool isConsecutiveResizeOpMatched(
+    ONNXResizeOp resizeOp1, ONNXResizeOp &resizeOp2) {
+  resizeOp2 = nullptr;
+  for (Operation *user : resizeOp1->getUsers()) {
+    if (isa<ONNXResizeOp>(user) && !resizeOp2) {
+      std::cout << "If condition";
+      resizeOp2 = cast<ONNXResizeOp>(user);
+    } else {
+      return false;
+    }
+  }
+  return resizeOp2 != nullptr;
+}
+
