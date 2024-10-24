@@ -1,0 +1,40 @@
+
+import networkx as nx
+
+from nnac.core.log import Logger
+
+from .single_layer_transforms import remove_one_layer
+
+logger = Logger("OPTIMIZATION")
+
+""" Remove consecutive Resize nodes
+"""
+
+
+def RemoveConsecutiveResizes(opt):
+    G = opt.G
+
+    layers = list(nx.topological_sort(G))
+    for layer in layers:
+        if layer in G.nodes:
+            op_type = G.nodes[layer].get("op_type", None)
+            if op_type != "Resize":
+                continue
+
+            remove_resizes = [layer]
+            succ_layer = list(G.successors(layer))
+            while (
+                len(succ_layer) == 1
+                and G.nodes[succ_layer[0]].get("op_type", None) == "Resize"
+            ):
+                remove_resizes.append(succ_layer[0])
+                succ_layer = list(G.successors(succ_layer[0]))
+
+            if len(remove_resizes) == 1:
+                continue
+
+            for n in remove_resizes[:-1]:
+                remove_one_layer(opt, n)
+                logger.debug("[DEBUG] Remove consecutive Resize layer {}.".format(n))
+
+                opt.passes_counter["RemoveConsecutiveResizes"] += 1
