@@ -56,3 +56,24 @@ static bool isConsecutiveResizeOpMatched(
   return resizeOp2 != nullptr;
 }
 
+
+
+struct ReplaceFirstResizeWithSecondPattern : public OpRewritePattern<ONNXResizeOp> {
+  using OpRewritePattern<ONNXResizeOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(
+      ONNXResizeOp resizeOp1, PatternRewriter &rewriter) const final {
+    // Check if resizeOp1 is followed by another consecutive Resize operation
+    ONNXResizeOp resizeOp2;
+    if (!isConsecutiveResizeOpMatched(resizeOp1, resizeOp2))
+      return failure(); // No consecutive resize found
+
+    // Replace all uses of the first ResizeOp with the second ResizeOp's result
+    rewriter.replaceOp(resizeOp1, resizeOp2.getResult());
+
+    // Optionally, you can erase the first ResizeOp if it's no longer used elsewhere
+    rewriter.eraseOp(resizeOp1);
+
+    return success();
+  }
+};
