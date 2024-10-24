@@ -77,3 +77,62 @@ struct ReplaceFirstResizeWithSecondPattern : public OpRewritePattern<ONNXResizeO
     return success();
   }
 };
+
+
+
+
+import torch
+import torch.nn as nn
+import torch.onnx
+
+# Define a custom Resize layer (PyTorch doesn't have a built-in Resize layer)
+class ResizeLayer(nn.Module):
+    def __init__(self, size):
+        super(ResizeLayer, self).__init__()
+        self.size = size
+
+    def forward(self, x):
+        return torch.nn.functional.interpolate(x, size=self.size, mode='bilinear')
+
+# Define the model
+class CustomModel(nn.Module):
+    def __init__(self):
+        super(CustomModel, self).__init__()
+        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.resize1 = ResizeLayer(size=(16, 16))  # Resize to 16x16
+        self.resize2 = ResizeLayer(size=(8, 8))    # Resize to 8x8
+        self.flatten = nn.Flatten()
+        self.fc1 = nn.Linear(8 * 8 * 3, 128)       # Linear layer 1
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(128, 10)              # Linear layer 2
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, x):
+        x = self.maxpool(x)
+        x = self.resize1(x)
+        x = self.resize2(x)
+        x = self.flatten(x)
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        x = self.softmax(x)
+        return x
+
+# Initialize the model
+model = CustomModel()
+
+# Dummy input for the model (e.g., 1 image with 3 channels of size 32x32)
+dummy_input = torch.randn(1, 3, 32, 32)
+
+# Export the model to ONNX
+torch.onnx.export(
+    model,                      # model to be exported
+    dummy_input,                # input to the model
+    "custom_model.onnx",        # where to save the ONNX model
+    input_names=["input"],      # the model's input names
+    output_names=["output"],    # the model's output names
+    dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}},  # support dynamic batching
+    opset_version=11            # ONNX opset version to use
+)
+
+print("Model has been exported to custom_model.onnx")
