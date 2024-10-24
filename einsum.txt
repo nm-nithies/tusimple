@@ -1,415 +1,52 @@
-# Copyright 2023-2024 Synopsys, Inc.
-# This Synopsys software and all associated documentation are proprietary
-# to Synopsys, Inc. and may only be used pursuant to the terms and conditions
-# of a written license agreement with Synopsys, Inc.
-# All other use, reproduction, modification, or distribution of the Synopsys
-# software or the associated documentation is strictly prohibited.
+LogicalResult matchAndRewrite(
+    ONNXSubOp subOp, PatternRewriter &rewriter) const final {
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+  Location odsLoc = subOp.getLoc();
+  onnx_mlir::MultiDialectBuilder<onnx_mlir::OnnxBuilder> create(rewriter, odsLoc);
 
-import networkx as nx
-import numpy as np
+  // First, match if the sub and div operations form a BatchNorm pattern
+  ONNXDivOp divOp;
+  if (!isSubDivBatchNormMatched(subOp, divOp)) {
+    cout << "643";
+    return failure();
+  }
 
-from nnac.core.log import Logger
+  // Extract the inputs and bias values from the Sub and Div operations
+  Value input = subOp.getOperand(0);
+  Value biasValue = divOp.getOperand(1);
 
-from .single_layer_transforms import append_Transpose, append_new_node
+  // Prepare the axis vector and scale vector
+  SmallVector<int64_t, 4> axisVec;  // Fill this with appropriate axes for the scale
+  SmallVector<float, 4> scaleVec;   // This will be populated with scale values
 
-logger = Logger("OPTIMIZATION")
+  // Extract scaleValue from subOp's second operand
+  Value scaleValue = subOp.getOperand(1);
 
-"""
-Replace the Einsum by MatMul when the equation of Einsum is a valid MatMul computation,
-also insert extra Transpose layer if needed.
-Support Transpose patterns for Einsum:
-+ Pattern1:
-    1. MatMul(a.transpose, b): b c m, b c n -> b m n
-    2. MatMul(b.transpose, a): b c m, b c n -> b n m
-    3. MatMul(a, b.transpose): b c m, b n m -> b c n
-    4. MatMul(b, a.transpose): b c m, b n m -> b n c
-+ Pattern2:
-Becomes (2 Transpose + 2 Reshape) + MatMul + Reshape
-"bijk,binm->bjknm"
-"nkctv,kvw->nctw"
-"""
+  // Call the getScaleValue function to extract the scale values based on axis
+  if (failed(getScaleValue(rewriter, subOp, axisVec, scaleVec, scaleValue))) {
+    cout << "Failed to extract scale values";
+    return failure();
+  }
 
+  // At this point, scaleVec contains the correct scale values
 
-def ReplaceEinsumByMatMul(opt):
-    funcs = [pattern1, pattern2]
-    for func in funcs:
-        func(opt)
+  // Define epsilon and momentum attributes for BatchNormalization
+  FloatAttr epsilonAttr = rewriter.getF32FloatAttr(1e-5f); 
+  FloatAttr momentumAttr = rewriter.getF32FloatAttr(0.9f);
 
+  // Define output type (assuming same as input type)
+  SmallVector<Type, 1> outputTypes;
+  outputTypes.emplace_back(input.getType());
 
-def pattern1(opt):
-    G = opt.G
+  // Create the BatchNormalization operation
+  auto bnOp = rewriter.create<ONNXBatchNormalizationInferenceModeOp>(
+      subOp.getLoc(), outputTypes, input, scaleValue, biasValue, scaleValue, biasValue, epsilonAttr, momentumAttr);
 
-    layers = list(nx.topological_sort(G))
-    for layer in layers:
-        if layer not in G.nodes:
-            continue
-        if G.nodes[layer].get("op_type", None) != "Einsum":
-            continue
-        if len(G.nodes[layer]["input"]) != 2:
-            continue
-        equation = G.nodes[layer]["attr_dict"].get("equation", None)
-        if equation is None:
-            continue
-        equation = equation.decode("utf-8")
-        # check if the equation of Einsum layer is equivalent to Matmul layer
-        if equation.count(',') != 1:
-            continue
-        if equation.count('->') != 1:
-            continue
-        index1, remain = equation.split(',')
-        index2, index3 = remain.split('->')
-        matrix1 = np.random.randn(*[ord(ch) - ord('a') for ch in index1.replace(" ", "")])
-        matrix2 = np.random.randn(*[ord(ch) - ord('a') for ch in index2.replace(" ", "")])
-        matrix3 = np.random.randn(*[ord(ch) - ord('a') for ch in index3.replace(" ", "")])
-        if matrix1.shape[-2] == matrix2.shape[-1]:
-            matmul_result = np.matmul(matrix1, matrix2)
-            einsum_result = np.einsum(equation, matrix1, matrix2)
-            if matmul_result.shape != einsum_result.shape or not np.isclose(matmul_result, einsum_result):
-                continue
-            G.nodes[layer]["op_type"] = "MatMul"
-            del G.nodes[layer]["attr_dict"]
-            logger.debug(
-                "[DEBUG] replace Einsum layer {} by MatMul layer,"
-                " the computation of Einsum is equvalent to MatMul".format(
-                    layer
-                )
-            )
-            opt.passes_counter["ReplaceEinsumByMatMul"] += 1
-        else:
-            # matching Transpose patterns
-            perm = [i for i in range(len(matrix1.shape))]
-            perm[-2] += 1
-            perm[-1] -= 1
-            replace = True
-            if (
-                matrix1.shape[-2] == matrix2.shape[-2]
-                and matrix1.shape[-1] == matrix3.shape[-2]
-                and matrix2.shape[-1] == matrix3.shape[-1]
-            ):
-                matmul_result = np.matmul(matrix1.transpose(perm), matrix2)
-                einsum_result = np.einsum(equation, matrix1, matrix2)
-                if matmul_result.shape != einsum_result.shape or not np.isclose(matmul_result, einsum_result).all():
-                    continue
-                append_Transpose(opt, G.nodes[layer]["input"][0], perm)
+  // Replace the original DivOp with the BatchNormOp
+  rewriter.replaceOp(divOp, bnOp.getResult());
+  // Erase the SubOp as it is now fused into the BatchNorm
+  rewriter.eraseOp(subOp);
 
-            elif (
-                matrix1.shape[-2] == matrix2.shape[-2]
-                and matrix1.shape[-1] == matrix3.shape[-1]
-                and matrix2.shape[-1] == matrix3.shape[-2]
-            ):
-                matmul_result = np.matmul(matrix2.transpose(perm), matrix1)
-                einsum_result = np.einsum(equation, matrix1, matrix2)
-                if matmul_result.shape != einsum_result.shape or not np.isclose(matmul_result, einsum_result).all():
-                    continue
-                append_Transpose(opt, G.nodes[layer]["input"][1], perm)
-                G.nodes[layer]["input"] = [G.nodes[layer]["input"][1], G.nodes[layer]["input"][0]]
-            elif (
-                matrix1.shape[-1] == matrix2.shape[-1]
-                and matrix1.shape[-2] == matrix3.shape[-2]
-                and matrix2.shape[-2] == matrix3.shape[-1]
-            ):
-                matmul_result = np.matmul(matrix1, matrix2.transpose(perm))
-                einsum_result = np.einsum(equation, matrix1, matrix2)
-                if matmul_result.shape != einsum_result.shape or not np.isclose(matmul_result, einsum_result).all():
-                    continue
-                append_Transpose(opt, G.nodes[layer]["input"][1], perm)
-            elif (
-                matrix1.shape[-1] == matrix2.shape[-1]
-                and matrix1.shape[-2] == matrix3.shape[-1]
-                and matrix2.shape[-2] == matrix3.shape[-2]
-            ):
-                matmul_result = np.matmul(matrix2, matrix1.transpose(perm))
-                einsum_result = np.einsum(equation, matrix1, matrix2)
-                if matmul_result.shape != einsum_result.shape or not np.isclose(matmul_result, einsum_result).all():
-                    continue
-                append_Transpose(opt, G.nodes[layer]["input"][0], perm)
-                G.nodes[layer]["input"] = [G.nodes[layer]["input"][1], G.nodes[layer]["input"][0]]
-            else:
-                replace = False
-            if replace:
-                G.nodes[layer]["op_type"] = "MatMul"
-                del G.nodes[layer]["attr_dict"]
-                logger.debug(
-                    "[DEBUG] replace Einsum layer {} by MatMul layer and insert a Transpose layer,"
-                    " the computation of Einsum is equivalent to MatMul".format(
-                        layer
-                    )
-                )
-                opt.passes_counter["ReplaceEinsumByMatMul_pattern1"] += 1
-
-
-# Support more complicated case including insertion of Reshape layers and Transpose layers
-# einsum equation support validated on examples like:
-# "bijk,binm->bjknm"
-# "nkctv,kvw->nctw"
-def pattern2(opt):
-    G = opt.G
-    tensor_dict = opt.TensorDict
-    shape_dict = opt.ShapeDict
-
-    layers = list(nx.topological_sort(G))
-    for layer in layers:
-        if layer not in G.nodes:
-            continue
-        if G.nodes[layer].get("op_type", None) != "Einsum":
-            continue
-        if len(G.nodes[layer]["input"]) != 2:
-            continue
-        equation = G.nodes[layer]["attr_dict"].get("equation", None)
-        if equation is None:
-            continue
-        equation = equation.decode("utf-8")
-        # check if the equation of Einsum layer is equivalent to Matmul layer
-        if equation.count(',') != 1:
-            continue
-        if equation.count('->') != 1:
-            continue
-        index1, remain = equation.split(',')
-        index2, index3 = remain.split('->')
-        test_shape1 = [ord(ch) - ord('a') for ch in index1.replace(" ", "")]
-        test_shape2 = [ord(ch) - ord('a') for ch in index2.replace(" ", "")]
-        test_shape3 = [ord(ch) - ord('a') for ch in index3.replace(" ", "")]
-
-        removed_dim = []
-        for dim in test_shape1:
-            if dim in test_shape1 and dim not in test_shape3:
-                removed_dim.append(dim)
-
-        removed_dim_idx1 = [test_shape1.index(i) for i in removed_dim]
-        removed_dim_idx2 = [test_shape2.index(i) for i in removed_dim]
-        removed_dim_count = len(removed_dim_idx1)
-
-        if len(removed_dim_idx1) != len(removed_dim_idx2):
-            continue
-
-        constant_input0 = False
-        constant_input1 = False
-        if layer not in shape_dict:
-            continue
-        else:
-            real_shape3 = shape_dict[layer]
-
-        if G.nodes[layer]["input"][0] not in shape_dict:
-            if G.nodes[layer]["input"][0] not in tensor_dict:
-                continue
-            else:
-                real_shape1 = tensor_dict[G.nodes[layer]["input"][0]].shape
-                constant_input0 = True
-        else:
-            real_shape1 = shape_dict[G.nodes[layer]["input"][0]]
-
-        if G.nodes[layer]["input"][1] not in shape_dict:
-            if G.nodes[layer]["input"][1] not in tensor_dict:
-                continue
-            else:
-                real_shape2 = tensor_dict[G.nodes[layer]["input"][1]].shape
-                constant_input1 = True
-        else:
-            real_shape2 = shape_dict[G.nodes[layer]["input"][1]]
-
-        matrix1 = np.random.randn(*real_shape1)
-        matrix2 = np.random.randn(*real_shape2)
-
-        # for input1, we need to transpose the removed_dim to the end
-        perm1 = None
-        transpose1 = matrix1
-        if len(removed_dim_idx1) > 0:
-            perm1 = []
-            for i in range(len(real_shape1)):
-                if i in removed_dim_idx1:
-                    continue
-                perm1.append(i)
-            perm1.extend(removed_dim_idx1)
-            if perm1 is not None:
-                transpose1 = matrix1.transpose(perm1)
-
-        # for input2, we need to transpose the removed_dim to beginning dim
-        perm2 = None
-        transpose2 = matrix2
-        if len(removed_dim_idx2) > 0:
-            perm2 = []
-            for i in range(len(real_shape2)):
-                if i in removed_dim_idx2:
-                    continue
-                perm2.append(i)
-            for t in removed_dim_idx2[::-1]:  # reverse order fetch
-                perm2.insert(0, t)
-            if perm2 is not None:
-                transpose2 = matrix2.transpose(perm2)
-
-        target_shape1 = None
-        # we may need to flatten the first input
-        if len(real_shape1) >= 3:
-            shape1 = list(transpose1.shape)
-            cum1 = 1
-            for i in range(len(shape1) - removed_dim_count):
-                cum1 = cum1 * shape1[i]
-            cum2 = 1
-            for i in range(removed_dim_count):
-                cum2 = cum2 * shape1[len(shape1) - removed_dim_count + i]
-            target_shape1 = [cum1, cum2]
-            transpose1 = transpose1.reshape(target_shape1)
-
-        target_shape2 = None
-        # we may need to flatten the second input
-        if len(real_shape2) >= 3:
-            shape2 = list(transpose2.shape)
-            cum1 = 1
-            for i in range(removed_dim_count):
-                cum1 = cum1 * shape2[i]
-            cum2 = 1
-            for i in range(len(shape2) - removed_dim_count):
-                cum2 = cum2 * shape2[i + removed_dim_count]
-            target_shape2 = [cum1, cum2]
-            transpose2 = transpose2.reshape(target_shape2)
-
-        # Compare and validate
-        matmul_result = np.matmul(transpose1, transpose2).reshape(real_shape3)
-        einsum_result = np.einsum(equation, matrix1, matrix2)
-        if matmul_result.shape != einsum_result.shape or not np.isclose(matmul_result, einsum_result).all():
-            continue
-
-        # Begin to legalize the model
-        # insert a Transpose layer before input1
-        if not constant_input0:
-            if perm1 is not None:
-                transpose_input1 = G.nodes[layer]["input"][0]
-                transpose_layer1 = transpose_input1 + "_transpose"
-                node_dict = {
-                    "op_type": "Transpose",
-                    "input": [transpose_input1],
-                    "output": [transpose_layer1],
-                    "attr_dict": {"perm": perm1}
-                }
-                G.add_node(transpose_layer1, **node_dict)
-                G.add_edge(transpose_input1, transpose_layer1)
-                G.add_edge(transpose_layer1, layer)
-                G.remove_edge(transpose_input1, layer)
-                G.nodes[layer]["input"][0] = transpose_layer1
-                logger.debug(
-                    "[DEBUG] insert a Transpose layer {} to make it a valid MatMul input".format(
-                        transpose_layer1
-                    )
-                )
-
-        if not constant_input1:
-            # insert a Transpose layer before input2
-            if perm2 is not None:
-                transpose_input2 = G.nodes[layer]["input"][1]
-                transpose_layer2 = transpose_input2 + "_transpose"
-                node_dict = {
-                    "op_type": "Transpose",
-                    "input": [transpose_input2],
-                    "output": [transpose_layer2],
-                    "attr_dict": {"perm": perm2}
-                }
-                G.add_node(transpose_layer2, **node_dict)
-                G.add_edge(transpose_input2, transpose_layer2)
-                G.add_edge(transpose_layer2, layer)
-                G.remove_edge(transpose_input2, layer)
-                G.nodes[layer]["input"][1] = transpose_layer2
-                logger.debug(
-                    "[DEBUG] insert a Transpose layer {} to make it a valid MatMul input".format(
-                        transpose_layer2
-                    )
-                )
-
-        if not constant_input0:
-            # insert a Reshape layer before input1
-            if target_shape1 is not None:
-                reshape_input1 = G.nodes[layer]["input"][0]
-                reshape_layer1 = reshape_input1 + "_reshape"
-                tensor_dict[reshape_layer1 + "_shape"] = np.array(target_shape1).astype(np.int64)
-                node_dict = {
-                    "op_type": "Reshape",
-                    "input": [reshape_input1, reshape_layer1 + "_shape"],
-                    "output": [reshape_layer1]
-                }
-                G.add_node(reshape_layer1, **node_dict)
-                G.add_edge(reshape_input1, reshape_layer1)
-                G.add_edge(reshape_layer1, layer)
-                G.remove_edge(reshape_input1, layer)
-                G.nodes[layer]["input"][0] = reshape_layer1
-                logger.debug(
-                    "[DEBUG] insert a Reshape layer {} to make it a valid MatMul input".format(
-                        reshape_layer1
-                    )
-                )
-
-        if not constant_input1:
-            # insert a Reshape layer before input2
-            if target_shape2 is not None:
-                reshape_input2 = G.nodes[layer]["input"][1]
-                reshape_layer2 = reshape_input2 + "_reshape"
-                tensor_dict[reshape_layer2 + "_shape"] = np.array(target_shape2).astype(np.int64)
-                node_dict = {
-                    "op_type": "Reshape",
-                    "input": [reshape_input2, reshape_layer2 + "_shape"],
-                    "output": [reshape_layer2]
-                }
-                G.add_node(reshape_layer2, **node_dict)
-                G.add_edge(reshape_input2, reshape_layer2)
-                G.add_edge(reshape_layer2, layer)
-                G.remove_edge(reshape_input2, layer)
-                G.nodes[layer]["input"][1] = reshape_layer2
-                logger.debug(
-                    "[DEBUG] insert a Reshape layer {} to make it a valid MatMul input".format(
-                        reshape_layer2
-                    )
-                )
-
-        if constant_input0:
-            origin_values = tensor_dict[G.nodes[layer]["input"][0]]
-            new_values = origin_values
-            if perm1 is not None:
-                new_values = np.transpose(new_values, perm1)
-            if len(real_shape1) >= 3:
-                new_values = new_values.reshape(target_shape1)
-            tensor_dict[G.nodes[layer]["input"][0]] = new_values
-
-        if constant_input1:
-            origin_values1 = tensor_dict[G.nodes[layer]["input"][1]]
-            new_values1 = origin_values1
-            if perm2 is not None:
-                new_values1 = np.transpose(new_values1, perm2)
-            if len(real_shape2) >= 3:
-                new_values1 = new_values1.reshape(target_shape2)
-            tensor_dict[G.nodes[layer]["input"][1]] = new_values1
-
-        # replace the Einsum layer by MatMul layer
-        G.nodes[layer]["op_type"] = "MatMul"
-        del G.nodes[layer]["attr_dict"]
-        shape_dict[layer] = [target_shape1[0], target_shape2[-1]]
-
-        # insert a Reshape layer to reshape the flattened MatMul output
-        reshape_layer3 = layer + "_reshape"
-        tensor_dict[reshape_layer3 + "_shape"] = np.array(real_shape3).astype(np.int64)
-        append_new_node(
-            opt,
-            layer,
-            reshape_layer3,
-            "Reshape",
-            input=[layer, reshape_layer3 + "_shape"],
-            output=[reshape_layer3]
-        )
-        opt.compare_dict[reshape_layer3] = opt.compare_dict[layer]
-
-        # skip the comparison of MatMul layer
-        opt.compare_dict[layer] = None
-
-        logger.debug(
-            "[DEBUG] insert a Reshape layer {} to keep the original output shape of layer {}".format(
-                reshape_layer3, layer
-            )
-        )
-
-        logger.debug(
-            "[DEBUG] replace Einsum layer {} by MatMul layer".format(
-                layer
-            )
-        )
-        opt.passes_counter["ReplaceEinsumByMatMul_pattern2"] += 1
+  cout << "689689";
+  return success();
+}
