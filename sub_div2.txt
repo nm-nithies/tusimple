@@ -1,0 +1,167 @@
+// float extractFloatFromValue(mlir::Value value) {
+//     // Check if the value is defined by a constant operation.
+//     if (auto constOp = value.getDefiningOp<mlir::arith::ConstantOp>()) {
+//         // Get the constant attribute (could be a FloatAttr or DenseElementsAttr).
+//         if (auto floatAttr = constOp.getValue().dyn_cast<mlir::FloatAttr>()) {
+//             // Return the float value.
+//             return floatAttr.getValueAsDouble();  // Convert to float if needed.
+//         }
+//     }
+    
+//     // If the value isn't a constant or isn't float, return some default or error.
+//     throw std::runtime_error("Value is not a constant float!");
+// }
+
+
+
+// float extractFloatFromTensorValue(mlir::Value value) {
+//     if (auto constOp = value.getDefiningOp<ONNXConstantOp>()) {
+//         auto denseAttr = constOp.getValueAttr().dyn_cast<mlir::DenseFPElementsAttr>();
+//         if (denseAttr) {
+//             // Extract the float value from the tensor (assuming it's a scalar tensor).
+//             auto floatValue = *denseAttr.getFloatValues().begin();
+//             return floatValue.convertToFloat();
+//         }
+//     }
+
+//     // If the value isn't a constant tensor with floats, throw an error or return default.
+//     throw std::runtime_error("Value is not a constant float tensor!");
+// }
+
+float getSingleFloatFromTensor(mlir::Value val) {
+    // Check if the value is defined by a constant operation.
+    if (auto constOp = val.getDefiningOp<mlir::arith::ConstantOp>()) {
+        // Extract the attribute from the constant op.
+        if (auto denseAttr = dyn_cast<mlir::DenseFPElementsAttr>(constOp.getValue())) {
+            // Make sure the tensor has exactly one element.
+            if (denseAttr.getNumElements() == 1) {
+                // Return the single float value.
+                return (*denseAttr.getValues<float>().begin());
+            } else {
+                throw std::runtime_error("Tensor has more than one element.");
+            }
+        }
+    }
+
+    // If it's not a constant or not a valid tensor, throw an error.
+    throw std::runtime_error("Value is not a constant tensor or doesn't contain a single float.");
+}
+
+
+static bool isSubDivBatchNormMatched(
+    ONNXSubOp subOp, ONNXDivOp &divOp) {
+  divOp = nullptr;
+  for (Operation *user : subOp->getUsers()) {
+    if (isa<ONNXDivOp>(user) && !divOp)
+    {
+      cout<<"If condition";
+      divOp = cast<ONNXDivOp>(user);
+    }
+    else
+      return false;
+  }
+  return divOp != nullptr;
+}
+
+
+mlir::Value createFloatTensorConstant(mlir::OpBuilder &builder, mlir::Location loc, float value) {
+    auto elementType = builder.getF32Type();
+    auto tensorType = mlir::RankedTensorType::get({}, elementType); 
+    auto denseAttr = mlir::DenseElementsAttr::get(tensorType, llvm::ArrayRef<float>(&value, 1));
+    return builder.create<mlir::arith::ConstantOp>(loc, tensorType, denseAttr).getResult();
+}
+
+struct SubDivFuseBatchNormPattern : public OpRewritePattern<ONNXSubOp> {
+  using OpRewritePattern<ONNXSubOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(
+      ONNXSubOp subOp, PatternRewriter &rewriter) const final {
+
+    Location odsLoc = subOp.getLoc();
+    onnx_mlir::MultiDialectBuilder<onnx_mlir::OnnxBuilder> create(
+        rewriter, odsLoc);
+    ONNXDivOp divOp;
+    if (!isSubDivBatchNormMatched(subOp, divOp))
+     { cout<<"643";
+      return failure();}
+    
+    //   // Ensure both `Sub` and `Div` have a constant operand.
+    // Value subInput0 = subOp.getOperand(0);
+    // Value subInput1 = subOp.getOperand(1);
+    // Value divInput1 = cast<ONNXDivOp>(divOp).getOperand(1);
+
+    // if (!subInput1.getDefiningOp<ONNXConstantOp>() || !divInput1.getDefiningOp<ONNXConstantOp>()) {
+    //   return failure();
+    // }
+
+    // // Retrieve constant values for `Sub` and `Div`.
+    // auto subConstValue = subInput1.getDefiningOp<ONNXConstantOp>().value().cast<DenseElementsAttr>();
+    // auto divConstValue = divInput1.getDefiningOp<ONNXConstantOp>().value().cast<DenseElementsAttr>();
+
+    
+    Value input = subOp.getOperand(0);
+    Value scaleValue = subOp.getOperand(1);
+    Value biasValue = divOp.getOperand(1); 
+    auto temp = scaleValue.getType();
+    auto temp1 = dyn_cast<temp>(scaleValue);
+    // auto inputType = mlir::Value::cast<temp>(scaleValue);
+    // FloatAttr a = mlir::dyn_cast<FloatAttr>(subConstValue);
+    // cout<<getSingleFloatFromTensor(divConstValue);
+    // auto constOp = subConstValue.getDefiningOp<mlir::arith::subOp>();
+    // auto denseAttr = dyn_cast<mlir::DenseFPElementsAttr>(constOp.getValue());
+    // float vals = *denseAttr.getValues<float>().begin();
+    // cout<<vals<<"-----Float value ...";
+    // cout<<"655655";
+   
+    // float subValue = 0.5;  
+    // float divValue = 0.2;  
+    // Value scaleValue = createFloatTensorConstant(rewriter, subOp.getLoc(), 1.0 / divValue);
+    // Value biasValue = createFloatTensorConstant(rewriter, subOp.getLoc(),  -subValue / divValue);
+
+    // Value temp = createFloatTensorConstant(rewriter, subOp.getLoc(), 1.0f);
+    // Value scaleValue = create.onnx.div(temp, divConstValue);
+    // Value biasValue = create.onnx.div(subConstValue, divConstValue);
+    
+    // float mean = 0.0;
+    // float variance = 1.0f;
+    // Value meanValue = createFloatTensorConstant(rewriter, subOp.getLoc(), mean);
+    // Value varValue = createFloatTensorConstant(rewriter, subOp.getLoc(), variance);
+   
+    FloatAttr epsilonAttr = rewriter.getF32FloatAttr(1e-5f); 
+    FloatAttr momentumAttr =  rewriter.getF32FloatAttr(0.9);
+    //  float b = momentumAttr.getValueAsDouble();
+    // cout<<b;
+  //  llvm::APFloat epsilon = epsilonAttr.getValue();
+  //  llvm::APFloat momentum = momentumAttr.getValue();
+
+
+    cout<<"679679";
+    
+    SmallVector<Type, 1> outputTypes;
+    outputTypes.emplace_back(input.getType());
+    // outputTypes.emplace_back(scaleValue.getType());
+    // outputTypes.emplace_back(biasValue.getType());
+    
+
+    auto bnOp = rewriter.create<ONNXBatchNormalizationInferenceModeOp>(
+        subOp.getLoc(),outputTypes,input,
+        scaleValue, biasValue, scaleValue, biasValue, epsilonAttr, momentumAttr);  // epsilon
+        
+    // Value X = bnOp.getX();
+    // X.setType(divOp.getResult().getType());
+    rewriter.replaceOp(divOp, bnOp.getResult());
+    rewriter.eraseOp(subOp);
+  
+    // rewriter.replaceOp(divOp, bnOp.getResult(0));
+    // rewriter.eraseOp(subOp);
+    cout<<"689689";
+    return success();
+
+
+    //  Y.setType(instanceNormOp.getResult().getType());
+    // // Replace operation.
+    // rewriter.replaceOp(instanceNormOp, Y);
+    // cout<<"SUCCeSS";
+    // return success();
+  }
+};
