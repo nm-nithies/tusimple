@@ -137,3 +137,4 @@ torch.onnx.export(
 
 print("Model has been exported to custom_model.onnx")
 
+unflatten: Provided sizes [3, 32, 32] don't multiply up to the size of dim 1 (3) in the input tensor
