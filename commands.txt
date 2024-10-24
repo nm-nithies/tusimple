@@ -97,3 +97,9 @@ for (size_t i = 0; i < bufferSize; ++i) {
 
 onnx-mlir: /workspace/ONNX_MLIR/llvm-project/llvm/include/llvm/Support/Casting.h:656: decltype(auto) llvm::dyn_cast(From&) [with To = mlir::DisposableElementsAttr; From = mlir::ElementsAttr]: Assertion `detail::isPresent(Val) && "dyn_cast on a non-existent value"' failed.
 Aborted (core dumped)
+
+
+if (!elementsAttr.isa<mlir::DisposableElementsAttr>()) {
+    std::cerr << "Error: elementsAttr is not a DisposableElementsAttr." << std::endl;
+    return failure();
+}
