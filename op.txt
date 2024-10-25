@@ -675,3 +675,22 @@ def find_non_root_pred(G, root, layer):
             non_root_pred = pred
             break
     return non_root_pred
+
+
+
+
+
+def ReplaceAvgpool(opt):
+    G = opt.G
+    ShapeDict = opt.ShapeDict
+
+    layers = list(nx.topological_sort(G))
+    for layer in layers:
+        if G.nodes[layer].get("op_type", "") == "AveragePool":
+            kernel_shape = G.nodes[layer]["attr_dict"].get("kernel_shape", [])
+            input_shape = ShapeDict.get(G.nodes[layer]["input"][0], [])
+            if kernel_shape != [] and input_shape != [] and kernel_shape == input_shape[-len(kernel_shape):]:
+                G.nodes[layer]["op_type"] = "GlobalAveragePool"
+                G.nodes[layer]["attr_dict"] = {}
+
+                opt.passes_counter["ReplaceAvgpool"] += 1
