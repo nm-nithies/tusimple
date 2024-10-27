@@ -1,26 +1,24 @@
+# Base image with specified CUDA and OS versions
 ARG CUDA_VERSION=11.8.0
 ARG OS_VERSION=20.04
- 
+
 FROM nvidia/cuda:${CUDA_VERSION}-cudnn8-devel-ubuntu${OS_VERSION}
 LABEL maintainer="NVIDIA CORPORATION"
- 
+
 ENV TRT_VERSION 8.5.3.1
 SHELL ["/bin/bash", "-c"]
- 
-# Required to build Ubuntu 18.04 without user prompts with DLFW container
+
+# Set timezone and prevent user prompts
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Kolkata
- 
+
+# Set up working directory
 WORKDIR /workspace
- 
-RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
- 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    software-properties-common && \
-    add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
+
+# Essential dependencies
+RUN apt-get update && apt-get install -y \
+    ffmpeg libsm6 libxext6 \
+    software-properties-common \
     python3.9 \
     python3.9-venv \
     python3.9-dev \
@@ -38,23 +36,29 @@ RUN apt-get update && \
 
 # Install CMake >= 3.20.0
 RUN wget https://github.com/Kitware/CMake/releases/download/v3.20.0/cmake-3.20.0-Linux-x86_64.sh && \
-chmod +x cmake-3.20.0-Linux-x86_64.sh && \
-./cmake-3.20.0-Linux-x86_64.sh --skip-license --prefix=/usr/local
+    chmod +x cmake-3.20.0-Linux-x86_64.sh && \
+    ./cmake-3.20.0-Linux-x86_64.sh --skip-license --prefix=/usr/local
 
-# Create a virtual environment
+# Set up Python environment
 RUN python3.9 -m venv /opt/venv
- 
-# Activate the virtual environment
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64
- 
-# Upgrade pip inside the virtual environment
+
+# Upgrade pip and install Python requirements
 RUN pip install --upgrade pip
 
+# Install PyTorch and related dependencies
+RUN pip install torch==1.8.1+cu${CUDA_VERSION} torchvision==0.9.1+cu${CUDA_VERSION} -f https://download.pytorch.org/whl/torch_stable.html
+
+# Install MMCV, MMDetection, and MMSegmentation
+RUN pip install mmcv-full==1.4.0 -f https://download.openmmlab.com/mmcv/dist/cu${CUDA_VERSION}/torch1.8.1/index.html
+RUN pip install mmdet==2.14.0
+RUN pip install mmsegmentation==0.14.1
+
+# Install any additional requirements
 COPY onnx-mlir/requirements.txt onnx-mlir/requirements.txt
-RUN pip3 install -r onnx-mlir/requirements.txt
- 
-RUN apt-get update && \
-    apt-get upgrade -y && \
-    apt-get install -y git
+RUN pip install -r onnx-mlir/requirements.txt
+
+# Final clean-up
+RUN apt-get update && apt-get upgrade -y && apt-get install -y git
