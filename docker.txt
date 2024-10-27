@@ -5,3 +5,9 @@ ERROR: No matching distribution found for waymo-open-dataset-tf-2-1-0
 
 Try 'basename --help' for more information.
 tools/fastbev_run.sh: line 61: <8?:8: syntax error: operand expected (error token is "<8?:8")
+
+MMDET3D: /mnt/cache/huangbin1/Fast-BEV
+SRUN_ARGS: -s
+basename: missing operand
+Try 'basename --help' for more information.
+tools/fastbev_run.sh: line 61: paper/fastbev_m0_r18_s256x704_v200x200x4_c192_d2_f4<8?paper/fastbev_m0_r18_s256x704_v200x200x4_c192_d2_f4:8: division by 0 (error token is "fastbev_m0_r18_s256x704_v200x200x4_c192_d2_f4<8?paper/fastbev_m0_r18_s256x704_v200x200x4_c192_d2_f4:8")
