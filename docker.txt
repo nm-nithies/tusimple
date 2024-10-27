@@ -1,0 +1,60 @@
+ARG CUDA_VERSION=11.8.0
+ARG OS_VERSION=20.04
+ 
+FROM nvidia/cuda:${CUDA_VERSION}-cudnn8-devel-ubuntu${OS_VERSION}
+LABEL maintainer="NVIDIA CORPORATION"
+ 
+ENV TRT_VERSION 8.5.3.1
+SHELL ["/bin/bash", "-c"]
+ 
+# Required to build Ubuntu 18.04 without user prompts with DLFW container
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Kolkata
+ 
+WORKDIR /workspace
+ 
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
+ 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+    python3.9 \
+    python3.9-venv \
+    python3.9-dev \
+    python3-pip \
+    gcc \
+    cmake \
+    make \
+    ninja-build \
+    openjdk-11-jdk \
+    git \
+    wget \
+    curl \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install CMake >= 3.20.0
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.20.0/cmake-3.20.0-Linux-x86_64.sh && \
+chmod +x cmake-3.20.0-Linux-x86_64.sh && \
+./cmake-3.20.0-Linux-x86_64.sh --skip-license --prefix=/usr/local
+
+# Create a virtual environment
+RUN python3.9 -m venv /opt/venv
+ 
+# Activate the virtual environment
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64
+ 
+# Upgrade pip inside the virtual environment
+RUN pip install --upgrade pip
+
+COPY onnx-mlir/requirements.txt onnx-mlir/requirements.txt
+RUN pip3 install -r onnx-mlir/requirements.txt
+ 
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y git
