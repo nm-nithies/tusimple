@@ -3,11 +3,25 @@ ERROR: Could not find a version that satisfies the requirement waymo-open-datase
 ERROR: No matching distribution found for waymo-open-dataset-tf-2-1-0
 
 
-Try 'basename --help' for more information.
-tools/fastbev_run.sh: line 61: <8?:8: syntax error: operand expected (error token is "<8?:8")
++ PARTITION=1
++ JOB_NAME=1
++ CONFIG=configs/fastbev/exp/paper/fastbev_m0_r18_s256x704_v200x200x4_c192_d2_f4.py
++ GPUS=1
++ GPUS_PER_NODE=1
++ CPUS_PER_TASK=5
++ QUOTATYPE=auto
+/workspace/Fast-BEV/tools/slurm_eval.sh: 12: Bad substitution
+#!/usr/bin/env bash
 
-MMDET3D: /mnt/cache/huangbin1/Fast-BEV
-SRUN_ARGS: -s
-basename: missing operand
-Try 'basename --help' for more information.
-tools/fastbev_run.sh: line 61: paper/fastbev_m0_r18_s256x704_v200x200x4_c192_d2_f4<8?paper/fastbev_m0_r18_s256x704_v200x200x4_c192_d2_f4:8: division by 0 (error token is "fastbev_m0_r18_s256x704_v200x200x4_c192_d2_f4<8?paper/fastbev_m0_r18_s256x704_v200x200x4_c192_d2_f4:8")
+set -x
+
+PARTITION=$1
+JOB_NAME=$2
+CONFIG=$3
+GPUS=${GPUS:-1}
+GPUS_PER_NODE=${GPUS_PER_NODE:-8}
+CPUS_PER_TASK=${CPUS_PER_TASK:-5}
+QUOTATYPE=${QUOTATYPE:-"auto"}
+PY_ARGS=${@:4}
+SRUN_ARGS=${SRUN_ARGS:-""}
+
