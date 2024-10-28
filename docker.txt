@@ -228,3 +228,414 @@ RUN cd /tmp && \
     chmod +x cmake-3.23.0-linux-x86_64.sh && \
     ./cmake-3.23.0-linux-x86_64.sh --prefix=/usr/local --exclude-subdir --skip-license && \
     rm ./cmake-3.23.0-linux-x86_64.sh
+
+
+
+
+
+
+
+
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::ValueInfoProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:8456:21:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::TensorAnnotation]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::TensorAnnotation>::TypeHandler; typename TypeHandler::Type = onnx::TensorAnnotation]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::TensorAnnotation]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:8576:39:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::TensorShapeProto_Dimension]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::TensorShapeProto_Dimension>::TypeHandler; typename TypeHandler::Type = onnx::TensorShapeProto_Dimension]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::TensorShapeProto_Dimension]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:9859:19:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  In file included from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_field.h:60:0,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/implicit_weak_message.h:39,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/generated_message_util.h:54,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:26,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/onnx/onnx/onnx_pb.h:51,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/onnx/onnx/onnx-operators_pb.h:7,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/onnx/onnx/defs/attr_proto_util.h:7,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/onnx/onnx/defs/function.h:12,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/onnx/onnx/shape_inference/implementation.h:7,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/onnx/onnx/shape_inference/implementation.cc:5:
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::TensorProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::TensorProto>::TypeHandler; typename TypeHandler::Type = onnx::TensorProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::TensorProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:6242:23:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+     static inline GenericType* NewFromPrototype(const GenericType* prototype,
+                                                                    ^~~~~~~~~
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::GraphProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::GraphProto>::TypeHandler; typename TypeHandler::Type = onnx::GraphProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::GraphProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:6282:22:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::SparseTensorProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::SparseTensorProto>::TypeHandler; typename TypeHandler::Type = onnx::SparseTensorProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::SparseTensorProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:6322:30:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::TypeProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::TypeProto>::TypeHandler; typename TypeHandler::Type = onnx::TypeProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::TypeProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:6362:27:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::AttributeProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::AttributeProto>::TypeHandler; typename TypeHandler::Type = onnx::AttributeProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::AttributeProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:6990:25:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::StringStringEntryProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::StringStringEntryProto>::TypeHandler; typename TypeHandler::Type = onnx::StringStringEntryProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::StringStringEntryProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:7282:38:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::OperatorSetIdProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::OperatorSetIdProto>::TypeHandler; typename TypeHandler::Type = onnx::OperatorSetIdProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::OperatorSetIdProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:7394:28:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::TrainingInfoProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::TrainingInfoProto>::TypeHandler; typename TypeHandler::Type = onnx::TrainingInfoProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::TrainingInfoProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:7864:29:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::FunctionProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::FunctionProto>::TypeHandler; typename TypeHandler::Type = onnx::FunctionProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::FunctionProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:7904:25:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::NodeProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::NodeProto>::TypeHandler; typename TypeHandler::Type = onnx::NodeProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::NodeProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:8200:20:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::ValueInfoProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::ValueInfoProto>::TypeHandler; typename TypeHandler::Type = onnx::ValueInfoProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::ValueInfoProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:8456:21:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::TensorAnnotation]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::TensorAnnotation>::TypeHandler; typename TypeHandler::Type = onnx::TensorAnnotation]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::TensorAnnotation]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:8576:39:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::TensorShapeProto_Dimension]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::TensorShapeProto_Dimension>::TypeHandler; typename TypeHandler::Type = onnx::TensorShapeProto_Dimension]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::TensorShapeProto_Dimension]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:9859:19:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::OperatorProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::OperatorProto>::TypeHandler; typename TypeHandler::Type = onnx::OperatorProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::OperatorProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-operators-ml.pb.h:1178:25:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::SequenceProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::SequenceProto>::TypeHandler; typename TypeHandler::Type = onnx::SequenceProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::SequenceProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-data.pb.h:1133:31:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::MapProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::MapProto>::TypeHandler; typename TypeHandler::Type = onnx::MapProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::MapProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-data.pb.h:1173:26:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::OptionalProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::OptionalProto>::TypeHandler; typename TypeHandler::Type = onnx::OptionalProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::OptionalProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-data.pb.h:1213:31:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  In file included from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_field.h:60:0,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/implicit_weak_message.h:39,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/generated_message_util.h:54,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:26,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/onnx/onnx/onnx_pb.h:51,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/onnx/onnx/common/tensor.h:14,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/onnx/onnx/common/ir.h:27,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/onnx/onnx/version_converter/BaseConverter.h:12,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/onnx/onnx/version_converter/convert.h:10,
+                   from /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/onnx/onnx/version_converter/convert.cc:5:
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::TensorProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::TensorProto>::TypeHandler; typename TypeHandler::Type = onnx::TensorProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::TensorProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:6242:23:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+     static inline GenericType* NewFromPrototype(const GenericType* prototype,
+                                                                    ^~~~~~~~~
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::GraphProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::GraphProto>::TypeHandler; typename TypeHandler::Type = onnx::GraphProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::GraphProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:6282:22:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::SparseTensorProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::SparseTensorProto>::TypeHandler; typename TypeHandler::Type = onnx::SparseTensorProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::SparseTensorProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:6322:30:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::TypeProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::TypeProto>::TypeHandler; typename TypeHandler::Type = onnx::TypeProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::TypeProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:6362:27:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::AttributeProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::AttributeProto>::TypeHandler; typename TypeHandler::Type = onnx::AttributeProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::AttributeProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:6990:25:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::StringStringEntryProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::StringStringEntryProto>::TypeHandler; typename TypeHandler::Type = onnx::StringStringEntryProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::StringStringEntryProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:7282:38:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::OperatorSetIdProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::OperatorSetIdProto>::TypeHandler; typename TypeHandler::Type = onnx::OperatorSetIdProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::OperatorSetIdProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:7394:28:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::TrainingInfoProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::TrainingInfoProto>::TypeHandler; typename TypeHandler::Type = onnx::TrainingInfoProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::TrainingInfoProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:7864:29:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::FunctionProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::FunctionProto>::TypeHandler; typename TypeHandler::Type = onnx::FunctionProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::FunctionProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:7904:25:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::NodeProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::NodeProto>::TypeHandler; typename TypeHandler::Type = onnx::NodeProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::NodeProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:8200:20:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::ValueInfoProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::ValueInfoProto>::TypeHandler; typename TypeHandler::Type = onnx::ValueInfoProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::ValueInfoProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:8456:21:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::TensorAnnotation]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::TensorAnnotation>::TypeHandler; typename TypeHandler::Type = onnx::TensorAnnotation]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::TensorAnnotation]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:8576:39:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::TensorShapeProto_Dimension]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::TensorShapeProto_Dimension>::TypeHandler; typename TypeHandler::Type = onnx::TensorShapeProto_Dimension]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::TensorShapeProto_Dimension]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.pb.h:9859:19:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h: In instantiation of 'static GenericType* google::protobuf::internal::GenericTypeHandler<Type>::NewFromPrototype(const GenericType*, google::protobuf::Arena*) [with GenericType = onnx::OperatorProto]':
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:216:38:   required from 'typename TypeHandler::Type* google::protobuf::internal::RepeatedPtrFieldBase::Add(const typename TypeHandler::Type*) [with TypeHandler = google::protobuf::RepeatedPtrField<onnx::OperatorProto>::TypeHandler; typename TypeHandler::Type = onnx::OperatorProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:1248:48:   required from 'Element* google::protobuf::RepeatedPtrField<T>::Add() [with Element = onnx::OperatorProto]'
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-operators-ml.pb.h:1178:25:   required from here
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/third_party/protobuf/src/google/protobuf/repeated_ptr_field.h:752:66: warning: unused parameter 'prototype' [-Wunused-parameter]
+  [ 95%] Linking CXX static library libonnx.a
+  [ 95%] Built target onnx
+  [ 95%] Building CXX object CMakeFiles/onnx_optimizer.dir/onnxoptimizer/model_util.cc.o
+  [ 96%] Building CXX object CMakeFiles/onnx_optimizer.dir/onnxoptimizer/optimize.cc.o
+  [ 96%] Building CXX object third_party/onnx/CMakeFiles/onnx_cpp2py_export.dir/onnx/cpp2py_export.cc.o
+  [ 97%] Building CXX object CMakeFiles/onnx_optimizer.dir/onnxoptimizer/pass.cc.o
+  [ 97%] Building CXX object CMakeFiles/onnx_optimizer.dir/onnxoptimizer/pass_manager.cc.o
+  [ 97%] Building CXX object CMakeFiles/onnx_optimizer.dir/onnxoptimizer/pass_registry.cc.o
+  [ 97%] Building CXX object CMakeFiles/onnx_optimizer.dir/onnxoptimizer/passes/pass_util.cc.o
+  [ 98%] Building CXX object CMakeFiles/onnx_optimizer.dir/onnxoptimizer/passes/tensor_util.cc.o
+  /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/onnxoptimizer/model_util.cc:10:10: fatal error: filesystem: No such file or directory
+   #include <filesystem>
+            ^~~~~~~~~~~~
+  compilation terminated.
+  CMakeFiles/onnx_optimizer.dir/build.make:75: recipe for target 'CMakeFiles/onnx_optimizer.dir/onnxoptimizer/model_util.cc.o' failed
+  make[2]: *** [CMakeFiles/onnx_optimizer.dir/onnxoptimizer/model_util.cc.o] Error 1
+  make[2]: *** Waiting for unfinished jobs....
+  CMakeFiles/Makefile2:155: recipe for target 'CMakeFiles/onnx_optimizer.dir/all' failed
+  make[1]: *** [CMakeFiles/onnx_optimizer.dir/all] Error 2
+  make[1]: *** Waiting for unfinished jobs....
+  [ 98%] Linking CXX shared module ../../onnx_cpp2py_export.cpython-36m-x86_64-linux-gnu.so
+  [ 98%] Built target onnx_cpp2py_export
+  Makefile:135: recipe for target 'all' failed
+  make: *** [all] Error 2
+  Traceback (most recent call last):
+    File "<string>", line 1, in <module>
+    File "/tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/setup.py", line 347, in <module>
+      'onnxoptimizer=onnxoptimizer:main',
+    File "/usr/local/lib/python3.6/dist-packages/setuptools/__init__.py", line 153, in setup
+      return distutils.core.setup(**attrs)
+    File "/usr/lib/python3.6/distutils/core.py", line 148, in setup
+      dist.run_commands()
+    File "/usr/lib/python3.6/distutils/dist.py", line 955, in run_commands
+      self.run_command(cmd)
+    File "/usr/lib/python3.6/distutils/dist.py", line 974, in run_command
+      cmd_obj.run()
+    File "/usr/local/lib/python3.6/dist-packages/wheel/bdist_wheel.py", line 299, in run
+      self.run_command('build')
+    File "/usr/lib/python3.6/distutils/cmd.py", line 313, in run_command
+      self.distribution.run_command(command)
+    File "/usr/lib/python3.6/distutils/dist.py", line 974, in run_command
+      cmd_obj.run()
+    File "/usr/lib/python3.6/distutils/command/build.py", line 135, in run
+      self.run_command(cmd_name)
+    File "/usr/lib/python3.6/distutils/cmd.py", line 313, in run_command
+      self.distribution.run_command(command)
+    File "/usr/lib/python3.6/distutils/dist.py", line 974, in run_command
+      cmd_obj.run()
+    File "/tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/setup.py", line 223, in run
+      self.run_command('cmake_build')
+    File "/usr/lib/python3.6/distutils/cmd.py", line 313, in run_command
+      self.distribution.run_command(command)
+    File "/usr/lib/python3.6/distutils/dist.py", line 974, in run_command
+      cmd_obj.run()
+    File "/tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/setup.py", line 217, in run
+      subprocess.check_call(build_args)
+    File "/usr/lib/python3.6/subprocess.py", line 311, in check_call
+      raise CalledProcessError(retcode, cmd)
+  subprocess.CalledProcessError: Command '['/usr/local/bin/cmake', '--build', '.', '--', '-j', '20']' returned non-zero exit status 2.
+  ----------------------------------------
+  ERROR: Failed building wheel for onnxoptimizer
+  Building wheel for PyTurboJPEG (setup.py): finished with status 'done'
+  Created wheel for PyTurboJPEG: filename=PyTurboJPEG-1.7.7-py3-none-any.whl size=12489 sha256=17a75e3b240127857eaec722eed0a5ec3a6b52fdaa8e4d97b564939a6387a519
+  Stored in directory: /root/.cache/pip/wheels/37/bb/10/5d84bb8cb28b65093e06ac6acdf5f7158d9d5b7eb7b736d46b
+Successfully built PyTurboJPEG
+Failed to build onnxoptimizer
+Installing collected packages: onnx, flatbuffers, tiffile, PyTurboJPEG, onnxruntime, onnxoptimizer, lmdb
+    Running setup.py install for onnxoptimizer: started
+    Running setup.py install for onnxoptimizer: finished with status 'error'
+    ERROR: Command errored out with exit status 1:
+     command: /usr/bin/python3 -u -c 'import io, os, sys, setuptools, tokenize; sys.argv[0] = '"'"'/tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/setup.py'"'"'; __file__='"'"'/tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/setup.py'"'"';f = getattr(tokenize, '"'"'open'"'"', open)(__file__) if os.path.exists(__file__) else io.StringIO('"'"'from setuptools import setup; setup()'"'"');code = f.read().replace('"'"'\r\n'"'"', '"'"'\n'"'"');f.close();exec(compile(code, __file__, '"'"'exec'"'"'))' install --record /tmp/pip-record-2voj4hs8/install-record.txt --single-version-externally-managed --compile --install-headers /usr/local/include/python3.6/onnxoptimizer
+         cwd: /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/
+    Complete output (136 lines):
+    fatal: not a git repository (or any of the parent directories): .git
+    /usr/local/lib/python3.6/dist-packages/setuptools/dist.py:726: UserWarning: Usage of dash-separated 'license-file' will not be supported in future versions. Please use the underscore name 'license_file' instead
+      % (opt, underscore_opt)
+    running install
+    /usr/local/lib/python3.6/dist-packages/setuptools/command/install.py:37: SetuptoolsDeprecationWarning: setup.py install is deprecated. Use build and pip and other standards-based tools.
+      setuptools.SetuptoolsDeprecationWarning,
+    running build
+    running build_py
+    running create_version
+    running cmake_build
+    --
+    -- 3.20.1.0
+    -- Found Python: /usr/bin/python3 (found version "3.6.9") found components: Interpreter Development Development.Module Development.Embed
+    Generated: /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-ml.proto
+    Generated: /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-operators-ml.proto
+    Generated: /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build/third_party/onnx/onnx/onnx-data.proto
+    -- Could NOT find pybind11 (missing: pybind11_DIR)
+    -- pybind11 v2.9.2
+    --
+    -- ******** Summary ********
+    --   CMake version             : 3.23.0
+    --   CMake command             : /usr/local/bin/cmake
+    --   System                    : Linux
+    --   C++ compiler              : /usr/bin/c++
+    --   C++ compiler version      : 7.5.0
+    --   CXX flags                 :  -Wnon-virtual-dtor
+    --   Build type                : Release
+    --   Compile definitions       : __STDC_FORMAT_MACROS
+    --   CMAKE_PREFIX_PATH         :
+    --   CMAKE_INSTALL_PREFIX      : /usr/local
+    --   CMAKE_MODULE_PATH         :
+    --
+    --   ONNX version              : 1.13.0
+    --   ONNX NAMESPACE            : onnx
+    --   ONNX_USE_LITE_PROTO       : ON
+    --   USE_PROTOBUF_SHARED_LIBS  : OFF
+    --   Protobuf_USE_STATIC_LIBS  : ON
+    --   ONNX_DISABLE_EXCEPTIONS   : OFF
+    --   ONNX_WERROR               : OFF
+    --   ONNX_BUILD_TESTS          : OFF
+    --   ONNX_BUILD_BENCHMARKS     : OFF
+    --
+    --   Protobuf compiler         :
+    --   Protobuf includes         :
+    --   Protobuf libraries        :
+    --   BUILD_ONNX_PYTHON         : ON
+    --     Python version        :
+    --     Python executable     : /usr/bin/python3
+    --     Python includes       :
+    -- Found Python: /usr/bin/python3 (found version "3.6.9") found components: Interpreter
+    CMake Warning at CMakeLists.txt:87 (find_package):
+      By not providing "Findpybind11.cmake" in CMAKE_MODULE_PATH this project has
+      asked CMake to find a package configuration file provided by "pybind11",
+      but CMake did not find one.
+    
+      Could not find a package configuration file provided by "pybind11"
+      (requested version 2.2) with any of the following names:
+    
+        pybind11Config.cmake
+        pybind11-config.cmake
+    
+      Add the installation prefix of "pybind11" to CMAKE_PREFIX_PATH or set
+      "pybind11_DIR" to a directory containing one of the above files.  If
+      "pybind11" provides a separate development package or SDK, be sure it has
+      been installed.
+    
+    
+    -- Configuring done
+    -- Generating done
+    -- Build files have been written to: /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/.setuptools-cmake-build
+    Consolidate compiler generated dependencies of target libprotobuf-lite
+    [ 12%] Built target libprotobuf-lite
+    Consolidate compiler generated dependencies of target libprotobuf
+    [ 41%] Built target libprotobuf
+    Consolidate compiler generated dependencies of target libprotoc
+    [ 71%] Built target libprotoc
+    Consolidate compiler generated dependencies of target protoc
+    [ 72%] Built target protoc
+    [ 73%] Built target gen_onnx_proto
+    [ 74%] Built target gen_onnx_operators_proto
+    [ 74%] Built target gen_onnx_data_proto
+    Consolidate compiler generated dependencies of target onnx_proto
+    [ 78%] Built target onnx_proto
+    Consolidate compiler generated dependencies of target onnx
+    [ 95%] Built target onnx
+    Consolidate compiler generated dependencies of target onnx_cpp2py_export
+    [ 95%] Built target onnx_cpp2py_export
+    Consolidate compiler generated dependencies of target onnx_optimizer
+    [ 95%] Building CXX object CMakeFiles/onnx_optimizer.dir/onnxoptimizer/model_util.cc.o
+    /tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/onnxoptimizer/model_util.cc:10:10: fatal error: filesystem: No such file or directory
+     #include <filesystem>
+              ^~~~~~~~~~~~
+    compilation terminated.
+    CMakeFiles/onnx_optimizer.dir/build.make:75: recipe for target 'CMakeFiles/onnx_optimizer.dir/onnxoptimizer/model_util.cc.o' failed
+    make[2]: *** [CMakeFiles/onnx_optimizer.dir/onnxoptimizer/model_util.cc.o] Error 1
+    CMakeFiles/Makefile2:155: recipe for target 'CMakeFiles/onnx_optimizer.dir/all' failed
+    make[1]: *** [CMakeFiles/onnx_optimizer.dir/all] Error 2
+    Makefile:135: recipe for target 'all' failed
+    make: *** [all] Error 2
+    Traceback (most recent call last):
+      File "<string>", line 1, in <module>
+      File "/tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/setup.py", line 347, in <module>
+        'onnxoptimizer=onnxoptimizer:main',
+      File "/usr/local/lib/python3.6/dist-packages/setuptools/__init__.py", line 153, in setup
+        return distutils.core.setup(**attrs)
+      File "/usr/lib/python3.6/distutils/core.py", line 148, in setup
+        dist.run_commands()
+      File "/usr/lib/python3.6/distutils/dist.py", line 955, in run_commands
+        self.run_command(cmd)
+      File "/usr/lib/python3.6/distutils/dist.py", line 974, in run_command
+        cmd_obj.run()
+      File "/usr/local/lib/python3.6/dist-packages/setuptools/command/install.py", line 68, in run
+        return orig.install.run(self)
+      File "/usr/lib/python3.6/distutils/command/install.py", line 589, in run
+        self.run_command('build')
+      File "/usr/lib/python3.6/distutils/cmd.py", line 313, in run_command
+        self.distribution.run_command(command)
+      File "/usr/lib/python3.6/distutils/dist.py", line 974, in run_command
+        cmd_obj.run()
+      File "/usr/lib/python3.6/distutils/command/build.py", line 135, in run
+        self.run_command(cmd_name)
+      File "/usr/lib/python3.6/distutils/cmd.py", line 313, in run_command
+        self.distribution.run_command(command)
+      File "/usr/lib/python3.6/distutils/dist.py", line 974, in run_command
+        cmd_obj.run()
+      File "/tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/setup.py", line 223, in run
+        self.run_command('cmake_build')
+      File "/usr/lib/python3.6/distutils/cmd.py", line 313, in run_command
+        self.distribution.run_command(command)
+      File "/usr/lib/python3.6/distutils/dist.py", line 974, in run_command
+        cmd_obj.run()
+      File "/tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/setup.py", line 217, in run
+        subprocess.check_call(build_args)
+      File "/usr/lib/python3.6/subprocess.py", line 311, in check_call
+        raise CalledProcessError(retcode, cmd)
+    subprocess.CalledProcessError: Command '['/usr/local/bin/cmake', '--build', '.', '--', '-j', '20']' returned non-zero exit status 2.
+    ----------------------------------------
+ERROR: Command errored out with exit status 1: /usr/bin/python3 -u -c 'import io, os, sys, setuptools, tokenize; sys.argv[0] = '"'"'/tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/setup.py'"'"'; __file__='"'"'/tmp/pip-install-xrfa74fb/onnxoptimizer_f3c6ed2d17f546af91cc5b05a0fda06a/setup.py'"'"';f = getattr(tokenize, '"'"'open'"'"', open)(__file__) if os.path.exists(__file__) else io.StringIO('"'"'from setuptools import setup; setup()'"'"');code = f.read().replace('"'"'\r\n'"'"', '"'"'\n'"'"');f.close();exec(compile(code, __file__, '"'"'exec'"'"'))' install --record /tmp/pip-record-2voj4hs8/install-record.txt --single-version-externally-managed --compile --install-headers /usr/local/include/python3.6/onnxoptimizer Check the logs for full command output.
