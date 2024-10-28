@@ -34,3 +34,12 @@ SRUN_ARGS=${SRUN_ARGS:-""}
 
 
 https://download.openmmlab.com/mmcv/dist/cu118/torch1.13.1/index.html
+
+
+# Install mmcv from source
+RUN git clone https://github.com/open-mmlab/mmcv.git && \
+    cd mmcv && \
+    git checkout v1.5.0 && \
+    pip install -r requirements/optional.txt && \
+    MMCV_WITH_OPS=1 pip install -e . && \
+    cd .. && rm -rf mmcv
