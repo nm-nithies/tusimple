@@ -25,3 +25,7 @@ QUOTATYPE=${QUOTATYPE:-"auto"}
 PY_ARGS=${@:4}
 SRUN_ARGS=${SRUN_ARGS:-""}
 
+++ dirname ./slurm_eval.sh
++ PYTHONPATH=./..:
++ srun -p 1 --job-name=fastbev_m0_r18_s256x704_v200x200x4_c192_d2_f4 --quotatype=auto --gres=gpu:1 --ntasks=1 --ntasks-per-node=1 --cpus-per-task=5 --kill-on-bad-exit=1 -s python -u tools/eval.py configs/fastbev/exp/paper/fastbev_m0_r18_s256x704_v200x200x4_c192_d2_f4.py --launcher=slurm --out work_dirs/fastbev/exp/paper/fastbev_m0_r18_s256x704_v200x200x4_c192_d2_f4/results/results.pkl --eval bbox
+./slurm_eval.sh: line 15: srun: command not found
