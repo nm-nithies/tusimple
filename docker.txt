@@ -219,3 +219,12 @@ WORKDIR /workspace
 
 
 RUN ["/bin/bash"]
+
+
+
+# Install CMake 3.23
+RUN cd /tmp && \
+    wget https://cmake.org/files/v3.23/cmake-3.23.0-linux-x86_64.sh && \
+    chmod +x cmake-3.23.0-linux-x86_64.sh && \
+    ./cmake-3.23.0-linux-x86_64.sh --prefix=/usr/local --exclude-subdir --skip-license && \
+    rm ./cmake-3.23.0-linux-x86_64.sh
