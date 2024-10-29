@@ -169,3 +169,6 @@ WORKDIR /workspace
 
 RUN ["/bin/bash"]
 
+
+
+undefined symbol: _ZN6caffe28TypeMeta21_typeMetaDataInstanceIN3c107complexIfEEEEPKNS_6detail12TypeMetaDataEv
