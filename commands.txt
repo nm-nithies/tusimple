@@ -103,3 +103,9 @@ if (!elementsAttr.isa<mlir::DisposableElementsAttr>()) {
     std::cerr << "Error: elementsAttr is not a DisposableElementsAttr." << std::endl;
     return failure();
 }
+
+
+
+v
+Faced  fatal error: THC/THC.h: No such file or directory error during mmdet3d setup for FAST-BEV.
+Found a solution and trying to solve it by downgrading pytorch version to 1.6 with corresponding CUDA version.
