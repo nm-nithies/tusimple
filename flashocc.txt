@@ -1,1 +1,46 @@
+# Start with a base image that includes Python and CUDA
+FROM nvidia/cuda:11.1-cudnn8-devel-ubuntu20.04
+
+# Set up environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PATH="/root/.local/bin:${PATH}"
+ENV CUDA_ROOT=/usr/local/cuda
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    python3-dev \
+    libevent-dev \
+    python3-venv \
+    build-essential \
+    git && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create and activate virtual environment
+RUN python3 -m venv /opt/flashocc_env
+ENV VIRTUAL_ENV=/opt/flashocc_env
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Install pip dependencies
+RUN pip install --upgrade pip
+RUN pip install torch==1.10.0+cu111 torchvision==0.11.0+cu111 \
+    torchaudio==0.10.0 -f https://download.pytorch.org/whl/torch_stable.html
+RUN pip install mmcv-full==1.5.3
+RUN pip install mmdet==2.25.1
+RUN pip install mmsegmentation==0.25.0
+RUN pip install pycuda lyft_dataset_sdk networkx==2.2 numba==0.53.0 \
+    numpy==1.23.5 nuscenes-devkit plyfile scikit-image tensorboard \
+    trimesh==2.35.39 setuptools==59.5.0 yapf==0.40.1
+
+# Clone and set up FlashOcc and mmdetection3d
+WORKDIR /opt
+RUN git clone https://github.com/Yzichen/FlashOCC.git
+WORKDIR /opt/FlashOcc
+RUN git clone https://github.com/open-mmlab/mmdetection3d.git
+WORKDIR /opt/FlashOcc/mmdetection3d
+RUN git checkout v1.0.0rc4 && pip install -v -e .
+WORKDIR /opt/FlashOcc/projects
+RUN pip install -v -e .
+
+# Set the default command to bash
+CMD ["bash"]
 
