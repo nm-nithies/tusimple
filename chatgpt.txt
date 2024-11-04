@@ -13,3 +13,24 @@
 
 
 {'rescale': True, 'img_metas': [[{'flip': False, 'pcd_horizontal_flip': False, 'pcd_vertical_flip': False, 'box_mode_3d': <Box3DMode.LIDAR: 0>, 'box_type_3d': <class 'mmdet3d.core.bbox.structures.lidar_box3d.LiDARInstance3DBoxes'>, 'sample_idx': '30e55a3ec6184d8cb1944b39ba19d622', 'pcd_scale_factor': 1.0, 'pts_filename': 'data/nuscenes/samples/LIDAR_TOP/n015-2018-07-11-11-54-16+0800__LIDAR_TOP__1531281439800013.pcd.bin'}]]
+
+
+
+{
+    'rescale': True,
+    'img_metas': [
+        [
+            {
+                'flip': False,
+                'pcd_horizontal_flip': False,
+                'pcd_vertical_flip': False,
+                'box_mode_3d': Box3DMode.LIDAR,
+                'box_type_3d': mmdet3d.core.bbox.structures.lidar_box3d.LiDARInstance3DBoxes,
+                'sample_idx': '30e55a3ec6184d8cb1944b39ba19d622',
+                'pcd_scale_factor': 1.0,
+                'pts_filename': 'data/nuscenes/samples/LIDAR_TOP/n015-2018-07-11-11-54-16+0800__LIDAR_TOP__1531281439800013.pcd.bin'
+            }
+        ]
+    ]
+}
+
