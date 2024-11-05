@@ -68,6 +68,189 @@ RuntimeError: t == DeviceType::CUDAINTERNAL ASSERT FAILED at "/usr/local/lib/pyt
 
 
 
+         [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  1.0000e+00]]]],
+       device='cuda:0'), tensor([[[[1.2726e+03, 0.0000e+00, 8.2662e+02],
+          [0.0000e+00, 1.2726e+03, 4.7975e+02],
+          [0.0000e+00, 0.0000e+00, 1.0000e+00]],
+
+         [[1.2664e+03, 0.0000e+00, 8.1627e+02],
+          [0.0000e+00, 1.2664e+03, 4.9151e+02],
+          [0.0000e+00, 0.0000e+00, 1.0000e+00]],
+
+         [[1.2608e+03, 0.0000e+00, 8.0797e+02],
+          [0.0000e+00, 1.2608e+03, 4.9533e+02],
+          [0.0000e+00, 0.0000e+00, 1.0000e+00]],
+
+         [[1.2567e+03, 0.0000e+00, 7.9211e+02],
+          [0.0000e+00, 1.2567e+03, 4.9278e+02],
+          [0.0000e+00, 0.0000e+00, 1.0000e+00]],
+
+         [[8.0922e+02, 0.0000e+00, 8.2922e+02],
+          [0.0000e+00, 8.0922e+02, 4.8178e+02],
+          [0.0000e+00, 0.0000e+00, 1.0000e+00]],
+
+         [[1.2595e+03, 0.0000e+00, 8.0725e+02],
+          [0.0000e+00, 1.2595e+03, 5.0120e+02],
+          [0.0000e+00, 0.0000e+00, 1.0000e+00]]]], device='cuda:0'), tensor([[[[0.4400, 0.0000, 0.0000],
+          [0.0000, 0.4400, 0.0000],
+          [0.0000, 0.0000, 1.0000]],
+
+         [[0.4400, 0.0000, 0.0000],
+          [0.0000, 0.4400, 0.0000],
+          [0.0000, 0.0000, 1.0000]],
+
+         [[0.4400, 0.0000, 0.0000],
+          [0.0000, 0.4400, 0.0000],
+          [0.0000, 0.0000, 1.0000]],
+
+         [[0.4400, 0.0000, 0.0000],
+          [0.0000, 0.4400, 0.0000],
+          [0.0000, 0.0000, 1.0000]],
+
+         [[0.4400, 0.0000, 0.0000],
+          [0.0000, 0.4400, 0.0000],
+          [0.0000, 0.0000, 1.0000]],
+
+         [[0.4400, 0.0000, 0.0000],
+          [0.0000, 0.4400, 0.0000],
+          [0.0000, 0.0000, 1.0000]]]], device='cuda:0'), tensor([[[   0., -140.,    0.],
+         [   0., -140.,    0.],
+         [   0., -140.,    0.],
+         [   0., -140.,    0.],
+         [   0., -140.,    0.],
+         [   0., -140.,    0.]]], device='cuda:0'), tensor([[[1., 0., 0.],
+         [0., 1., 0.],
+         [0., 0., 1.]]], device='cuda:0')]]}
+False
+/usr/local/lib/python3.8/dist-packages/torch/onnx/utils.py:363: UserWarning: Skipping _decide_input_format
+ -1
+  warnings.warn("Skipping _decide_input_format\n {}".format(e.args[0]))
+nms in trace fisrt
+if condition
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/necks/view_transformer.py:288: UserWarning: torch.range is deprecated and will be removed in a future release because its behavior is inconsistent with Python's range builtin. Instead, use torch.arange, which produces values in [start, end).
+  ranks_depth = torch.range(
+/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/necks/view_transformer.py:291: UserWarning: __floordiv__ is deprecated, and its behavior will change in a future version of pytorch. It currently rounds toward 0 (like the 'trunc' function NOT 'floor'). This results in incorrect rounding for negative values. To keep the current behavior, use torch.div(a, b, rounding_mode='trunc'), or for actual floor division, use torch.div(a, b, rounding_mode='floor').
+  0, num_points // D - 1, dtype=torch.int, device=coor.device)   # [0, 1, ...,B*N*fH*fW-1]
+/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/necks/view_transformer.py:290: UserWarning: torch.range is deprecated and will be removed in a future release because its behavior is inconsistent with Python's range builtin. Instead, use torch.arange, which produces values in [start, end).
+  ranks_feat = torch.range(
+/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/necks/view_transformer.py:301: UserWarning: torch.range is deprecated and will be removed in a future release because its behavior is inconsistent with Python's range builtin. Instead, use torch.arange, which produces values in [start, end).
+  batch_idx = torch.range(0, B - 1).reshape(B, 1). \
+/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/necks/view_transformer.py:302: UserWarning: __floordiv__ is deprecated, and its behavior will change in a future version of pytorch. It currently rounds toward 0 (like the 'trunc' function NOT 'floor'). This results in incorrect rounding for negative values. To keep the current behavior, use torch.div(a, b, rounding_mode='trunc'), or for actual floor division, use torch.div(a, b, rounding_mode='floor').
+  expand(B, num_points // B).reshape(num_points, 1).to(coor)
+/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/necks/view_transformer.py:309: TracerWarning: Using len to get tensor shape might cause the trace to be incorrect. Recommended usage would be tensor.shape[0]. Passing a tensor of different shape might lead to errors or silently give incorrect results.
+  if len(kept) == 0:
+/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/necks/view_transformer.py:330: TracerWarning: Using len to get tensor shape might cause the trace to be incorrect. Recommended usage would be tensor.shape[0]. Passing a tensor of different shape might lead to errors or silently give incorrect results.
+  if len(interval_starts) == 0:
+/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/necks/view_transformer.py:258: TracerWarning: Converting a tensor to a Python integer might cause the trace to be incorrect. We can't record the data flow of Python values, so this value will be treated as a constant in the future. This means that the trace might not generalize to other inputs!
+  bev_feat_shape = (depth.shape[0], int(self.grid_size[2]),
+/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/necks/view_transformer.py:259: TracerWarning: Converting a tensor to a Python integer might cause the trace to be incorrect. We can't record the data flow of Python values, so this value will be treated as a constant in the future. This means that the trace might not generalize to other inputs!
+  int(self.grid_size[1]), int(self.grid_size[0]),
+IN BEVPOOL
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+In Conv
+/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/dense_heads/bev_occ_head.py:288: TracerWarning: Converting a tensor to a NumPy array might cause the trace to be incorrect. We can't record the data flow of Python values, so this value will be treated as a constant in the future. This means that the trace might not generalize to other inputs!
+  occ_res = occ_res.cpu().numpy().astype(np.uint8)     # (B, Dx, Dy, Dz)
+Traceback (most recent call last):
+  File "tools/test.py", line 359, in <module>
+    main()
+  File "tools/test.py", line 317, in main
+    torch.onnx.export(
+  File "/usr/local/lib/python3.8/dist-packages/torch/onnx/__init__.py", line 316, in export
+    return utils.export(model, args, f, export_params, verbose, training,
+  File "/usr/local/lib/python3.8/dist-packages/torch/onnx/utils.py", line 107, in export
+    _export(model, args, f, export_params, verbose, training, input_names, output_names,
+  File "/usr/local/lib/python3.8/dist-packages/torch/onnx/utils.py", line 724, in _export
+    _model_to_graph(model, args, verbose, input_names,
+  File "/usr/local/lib/python3.8/dist-packages/torch/onnx/utils.py", line 493, in _model_to_graph
+    graph, params, torch_out, module = _create_jit_graph(model, args)
+  File "/usr/local/lib/python3.8/dist-packages/torch/onnx/utils.py", line 437, in _create_jit_graph
+    graph, torch_out = _trace_and_get_graph_from_model(model, args)
+  File "/usr/local/lib/python3.8/dist-packages/torch/onnx/utils.py", line 388, in _trace_and_get_graph_from_model
+    torch.jit._get_trace_graph(model, args, strict=False, _force_outplace=False, _return_inputs_states=True)
+  File "/usr/local/lib/python3.8/dist-packages/torch/jit/_trace.py", line 1173, in _get_trace_graph
+    outs = ONNXTracedModule(f, strict, _force_outplace, return_inputs, _return_inputs_states)(*args_tuple, **args)
+  File "/usr/local/lib/python3.8/dist-packages/torch/nn/modules/module.py", line 1106, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/usr/local/lib/python3.8/dist-packages/torch/jit/_trace.py", line 130, in forward
+    graph, out = torch._C._create_graph_by_tracing(
+RuntimeError: output 1 (14
+[ CPULongType{} ]) of traced region did not have observable data dependence with trace inputs; this probably indicates your program cannot be understood by the tracer.
+
 
 
 
