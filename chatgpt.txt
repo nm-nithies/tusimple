@@ -35,24 +35,35 @@
 }
 
 
-  File "/workspace/flashocc/FlashOCC/mmdetection3d/mmdet3d/models/detectors/base.py", line 70, in forward
-    json.dump(kwargs,f)
-  File "/usr/lib/python3.8/json/__init__.py", line 179, in dump
-    for chunk in iterable:
-  File "/usr/lib/python3.8/json/encoder.py", line 431, in _iterencode
-    yield from _iterencode_dict(o, _current_indent_level)
-  File "/usr/lib/python3.8/json/encoder.py", line 405, in _iterencode_dict
-    yield from chunks
-  File "/usr/lib/python3.8/json/encoder.py", line 325, in _iterencode_list
-    yield from chunks
-  File "/usr/lib/python3.8/json/encoder.py", line 325, in _iterencode_list
-    yield from chunks
-  File "/usr/lib/python3.8/json/encoder.py", line 405, in _iterencode_dict
-    yield from chunks
-  File "/usr/lib/python3.8/json/encoder.py", line 438, in _iterencode
-    o = _default(o)
-  File "/usr/lib/python3.8/json/encoder.py", line 179, in default
-    raise TypeError(f'Object of type {o.__class__.__name__} '
+  File "/usr/local/lib/python3.8/dist-packages/mmcv/runner/fp16_utils.py", line 124, in new_func
+    return old_func(*args,**kwargs)
+  File "/workspace/flashocc/FlashOCC/mmdetection3d/mmdet3d/models/detectors/base.py", line 74, in forward
+    return self.forward_test(**kwargs)
+  File "/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/detectors/bevdet.py", line 216, in forward_test
+    return self.simple_test(points[0], img_metas[0], img_inputs[0],
+  File "/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/detectors/bevdet_occ.py", line 168, in simple_test
+    img_feats, _, _ = self.extract_feat(
+  File "/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/detectors/bevdet.py", line 126, in extract_feat
+    img_feats, depth = self.extract_img_feat(img_inputs, img_metas, **kwargs)
+  File "/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/detectors/bevdet.py", line 106, in extract_img_feat
+    x, depth = self.img_view_transformer([x] + img_inputs[1:7])
+  File "/usr/local/lib/python3.8/dist-packages/torch/nn/modules/module.py", line 1106, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/usr/local/lib/python3.8/dist-packages/torch/nn/modules/module.py", line 1094, in _slow_forward
+    result = self.forward(*input, **kwargs)
+  File "/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/necks/view_transformer.py", line 431, in forward
+    return self.view_transform(input, depth, tran_feat)
+  File "/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/necks/view_transformer.py", line 404, in view_transform
+    return self.view_transform_core(input, depth, tran_feat)
+  File "/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/necks/view_transformer.py", line 380, in view_transform_core
+    bev_feat = self.voxel_pooling_v2(
+  File "/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/models/necks/view_transformer.py", line 261, in voxel_pooling_v2
+    bev_feat = bev_pool_v2(depth, feat, ranks_depth, ranks_feat, ranks_bev,
+  File "/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/ops/bev_pool_v2/bev_pool.py", line 102, in bev_pool_v2
+    x = QuickCumsumCuda.apply(depth, feat, ranks_depth, ranks_feat, ranks_bev,
+  File "/workspace/flashocc/FlashOCC/projects/mmdet3d_plugin/ops/bev_pool_v2/bev_pool.py", line 29, in forward
+    bev_pool_v2_ext.bev_pool_v2_forward(
+RuntimeError: t == DeviceType::CUDAINTERNAL ASSERT FAILED at "/usr/local/lib/python3.8/dist-packages/torch/include/c10/cuda/impl/CUDAGuardImpl.h":24, please report a bug to PyTorch. 
 
 
 
