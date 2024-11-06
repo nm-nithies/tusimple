@@ -267,3 +267,4 @@ Traceback (most recent call last):
     assert len(params) + len(flatten_args) == sum(1 for _ in graph.inputs())
 AssertionError
 
+[W shape_type_inference.cpp:434] Warning: Constant folding in symbolic shape inference fails: shape '[1, 1, 1, 1, 1]' is invalid for input of size 4224 (function ComputeConstantFolding)
