@@ -252,5 +252,18 @@ RuntimeError: output 1 (14
 [ CPULongType{} ]) of traced region did not have observable data dependence with trace inputs; this probably indicates your program cannot be understood by the tracer.
 
 
-
+Traceback (most recent call last):
+  File "tools/test.py", line 359, in <module>
+    main()
+  File "tools/test.py", line 317, in main
+    torch.onnx.export(
+  File "/usr/local/lib/python3.8/dist-packages/torch/onnx/__init__.py", line 316, in export
+    return utils.export(model, args, f, export_params, verbose, training,
+  File "/usr/local/lib/python3.8/dist-packages/torch/onnx/utils.py", line 107, in export
+    _export(model, args, f, export_params, verbose, training, input_names, output_names,
+  File "/usr/local/lib/python3.8/dist-packages/torch/onnx/utils.py", line 724, in _export
+    _model_to_graph(model, args, verbose, input_names,
+  File "/usr/local/lib/python3.8/dist-packages/torch/onnx/utils.py", line 519, in _model_to_graph
+    assert len(params) + len(flatten_args) == sum(1 for _ in graph.inputs())
+AssertionError
 
