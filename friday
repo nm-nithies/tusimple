@@ -1,9 +1,32 @@
-Step 14/32 : RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub
- ---> Running in f7755b362929
-Warning: apt-key output should not be parsed (stdout is not a terminal)
-Executing: /tmp/apt-key-gpghome.cpXm1hYJS2/gpg.1.sh --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub
-gpg: requesting key from 'https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub'
-gpg: key A4B469963BF863CC: "cudatools <cudatools@nvidia.com>" not changed
-gpg: Total number processed: 1
-gpg:              unchanged: 1
-Removing intermediate container f7755b362929
+RuntimeError: output 1 (14[ CPULongType{} ]) of traced region did not have observable data dependence with trace inputs; this probably indicates your program cannot be understood by the tracer.
+
+Found the cause for this issue , this error raises due to convertion from  Tensor to numpy array and usage of numpy in the FlashOCC forward function .
+Solve this issue by removing numpy usage in forward function
+
+Faced issue 
+Exporting the operator argsort to ONNX opset version 11 is not supported. Please feel free to request support or submit a pull request on PyTorch GitHub.
+
+Solved by replacing argsort to sort function in forward function
+
+Currently facing a issue  Constant folding in symbolic shape inference during export
+
+ Constant folding in symbolic shape inference fails: shape '[1, 1, 1, 1, 1]' is invalid for input of size 4224 (function ComputeConstantFolding)
+
+
+
+
+
+Hi Yvonne, for the FlashOCC model forward function required multiple inputs and did not support for single input tensor during export. Analyzed flow and arguments passed to the forward function during inference.
+
+Modified the jit_trace.py ONNXTracedModule forward function in torch/jit/_trace.py to support flashocc inputs. Able to pass the inputs to the flashocc forward function .
+
+Faced  an issue  RuntimeError: t == DeviceType::CUDAINTERNAL ASSERT FAILED at "/usr/local/lib/python3.8/dist-packages/torch/include/c10/cuda/impl/CUDAGuardImpl.h":24, please report a bug to PyTorch 
+
+Resolved this issue by moving Model and Tensors to Cuda.
+
+Currently debugging the issue in outputs of  ONNXTracedModule forward function 
+RuntimeError: output 1 (14[ CPULongType{} ]) of traced region did not have observable data dependence with trace inputs; this probably indicates your program cannot be understood by the tracer.
+
+Hi Yvonne,Completed the setup for FlashOCC repository. Structured the nuscenes dataset and created .pkl for bevdetv2-nuscenes.
+
+Currently trying to export the model 
