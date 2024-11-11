@@ -268,3 +268,15 @@ Traceback (most recent call last):
 AssertionError
 
 [W shape_type_inference.cpp:434] Warning: Constant folding in symbolic shape inference fails: shape '[1, 1, 1, 1, 1]' is invalid for input of size 4224 (function ComputeConstantFolding)
+
+
+
+
+from sne4onnx import extraction
+ 
+extracted_graph = extraction(
+  input_op_names=['quickcumsum_output'],
+  output_op_names=['entire_model_output'],
+  input_onnx_file_path='input_model.onnx',
+  output_onnx_file_path='input_model_cut.onnx',
+)
