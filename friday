@@ -1,32 +1,5 @@
-RuntimeError: output 1 (14[ CPULongType{} ]) of traced region did not have observable data dependence with trace inputs; this probably indicates your program cannot be understood by the tracer.
-
-Found the cause for this issue , this error raises due to convertion from  Tensor to numpy array and usage of numpy in the FlashOCC forward function .
-Solve this issue by removing numpy usage in forward function
-
-Faced issue 
-Exporting the operator argsort to ONNX opset version 11 is not supported. Please feel free to request support or submit a pull request on PyTorch GitHub.
-
-Solved by replacing argsort to sort function in forward function
-
-Currently facing a issue  Constant folding in symbolic shape inference during export
-
- Constant folding in symbolic shape inference fails: shape '[1, 1, 1, 1, 1]' is invalid for input of size 4224 (function ComputeConstantFolding)
-
-
-
-
-
-Hi Yvonne, for the FlashOCC model forward function required multiple inputs and did not support for single input tensor during export. Analyzed flow and arguments passed to the forward function during inference.
-
-Modified the jit_trace.py ONNXTracedModule forward function in torch/jit/_trace.py to support flashocc inputs. Able to pass the inputs to the flashocc forward function .
-
-Faced  an issue  RuntimeError: t == DeviceType::CUDAINTERNAL ASSERT FAILED at "/usr/local/lib/python3.8/dist-packages/torch/include/c10/cuda/impl/CUDAGuardImpl.h":24, please report a bug to PyTorch 
-
-Resolved this issue by moving Model and Tensors to Cuda.
-
-Currently debugging the issue in outputs of  ONNXTracedModule forward function 
-RuntimeError: output 1 (14[ CPULongType{} ]) of traced region did not have observable data dependence with trace inputs; this probably indicates your program cannot be understood by the tracer.
-
-Hi Yvonne,Completed the setup for FlashOCC repository. Structured the nuscenes dataset and created .pkl for bevdetv2-nuscenes.
-
-Currently trying to export the model 
+# To solve inverse Op export issues
++            # https://github.com/pytorch/pytorch/issues/70299#issuecomment-1449805681
++            import onnxruntime
++            from onnxruntime.tools import pytorch_export_contrib_ops
++            pytorch_export_contrib_ops.register()
