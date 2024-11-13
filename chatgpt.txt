@@ -280,3 +280,9 @@ extracted_graph = extraction(
   input_onnx_file_path='input_model.onnx',
   output_onnx_file_path='input_model_cut.onnx',
 )
+
+
+
+
+ERROR: Could not install packages due to an EnvironmentError: [Errno 13] Permission denied: '/usr/bin/pip'
+Consider using the `--user` option or check the permissions.
