@@ -3,3 +3,46 @@
 +            import onnxruntime
 +            from onnxruntime.tools import pytorch_export_contrib_ops
 +            pytorch_export_contrib_ops.register()
+
+
+import torch
+import torch.nn as nn
+
+# Define a simple PyTorch model
+class SimpleModel(nn.Module):
+    def __init__(self):
+        super(SimpleModel, self).__init__()
+        self.fc1 = nn.Linear(10, 5)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(5, 2)
+        
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        return x
+
+# Initialize the model and set it to evaluation mode
+model = SimpleModel()
+model.eval()
+
+
+import onnx
+
+# Create a dummy input tensor with the correct shape
+dummy_input = torch.randn(1, 10)  # Batch size of 1, input size of 10
+
+# Export the model to an ONNX file
+torch.onnx.export(
+    model,                  # the model to export
+    dummy_input,            # example input to the model
+    "simple_model.onnx",    # file name for the output ONNX model
+    export_params=True,     # store the trained parameter weights
+    opset_version=11,       # ONNX opset version to export the model to
+    do_constant_folding=True,  # optimize constant expressions
+    input_names=['input'],      # name of the input layer
+    output_names=['output'],    # name of the output layer
+    dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}  # make batch size dynamic
+)
+
+print("Model has been exported to simple_model.onnx")
