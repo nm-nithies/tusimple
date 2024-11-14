@@ -302,3 +302,9 @@ onnxruntime.capi.onnxruntime_pybind11_state.InvalidArgument: [ONNXRuntimeError] 
 
 RuntimeError: Exporting the operator inverse to ONNX opset version 11 is not supported. Please feel free to request support or submit a pull request on PyTorch GitHub. 
 
+
+Found inputs are not traced for view_transformer during export and some Ops are missing in the exported graph
+Trying to debug the root cause for missing operators during export
+Tried to export the first forward function and ran inference for export ONNX model. ONNX results were matching with the pytorch inference
+Debugging the reason for missing operators during export
+
