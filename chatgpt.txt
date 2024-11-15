@@ -308,3 +308,7 @@ Trying to debug the root cause for missing operators during export
 Tried to export the first forward function and ran inference for export ONNX model. ONNX results were matching with the pytorch inference
 Debugging the reason for missing operators during export
 
+
+
+
+onnxruntime.capi.onnxruntime_pybind11_state.RuntimeException: [ONNXRuntimeError] : 6 : RUNTIME_EXCEPTION : Exception during initialization: /hdd2/lucia/build_onnxruntime_1.19/onnxruntime/onnxruntime/core/framework/session_state_utils.cc:210 onnxruntime::common::Status onnxruntime::session_state_utils::SaveInitializedTensors(const onnxruntime::Env&, const std::__cxx11::basic_string<char>&, const onnxruntime::GraphViewer&, const AllocatorPtr&, const onnxruntime::OrtValueNameIdxMap&, const std::vector<int>&, onnxruntime::ITensorAllocator&, const SaveTensorFunction&, const onnxruntime::logging::Logger&, const onnxruntime::DataTransferManager&, const onnxruntime::ExecutionPlanBase&, const onnxruntime::SessionOptions&, const MemoryProfileFunction&, std::unordered_map<std::__cxx11::basic_string<char>, std::unique_ptr<onnxruntime::Tensor> >&) ort_value_name_idx_map.MaxIdx() > -1 was false. OrtValue indexes should have been populated.
