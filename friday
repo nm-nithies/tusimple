@@ -46,3 +46,12 @@ torch.onnx.export(
 )
 
 print("Model has been exported to simple_model.onnx")
+
+
+
+Ran Inference for exported FlashOCC model but the outputs did not match with the pytorch Inference
+Found inputs are not traced for view_transformer during export and some Ops are missing in the exported graph
+Trying to debug the root cause for missing operators during export
+Tried to export the first forward function and ran inference for the exported ONNX model. ONNX results were matching with the pytorch inference
+Debugging the reason for missing operators in second module during export
+
