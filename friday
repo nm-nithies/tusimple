@@ -1,57 +1,21 @@
-# To solve inverse Op export issues
-+            # https://github.com/pytorch/pytorch/issues/70299#issuecomment-1449805681
-+            import onnxruntime
-+            from onnxruntime.tools import pytorch_export_contrib_ops
-+            pytorch_export_contrib_ops.register()
-
-
-import torch
-import torch.nn as nn
-
-# Define a simple PyTorch model
-class SimpleModel(nn.Module):
-    def __init__(self):
-        super(SimpleModel, self).__init__()
-        self.fc1 = nn.Linear(10, 5)
-        self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(5, 2)
-        
-    def forward(self, x):
-        x = self.fc1(x)
-        x = self.relu(x)
-        x = self.fc2(x)
-        return x
-
-# Initialize the model and set it to evaluation mode
-model = SimpleModel()
-model.eval()
-
-
-import onnx
-
-# Create a dummy input tensor with the correct shape
-dummy_input = torch.randn(1, 10)  # Batch size of 1, input size of 10
-
-# Export the model to an ONNX file
-torch.onnx.export(
-    model,                  # the model to export
-    dummy_input,            # example input to the model
-    "simple_model.onnx",    # file name for the output ONNX model
-    export_params=True,     # store the trained parameter weights
-    opset_version=11,       # ONNX opset version to export the model to
-    do_constant_folding=True,  # optimize constant expressions
-    input_names=['input'],      # name of the input layer
-    output_names=['output'],    # name of the output layer
-    dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}  # make batch size dynamic
-)
-
-print("Model has been exported to simple_model.onnx")
+Able to export the post forward function and verified its correctness
+But for this second forward (view transformer) after replacing this bevpoolv2 output as constants in the flow, the tensor data is empty
+Inputs shape has been reflected in the output graph in jit_trace.py when dumping the values using numpy file instead of pkl file.Yet visualize in netron.
 
 
 
-Ran Inference for exported FlashOCC model but the outputs did not match with the pytorch Inference
-Found inputs are not traced for view_transformer during export and some Ops are missing in the exported graph
-Trying to debug the root cause for missing operators during export
-Tried to export the first forward function and ran inference for the exported ONNX model. ONNX results were matching with the pytorch inference
-Debugging the reason for missing operators in second module during export
+Tried to export the second forward function (module by module)
+I found a submodule(bev_v2_pool) in second forward function(view_transformer) uses a .so file . This so file has been build from .cpp and .cu source files.
+While exporting the second forward function , the output graph only contains nodes after this bev_v2_pool module. The code flow in .cpp and .cuda are not traced.
+I can able to export the model before this bev_v2_pool module and verified the output .
+Currently I am exploring in including .so file in onnx Jit_trace.
 
+Able to export Deformable DeTr with this dims (640x640) and legalized it . Uploaded the exported onnx and optimized model in onnx_model repo
+Found the script where the nodes are removed from the graph for the second forward function 
+After jit_pass_onnx(), the nodes are removed from the graph 
+Currently debugging this.
+
+Able to legalize the 1st module.
+Tried to export the 2nd module. But the output graph did not produce the expected Nodes
+Made some changes in the view_transfomer forward function and exported the model
+Still the output graph did not produce the expected graph. Debugging the reason for missing operators during export
