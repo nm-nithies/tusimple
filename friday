@@ -19,3 +19,7 @@ Able to legalize the 1st module.
 Tried to export the 2nd module. But the output graph did not produce the expected Nodes
 Made some changes in the view_transfomer forward function and exported the model
 Still the output graph did not produce the expected graph. Debugging the reason for missing operators during export
+
+
+RuntimeError: output 1 (1
+[ CPULongType{} ]) of traced region did not have observable data dependence with trace inputs; this probably indicates your program cannot be understood by the tracer.
