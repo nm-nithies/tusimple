@@ -1,25 +1,5 @@
-Able to export the post forward function and verified its correctness
-But for this second forward (view transformer) after replacing this bevpoolv2 output as constants in the flow, the tensor data is empty
-Inputs shape has been reflected in the output graph in jit_trace.py when dumping the values using numpy file instead of pkl file.Yet visualize in netron.
+The FlashOCC model is structured and exported into three distinct components:
 
-
-
-Tried to export the second forward function (module by module)
-I found a submodule(bev_v2_pool) in second forward function(view_transformer) uses a .so file . This so file has been build from .cpp and .cu source files.
-While exporting the second forward function , the output graph only contains nodes after this bev_v2_pool module. The code flow in .cpp and .cuda are not traced.
-I can able to export the model before this bev_v2_pool module and verified the output .
-Currently I am exploring in including .so file in onnx Jit_trace.
-
-Able to export Deformable DeTr with this dims (640x640) and legalized it . Uploaded the exported onnx and optimized model in onnx_model repo
-Found the script where the nodes are removed from the graph for the second forward function 
-After jit_pass_onnx(), the nodes are removed from the graph 
-Currently debugging this.
-
-Able to legalize the 1st module.
-Tried to export the 2nd module. But the output graph did not produce the expected Nodes
-Made some changes in the view_transfomer forward function and exported the model
-Still the output graph did not produce the expected graph. Debugging the reason for missing operators during export
-
-
-RuntimeError: output 1 (1
-[ CPULongType{} ]) of traced region did not have observable data dependence with trace inputs; this probably indicates your program cannot be understood by the tracer.
+pre_bevpool_v2: Represents the initial processing stages before the BEV pooling operation.
+bevpool_v2: Encapsulates the BEV pooling operation, a core feature of the model.
+post_bevpool_v2: Handles the processing stages following the BEV pooling operation.
