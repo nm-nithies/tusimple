@@ -1,5 +1,1 @@
-The FlashOCC model is structured and exported into three distinct components:
-
-pre_bevpool_v2: Represents the initial processing stages before the BEV pooling operation.
-bevpool_v2: Encapsulates the BEV pooling operation, a core feature of the model.
-post_bevpool_v2: Handles the processing stages following the BEV pooling operation.
+onnxruntime.capi.onnxruntime_pybind11_state.Fail: [ONNXRuntimeError] : 1 : FAIL : Node (bert/encoder/layer_0/output/dense/MatMul) Op (Gemm) [ShapeInferenceError] First input does not have rank 2
