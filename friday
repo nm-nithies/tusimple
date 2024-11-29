@@ -1,1 +1,56 @@
 onnxruntime.capi.onnxruntime_pybind11_state.Fail: [ONNXRuntimeError] : 1 : FAIL : Node (bert/encoder/layer_0/output/dense/MatMul) Op (Gemm) [ShapeInferenceError] First input does not have rank 2
+
+th
+
+Worked on FlashOCC task ,to legalize the model with correct shape info.
+Able to fix this after commenting some lines in nnac/core/utils.py
+https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/blob/main/nnac/core/utils.py?ref_type=heads#L614-L623 
+Uploaded the model and updatd the README
+ 
+For bertsquad legalization task , 
+Tried to find the dimension mismatch for (bert/encoder/layer_0/output/dense/MatMul Op
+Verified the onnx-simplifier results but got exact output (onnx_inference for sliced model )
+Found after enabling FuseGelu pass , there is extra dimension added .
+Currently checking the reason for extra dimension in FuseGelu pass
+
+we
+
+Upload the model files , patch , README and Dockerfile for llama2c in onnx_models repo
+Started working on bertsquad legalisation task
+ 
+While legalization faced an issue :
+onnxruntime.capi.onnxruntime_pybind11_state.Fail: [ONNXRuntimeError] : 1 : FAIL : Node (bert/encoder/layer_0/output/dense/MatMul) Op (Gemm) [ShapeInferenceError] First input does not have rank 2 
+ 
+In onnx model inference(512, 3072) is passed to (bert/encoder/layer_0/output/dense/MatMul Op
+But in legalized model inference (1,512, 3072) is passed to  (bert/encoder/layer_0/output/dense/MatMul Op
+Currently debugging this.
+
+
+tue
+Tried to understand the working for prompt generation for llama2c
+Found the llama model requires different input dimension for prompt generation .
+Exported the model with dynamic input dim and verfied the output prompt with pytorch for two samples. Got same Output.
+Able to legalize the model i with different input dimension as nnac lacks the ability to keep the dynamic input dimension as Yvonne suggested.
+Yet to upload the model,patch and README file for llama2c in onnx_repo 
+
+
+mo
+Uploded all patches, inputs files, README and document (for bevpoolv2 info) for FlashOCC
+ 
+Made a repo setup for LLama2c using Docker
+Able to generate single prompt for LLama2c (pytorch inference)
+During export faced an issue
+ Exporting the operator 'aten::scaled_dot_product_attention' to ONNX opset version 14 is not supported. Please feel free to request support or submit a pull request on PyTorch GitHub:
+Able to resolve this issue using higher torch version
+Able to export and legalize the model
+Verified the onnx inference for single blockset with pytorch inference . Got same outputs(for single blockset)
+
+
+
+
+fri
+
+Cleaned the code and added patch files for both the export models
+Uploaded both onnx and optimized_onnx in model repo 
+Updated the jira along with bevpool_v2 module info
+
