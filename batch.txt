@@ -33,3 +33,45 @@ torch.onnx.export(
 )
 
 print(f"ONNX model exported to {onnx_path}")
+
+
+
+
+
+import torch
+import torch.nn as nn
+
+# Define the model with only LayerNorm
+class LayerNormModel(nn.Module):
+    def __init__(self, normalized_shape):
+        super(LayerNormModel, self).__init__()
+        self.layer_norm = nn.LayerNorm(normalized_shape)
+
+    def forward(self, x):
+        return self.layer_norm(x)
+
+# Initialize the model
+input_shape = (1, 256, 768)
+normalized_shape = input_shape[2]
+model = LayerNormModel(normalized_shape)
+
+# Create a dummy input
+dummy_input = torch.randn(input_shape)
+
+# Export the model to ONNX
+onnx_file_path = "layernorm_model.onnx"
+torch.onnx.export(
+    model,                     # The model to be exported
+    dummy_input,               # A dummy input for the model
+    onnx_file_path,            # Filepath to save the ONNX model
+    input_names=["input"],     # Name of the input node
+    output_names=["output"],   # Name of the output node
+    opset_version=13,          # ONNX opset version
+    dynamic_axes={             # Allow for dynamic axes if needed
+        "input": {0: "batch_size"},
+        "output": {0: "batch_size"}
+    }
+)
+
+print(f"Model exported to {onnx_file_path}")
+
