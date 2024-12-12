@@ -38,40 +38,61 @@ print(f"ONNX model exported to {onnx_path}")
 
 
 
-import torch
-import torch.nn as nn
+import onnx
+from onnx import helper, TensorProto
+import numpy as np
 
-# Define the model with only LayerNorm
-class LayerNormModel(nn.Module):
-    def __init__(self, normalized_shape):
-        super(LayerNormModel, self).__init__()
-        self.layer_norm = nn.LayerNorm(normalized_shape)
+# Define input and output shapes
+input_shape = [1, 256, 768]
+input_name = "input"
+output_name = "output"
+gamma_name = "gamma"
+beta_name = "beta"
 
-    def forward(self, x):
-        return self.layer_norm(x)
+# Create input tensor
+input_tensor = helper.make_tensor_value_info(input_name, TensorProto.FLOAT, input_shape)
+output_tensor = helper.make_tensor_value_info(output_name, TensorProto.FLOAT, input_shape)
 
-# Initialize the model
-input_shape = (1, 256, 768)
-normalized_shape = input_shape[2]
-model = LayerNormModel(normalized_shape)
-
-# Create a dummy input
-dummy_input = torch.randn(input_shape)
-
-# Export the model to ONNX
-onnx_file_path = "layernorm_model.onnx"
-torch.onnx.export(
-    model,                     # The model to be exported
-    dummy_input,               # A dummy input for the model
-    onnx_file_path,            # Filepath to save the ONNX model
-    input_names=["input"],     # Name of the input node
-    output_names=["output"],   # Name of the output node
-    opset_version=13,          # ONNX opset version
-    dynamic_axes={             # Allow for dynamic axes if needed
-        "input": {0: "batch_size"},
-        "output": {0: "batch_size"}
-    }
+# Create gamma and beta tensors (parameters for LayerNormalization)
+gamma = np.ones(input_shape[-1], dtype=np.float32)  # Scale factor
+gamma_initializer = helper.make_tensor(
+    name=gamma_name,
+    data_type=TensorProto.FLOAT,
+    dims=[input_shape[-1]],
+    vals=gamma.flatten().tolist(),
 )
 
-print(f"Model exported to {onnx_file_path}")
+beta = np.zeros(input_shape[-1], dtype=np.float32)  # Bias factor
+beta_initializer = helper.make_tensor(
+    name=beta_name,
+    data_type=TensorProto.FLOAT,
+    dims=[input_shape[-1]],
+    vals=beta.flatten().tolist(),
+)
+
+# Create LayerNormalization node
+layernorm_node = helper.make_node(
+    "LayerNormalization",  # Operation name
+    inputs=[input_name, gamma_name, beta_name],
+    outputs=[output_name],
+    name="LayerNorm"
+)
+
+# Build the graph
+graph = helper.make_graph(
+    nodes=[layernorm_node],
+    name="LayerNormGraph",
+    inputs=[input_tensor],
+    outputs=[output_tensor],
+    initializer=[gamma_initializer, beta_initializer]
+)
+
+# Create the model
+model = helper.make_model(graph, producer_name="onnx-layernorm-example")
+
+# Save the model to a file
+onnx.save(model, "layernorm_1x256x768.onnx")
+
+print("ONNX model with LayerNormalization created and saved as 'layernorm_1x256x768.onnx'")
+
 
