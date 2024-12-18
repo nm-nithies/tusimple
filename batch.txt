@@ -97,8 +97,15 @@ onnx.save(model, "layernorm_1x256x768.onnx")
 
 print("ONNX model with LayerNormalization created and saved as 'layernorm_1x256x768.onnx'")
 
-We are pleased to inform you that you have been fully approved in our system and are now active to begin work on projects with us. As part of our onboarding process, we kindly request that you review and sign the Non-Disclosure Agreement (NDA) and Code of Ethics documents.
 
-Please find attached the NDA and Code of Ethics documents for your review and signature. Once signed, please send back the completed documents to me via ghasmik@synopsys.com. The deadline is December 24th.
+Subject: Submission of Signed NDA and Code of Ethics Documents
 
-Should you have any questions or require further clarification regarding the documents, feel free to reach out to us. The primary person to follow up on this matter is me from the HRSC team.
+Dear Ghasmik,
+
+Thank you for the confirmation and the opportunity to work with your team.I have reviewed, signed, and attached the NDA and Code of Ethics documents as requested. Please find them enclosed with this email.
+
+Should you require any additional information or have further instructions, please let me know.
+
+Thank you, and I look forward to contributing to the projects.
+
+Best regards,
