@@ -98,26 +98,66 @@ onnx.save(model, "layernorm_1x256x768.onnx")
 print("ONNX model with LayerNormalization created and saved as 'layernorm_1x256x768.onnx'")
 
 
+import torch
+import numpy as np
+
+# Load data
 input1 = np.load("/remote/us01sgnfs00562/NNSDK/amajala/onnx_model/tensor1_256_768.npy")
 scale = np.load("/remote/us01sgnfs00562/NNSDK/amajala/hello/nnac/frontend/scale.npy")
-scale = np.load("/remote/us01sgnfs00562/NNSDK/amajala/hello/nnac/frontend/bias.npy")
-scale = torch.tensor(scale)
-bias = torch.tensor(b)
-input1 = torch.tensor(input1)
-mean1 = torch.mean(input1)
-numerator = input1 - mean1
-pow1 = torch.pow(numerator, 2)
-var_eps1 = torch.mean(pow1)+ 0.000009999999747378752
-denominator = torch.sqrt(var_eps1)
-out1 = (numerator/denominator) * scale + bias
-print(out1)
- 
-mean1 = torch.mean(i)
-numerator = input1 - mean1
-mul_1 = numerator * numerator
-var_eps1 = torch.mean(mul_1) + 0.000009999999747378752
-sqrt1 = torch.sqrt(var_eps1)
-reciprocal1 = torch.reciprocal(sqrt1)
-denominator = reciprocal1 * scale
-out2 = (input1 * denominator) + (bias - (denominator * mean1))
-print(out2)
+bias = np.load("/remote/us01sgnfs00562/NNSDK/amajala/hello/nnac/frontend/bias.npy")
+
+# Convert numpy arrays to tensors
+input1 = torch.tensor(input1, dtype=torch.float32)
+scale = torch.tensor(scale, dtype=torch.float32)
+bias = torch.tensor(bias, dtype=torch.float32)
+
+# Model 1
+class Model1(torch.nn.Module):
+    def forward(self, input1, scale, bias):
+        mean1 = torch.mean(input1)
+        numerator = input1 - mean1
+        pow1 = torch.pow(numerator, 2)
+        var_eps1 = torch.mean(pow1) + 0.000009999999747378752
+        denominator = torch.sqrt(var_eps1)
+        out1 = (numerator / denominator) * scale + bias
+        return out1
+
+# Model 2
+class Model2(torch.nn.Module):
+    def forward(self, input1, scale, bias):
+        mean1 = torch.mean(input1)
+        numerator = input1 - mean1
+        mul_1 = numerator * numerator
+        var_eps1 = torch.mean(mul_1) + 0.000009999999747378752
+        sqrt1 = torch.sqrt(var_eps1)
+        reciprocal1 = torch.reciprocal(sqrt1)
+        denominator = reciprocal1 * scale
+        out2 = (input1 * denominator) + (bias - (denominator * mean1))
+        return out2
+
+# Instantiate models
+model1 = Model1()
+model2 = Model2()
+
+# Export Model 1 to ONNX
+torch.onnx.export(
+    model1,
+    (input1, scale, bias),
+    "model1.onnx",
+    input_names=["input1", "scale", "bias"],
+    output_names=["output1"],
+    dynamic_axes={"input1": {0: "batch_size"}, "output1": {0: "batch_size"}},
+    opset_version=11,
+)
+
+# Export Model 2 to ONNX
+torch.onnx.export(
+    model2,
+    (input1, scale, bias),
+    "model2.onnx",
+    input_names=["input1", "scale", "bias"],
+    output_names=["output2"],
+    dynamic_axes={"input1": {0: "batch_size"}, "output2": {0: "batch_size"}},
+    opset_version=11,
+)
+
