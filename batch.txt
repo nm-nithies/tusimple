@@ -113,38 +113,48 @@ bias = torch.tensor(bias, dtype=torch.float32)
 
 # Model 1
 class Model1(torch.nn.Module):
-    def forward(self, input1, scale, bias):
+    def __init__(self, scale, bias):
+        super(Model1, self).__init__()
+        self.scale = torch.nn.Parameter(scale, requires_grad=False)
+        self.bias = torch.nn.Parameter(bias, requires_grad=False)
+    
+    def forward(self, input1):
         mean1 = torch.mean(input1)
         numerator = input1 - mean1
         pow1 = torch.pow(numerator, 2)
         var_eps1 = torch.mean(pow1) + 0.000009999999747378752
         denominator = torch.sqrt(var_eps1)
-        out1 = (numerator / denominator) * scale + bias
+        out1 = (numerator / denominator) * self.scale + self.bias
         return out1
 
 # Model 2
 class Model2(torch.nn.Module):
-    def forward(self, input1, scale, bias):
+    def __init__(self, scale, bias):
+        super(Model2, self).__init__()
+        self.scale = torch.nn.Parameter(scale, requires_grad=False)
+        self.bias = torch.nn.Parameter(bias, requires_grad=False)
+    
+    def forward(self, input1):
         mean1 = torch.mean(input1)
         numerator = input1 - mean1
         mul_1 = numerator * numerator
         var_eps1 = torch.mean(mul_1) + 0.000009999999747378752
         sqrt1 = torch.sqrt(var_eps1)
         reciprocal1 = torch.reciprocal(sqrt1)
-        denominator = reciprocal1 * scale
-        out2 = (input1 * denominator) + (bias - (denominator * mean1))
+        denominator = reciprocal1 * self.scale
+        out2 = (input1 * denominator) + (self.bias - (denominator * mean1))
         return out2
 
-# Instantiate models
-model1 = Model1()
-model2 = Model2()
+# Instantiate models with constants
+model1 = Model1(scale, bias)
+model2 = Model2(scale, bias)
 
 # Export Model 1 to ONNX
 torch.onnx.export(
     model1,
-    (input1, scale, bias),
-    "model1.onnx",
-    input_names=["input1", "scale", "bias"],
+    (input1,),
+    "model1_with_constants.onnx",
+    input_names=["input1"],
     output_names=["output1"],
     dynamic_axes={"input1": {0: "batch_size"}, "output1": {0: "batch_size"}},
     opset_version=11,
@@ -153,9 +163,9 @@ torch.onnx.export(
 # Export Model 2 to ONNX
 torch.onnx.export(
     model2,
-    (input1, scale, bias),
-    "model2.onnx",
-    input_names=["input1", "scale", "bias"],
+    (input1,),
+    "model2_with_constants.onnx",
+    input_names=["input1"],
     output_names=["output2"],
     dynamic_axes={"input1": {0: "batch_size"}, "output2": {0: "batch_size"}},
     opset_version=11,
