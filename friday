@@ -1,13 +1,35 @@
-import onnxruntime as ort
-import torch
-import numpy as np
+Identified an error in the changes done in FusePrimitivesIntoLayernorm Pass for layernorm Invstd pattern. Made the neccessary corrections.
+Able to legalize the model with --legalize_error 0.005(Fused all  small ops patttern into layernorm )
+Cleaned the code and pushed it.
 
-l = [1,2,3,45,66,7,7,7,8,8]
-t1 = torch.tensor(l)
-t2 = torch.randint(low =0 , high = 2, size = (2,256))
-t3 =torch.randint(low =0 , high = 2, size = (2,256))
-t4 =torch.randint(low =0 , high = 2, size = (2,256))
+Tried to compare the layernorm pattern (Std Dev) with layernorm pattern(Inv stddev)
+Created a pytorch code for both layernorm norm pattern (std dev & Inv std) and verified the output with bertsquad_8 scale, bias, eps . Got simialar output for pytorch and onnx runtime. 
+Tried to legalize the layernorm pattern(Inv stddev) model. But got max_diff around  2.00. 
+Found the scale and bias are not assigned properly and made some changes in FusePrimitivesIntoLayernorm Pass. Able to legalize the Inv stddev pattern with 0 max_diff. 
+Able to legalize the entire bertsquad model but the FusePrimitivesIntoLayernorm Pass is only applied for few layernorm pattern (Inv
+ StdDev
+ 
 
-ort_sess = ort.InferenceSession('/remote/us01sgnfs00562/NNSDK/amajala/onnx_model/bertsquad_8_1_optimized_allpass_sliced.onnx')
-output = ort_sess.run(None, {'segment_ids:0':t2.numpy(), 'input_mask:0':t3.numpy(),'input_ids:0': t4.numpy()})
-print(output[0].shape)
+
+Checked the output between pytorch layernorm(dumped scale,bias, eps values from bertsquad layernorm pattern attributes)  and sliced bertsquad layernorm model pattern . There is a little difff in output values 
+Tried to check the output forayern numerator and denominator for  pytorch layernorm with layernnorm pattern(bertsquad)
+Numerator
+  Sliced the numerator part from bertsquad . Able to get same ouptut for both pytorch and bertsquad layer pattern 
+Denominator
+   Sliced the denominator part from bertsquad . Did not get the expected output . Used torch.var function 
+Also checked the exported pytorch layernorm ouput. But same diff is produced 
+
+
+Worked on bertsquad_8 legalization
+Tried to verifiy the output between pythorch layernorm and bertsquad layernorm pattern
+Calcuated the pytorch layernorm with bertsquad scale, bias and eps
+Faced an issue in slicing the bertsquad layernorm pattern, did not get the expected graph. Tried with sne4onnx package an onnx-modifier
+ 
+Also tried with nnac onnx cutter , but faced 
+[ERROR]: The model cannot run onnxruntime inference! Please recheck the model and the onnx/onnxruntime version as well as your param setup to make sure everything is correct!
+ 
+
+Could not able to connect IN01,US01,EUDC machines for both Nithies and Sai's credentials
+Pushed the code and triggered the built(abnormal dead end for PowOp) in kathir's credentials
+Mapped the  bertsquad small ops
+Pattern with pytorch layernorm equation
