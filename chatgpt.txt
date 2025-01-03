@@ -1,7 +1,31 @@
-I cloned the MobileViTv3 repository to run inference but encountered multiple import issues because it requires switching to a specific commit. Unfortunately, this requirement is not mentioned in the README.
+Fixed the regression failed errores for  test cases .  
+In FusePreprocessingIntoConv Pass , Added addition check conditions and reorgranized the process of extracting constant Values. Solved assertion errors.
+In FuseSubandDivBN pass,   Added addition check conditions and resolved dimension mismatch in BatchNorm Op
+In regression_test file, Updated the unit test cases with  new pattern check conditions. 
+ 
+Retriggered the regression build. Build passed
+Currently ressolving the comments received on googlenet  MR
 
-I encountered a "No module" issue for main_eval when using the produced Python executable, so I ran the main_eval.py file directly instead.
+
+NITHIES
+Resolved All Mr comments for GoogleNetand pushed the code
+Uploaded the convnext_tbest_dy_optimized.onnx best_dy_optimized.onnx iny model in onnx_models_repo 
+Completed repo setup for Nafnet using Docker
+Tried to export the model but faced Python operator LayernormFunction issue. 
+Currently trying to resolve it
+
+NITHIES:
+Fixed the Python operator LayernormFunction issue. Removed the LayernormFunction class and replaced its code functionality in the forward function . Verified its output correctness
+Able to export the NAFNet model.
+While legalizing this model faced large max_diff values.
+Passes causing large diff  -- FuseMulAddIntoNormalization, FuseAddIntoSuccConv
+Currently trying to find the root cause for this max_diff
 
 
-
-
+Nithies:
+Gone through the MobileVitV3 repository's README
+Tried to setup the repository using virtual env but faced undefined symbol error for torch versions and able to setup the repo using docker.
+Tried to run inference but encountered multiple import issues because it requires switching to a specific commit. Unfortunately, this requirement is not mentioned in the README.
+Using the command provided in the README  to run inference, resulted in  "No module" named  main_eval  and, so I ran the main_eval.py file directly instead.
+Able to run the inference after both fix.
+Yet to export the model and legaliize it
