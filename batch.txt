@@ -1,18 +1,14 @@
- node_graph.add_node(
-        layernorm_node,
-        **{
-            "op_type": "LayerNormalization",
-            "input": [
-                ln_ip[0],
-                ln_name + "/layernorm_scale",
-                ln_name + "/layernorm_bias",
-            ],  # [X, SCALE, B], set SCALE and B as 1 and 0 now, and after the fusion of layernorm,
-            # we merge the original SCALE and B into the fused layernorm layer
-            # "output":[ln_name, ln_name+"/output1", ln_name+"/output2"], # [Y, Mean, InvStdDev],
-            # we don't need outputs Mean and InvStdDev
-            "output": [
-                layernorm_node
-            ],  # [Y, Mean, InvStdDev], we don't need outputs Mean and InvStdDev
-            "attr_dict": {"axis": ln_axis, "epsilon": ln_eps},
-            "domain": "",  # there is only ai.onnx domain now, we expect there is com.microsoft?
-        }
+
+import torch
+import torch.nn as nn
+import numpy as np
+
+x = torch.randn(1,32,256,256)
+layer_norm = nn.LayerNorm(x.shape, 9.999999974752427e-7)
+
+s = np.load("/remote/us01sgnfs00562/NNSDK/nithies/onnx_model/onnx__Mul_735_layernorm_scale_fused_mul.npy")
+b = np.load("/remote/us01sgnfs00562/NNSDK/nithies/onnx_model/onnx__Mul_735_layernorm_bias_fused_mul_fused_add.npy")
+
+with torch.no_grad():
+  layer_norm.weight.copy_(torch.tensor(s))
+  layer_norm.bias.copy_(torch.tensor(b))
