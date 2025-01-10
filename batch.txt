@@ -1,14 +1,21 @@
 import cv2
 import numpy as np
 
-# Load the JPG image
+# Load the image
 image_path = "image.jpg"
-image = cv2.imread(image_path)
+image = cv2.imread(image_path)  # Shape: (720, 1280, 3)
 
-# Convert BGR to RGB (optional, depending on usage)
-image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+# Resize to (256, 256)
+resized_image = cv2.resize(image, (256, 256))  # Shape: (256, 256, 3)
 
-# Convert to a NumPy array
-image_array = np.array(image_rgb)
+# Convert BGR to RGB (optional)
+resized_image_rgb = cv2.cvtColor(resized_image, cv2.COLOR_BGR2RGB)
 
-print(image_array.shape)  # Prints the shape of the array
+# Transpose to (C, H, W)
+transposed_image = np.transpose(resized_image_rgb, (2, 0, 1))  # Shape: (3, 256, 256)
+
+# Add batch dimension to get (1, 3, 256, 256)
+final_image = np.expand_dims(transposed_image, axis=0)
+
+print(final_image.shape)  # Output: (1, 3, 256, 256)
+
