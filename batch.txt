@@ -19,3 +19,4 @@ final_image = np.expand_dims(transposed_image, axis=0)
 
 print(final_image.shape)  # Output: (1, 3, 256, 256)
 
+cv2.error: OpenCV(4.10.0) /io/opencv/modules/imgproc/src/resize.cpp:4152: error: (-215:Assertion failed) !ssize.empty() in function 'resize'
