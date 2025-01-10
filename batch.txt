@@ -1,51 +1,14 @@
-import torch
-import torch.nn as nn
+import cv2
 import numpy as np
 
-# Input tensor
-x = torch.randn(1, 32, 256, 256)
+# Load the JPG image
+image_path = "image.jpg"
+image = cv2.imread(image_path)
 
-# Define LayerNorm
-layer_norm = nn.LayerNorm(x.shape[1:], eps=9.999999974752427e-7)  # Exclude batch dimension
+# Convert BGR to RGB (optional, depending on usage)
+image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-# Load pre-trained weights and bias
-scale_path = "/remote/us01sgnfs00562/NNSDK/nithies/onnx_model/onnx__Mul_735_layernorm_scale_fused_mul.npy"
-bias_path = "/remote/us01sgnfs00562/NNSDK/nithies/onnx_model/onnx__Mul_735_layernorm_bias_fused_mul_fused_add.npy"
+# Convert to a NumPy array
+image_array = np.array(image_rgb)
 
-s = np.load(scale_path)
-b = np.load(bias_path)
-
-with torch.no_grad():
-    layer_norm.weight.copy_(torch.tensor(s))
-    layer_norm.bias.copy_(torch.tensor(b))
-
-# Define a wrapper model for ONNX export
-class LayerNormModel(nn.Module):
-    def __init__(self, layer_norm):
-        super(LayerNormModel, self).__init__()
-        self.layer_norm = layer_norm
-
-    def forward(self, x):
-        return self.layer_norm(x)
-
-# Instantiate the model
-model = LayerNormModel(layer_norm)
-
-# Export to ONNX
-onnx_path = "layer_norm.onnx"
-torch.onnx.export(
-    model,
-    x,  # Example input
-    onnx_path,
-    export_params=True,  # Store trained parameter weights inside the model file
-    opset_version=11,  # ONNX opset version
-    do_constant_folding=True,  # Optimize constant folding
-    input_names=["input"],  # Input names
-    output_names=["output"],  # Output names
-    dynamic_axes={
-        "input": {0: "batch_size"},  # Variable batch size
-        "output": {0: "batch_size"},
-    },
-)
-
-print(f"ONNX model has been exported to {onnx_path}")
+print(image_array.shape)  # Prints the shape of the array
