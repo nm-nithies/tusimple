@@ -1,22 +1,21 @@
-import cv2
-import numpy as np
+Able to fuse pattern into layerNorm after broadcasting. Made some changes in FusePrimitivesIntoLayernorm
+Faced large max_diff values are generated after this fix.
+Tried to figure out the reason for this max_diff
 
-# Load the image
-image_path = "image.jpg"
-image = cv2.imread(image_path)  # Shape: (720, 1280, 3)
+For this large max_diff values, I have checked this Fuse PrimitiveIntolayernorm pass and this Normalization pattern . I did not see any bugs in pass. But I see large_diff values.
+I had verified this pattern with Onnx Layernorm. Did get same values 
+I think both batchnorm and layernnorm does not support this pattern.
+Can you please suggest me any idea's regarding this.
 
-# Resize to (256, 256)
-resized_image = cv2.resize(image, (256, 256))  # Shape: (256, 256, 3)
+Added a new pass to fuse Multiple branch (reshape + batchNorm) into single (reshape + batchNorm)
+Clean the pushed the code. Triggered build.
+Yet to add extra check conditions for this pass.
 
-# Convert BGR to RGB (optional)
-resized_image_rgb = cv2.cvtColor(resized_image, cv2.COLOR_BGR2RGB)
-
-# Transpose to (C, H, W)
-transposed_image = np.transpose(resized_image_rgb, (2, 0, 1))  # Shape: (3, 256, 256)
-
-# Add batch dimension to get (1, 3, 256, 256)
-final_image = np.expand_dims(transposed_image, axis=0)
-
-print(final_image.shape)  # Output: (1, 3, 256, 256)
-
-cv2.error: OpenCV(4.10.0) /io/opencv/modules/imgproc/src/resize.cpp:4152: error: (-215:Assertion failed) !ssize.empty() in function 'resize'
+SwinIR:
+Uploaded exported model, README.md and patch files for classicalSR_DIV2K_s48w8_SwinIR-M_x2 SwinIR in onnx_models repository
+NAFNet:
+Uploaded legalized model in the onnx_models repository and update the jira with log data.
+Bertsquad :
+Added some extra check conditions for FuseReshapeandBN new pass and pushed the code to repo
+constant folding pass to replace onnx-simplifier:
+Started working on it
