@@ -19,3 +19,6 @@ Bertsquad :
 Added some extra check conditions for FuseReshapeandBN new pass and pushed the code to repo
 constant folding pass to replace onnx-simplifier:
 Started working on it
+
+
+I cutted this subgraph layernorm pattern and  verfied the output with Onnx layernorm using (no match in outputs). 
