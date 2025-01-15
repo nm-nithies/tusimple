@@ -22,3 +22,10 @@ Started working on it
 
 
 I cutted this subgraph layernorm pattern and  verfied the output with Onnx layernorm using (no match in outputs). 
+
+
+
+I think the normalization should be done over axis 1 only.
+If this is the case you will need to replace the subgraph with: Transpose(perm=0,2,3,1) + LayerNorm + Transpose(perm=0,3,1,2)
+
+I assume the same is already done for other patterns that are fused into LayerNorm (and Transpose) operations
