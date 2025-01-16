@@ -65,3 +65,49 @@ modified_model_path = "modified_model.onnx"
 onnx.save(model, modified_model_path)
 
 print(f"Modified model saved at {modified_model_path}")
+
+
+import onnx
+from onnx import numpy_helper
+import numpy as np
+
+# Load the ONNX model
+model_path = "model.onnx"  # Replace with your model path
+model = onnx.load(model_path)
+
+# Access the model graph
+graph = model.graph
+
+# Helper function to find and update a constant value
+def update_constant_value(graph, constant_name, new_value):
+    for initializer in graph.initializer:
+        if initializer.name == constant_name:
+            print(f"Original value of {constant_name}: {numpy_helper.to_array(initializer)}")
+            
+            # Update the value
+            tensor_data = np.array(new_value, dtype=onnx.mapping.TENSOR_TYPE_TO_NP_TYPE[initializer.data_type])
+            initializer.raw_data = numpy_helper.from_array(tensor_data).raw_data
+            
+            print(f"Updated value of {constant_name}: {new_value}")
+            return True
+    return False
+
+# Iterate through the nodes to find Mul operations
+for node in graph.node:
+    if node.op_type == "Mul":
+        print(f"Processing Mul node with name: {node.name}")
+        
+        # Iterate through inputs of the Mul node
+        for input_name in node.input:
+            # Update the constant input tensor if it exists in the initializer
+            if update_constant_value(graph, input_name, new_value=2.0):  # Update to 2.0
+                print(f"Updated tensor: {input_name}")
+            else:
+                print(f"Input {input_name} is not a constant tensor.")
+
+# Save the modified ONNX model
+modified_model_path = "modified_model.onnx"
+onnx.save(model, modified_model_path)
+
+print(f"Modified model saved at {modified_model_path}")
+
