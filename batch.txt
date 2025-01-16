@@ -1,31 +1,27 @@
-Able to fuse pattern into layerNorm after broadcasting. Made some changes in FusePrimitivesIntoLayernorm
-Faced large max_diff values are generated after this fix.
-Tried to figure out the reason for this max_diff
+import onnx
+from onnx import helper
 
-For this large max_diff values, I have checked this Fuse PrimitiveIntolayernorm pass and this Normalization pattern . I did not see any bugs in pass. But I see large_diff values.
-I had verified this pattern with Onnx Layernorm. Did get same values 
-I think both batchnorm and layernnorm does not support this pattern.
-Can you please suggest me any idea's regarding this.
+# Load the ONNX model
+model_path = "model.onnx"  # Replace with your model path
+model = onnx.load(model_path)
 
-Added a new pass to fuse Multiple branch (reshape + batchNorm) into single (reshape + batchNorm)
-Clean the pushed the code. Triggered build.
-Yet to add extra check conditions for this pass.
+# Access the model graph
+graph = model.graph
 
-SwinIR:
-Uploaded exported model, README.md and patch files for classicalSR_DIV2K_s48w8_SwinIR-M_x2 SwinIR in onnx_models repository
-NAFNet:
-Uploaded legalized model in the onnx_models repository and update the jira with log data.
-Bertsquad :
-Added some extra check conditions for FuseReshapeandBN new pass and pushed the code to repo
-constant folding pass to replace onnx-simplifier:
-Started working on it
+# Iterate through the nodes to find the ReduceMean op
+for node in graph.node:
+    if node.op_type == "ReduceMean":
+        print("Original ReduceMean node attributes:", node)
+        
+        # Modify the axis attribute
+        for attr in node.attribute:
+            if attr.name == "axes":
+                print("Original axes:", attr.ints)
+                attr.ints[:] = [1]  # Update the axis value to [1] (or your desired value)
+                print("Updated axes:", attr.ints)
 
+# Save the modified ONNX model
+modified_model_path = "modified_model.onnx"
+onnx.save(model, modified_model_path)
 
-I cutted this subgraph layernorm pattern and  verfied the output with Onnx layernorm using (no match in outputs). 
-
-
-
-I think the normalization should be done over axis 1 only.
-If this is the case you will need to replace the subgraph with: Transpose(perm=0,2,3,1) + LayerNorm + Transpose(perm=0,3,1,2)
-
-I assume the same is already done for other patterns that are fused into LayerNorm (and Transpose) operations
+print(f"Modified model saved at {modified_model_path}")
