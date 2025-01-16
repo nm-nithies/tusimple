@@ -25,3 +25,43 @@ modified_model_path = "modified_model.onnx"
 onnx.save(model, modified_model_path)
 
 print(f"Modified model saved at {modified_model_path}")
+
+
+import onnx
+from onnx import numpy_helper
+import numpy as np
+
+# Load the ONNX model
+model_path = "model.onnx"  # Replace with your model path
+model = onnx.load(model_path)
+graph = model.graph
+
+# Helper function to update tensor properties
+def update_tensor(graph, tensor_name, new_value):
+    for initializer in graph.initializer:
+        if initializer.name == tensor_name:
+            print(f"Original value of {tensor_name}: {numpy_helper.to_array(initializer)}")
+            
+            # Update the value
+            tensor_data = np.array(new_value, dtype=onnx.mapping.TENSOR_TYPE_TO_NP_TYPE[initializer.data_type])
+            initializer.raw_data = numpy_helper.from_array(tensor_data).raw_data
+            
+            print(f"Updated value of {tensor_name}: {new_value}")
+            return True
+    print(f"Tensor {tensor_name} not found in initializer.")
+    return False
+
+# Identify the ReduceMean node and modify the tensor
+for node in graph.node:
+    if node.op_type == "ReduceMean":
+        print(f"Found ReduceMean node: {node.name}")
+        
+        # Example: Update the axes tensor for ReduceMean
+        axes_tensor_name = node.input[1]  # Second input is typically axes for ReduceMean
+        update_tensor(graph, axes_tensor_name, [1])  # Update to new axes [1]
+
+# Save the modified model
+modified_model_path = "modified_model.onnx"
+onnx.save(model, modified_model_path)
+
+print(f"Modified model saved at {modified_model_path}")
