@@ -1,1 +1,1 @@
-onnxruntime.capi.onnxruntime_pybind11_state.Fail: [ONNXRuntimeError] : 1 : FAIL : Non-zero status code returned while running Conv node. Name:'Conv_68' Status Message: Input channels C is not equal to kernel channels * group. C: 256 kernel channels: 32 group: 1
+oThe error occurs because the number of input channels (256) does not match the expected number of kernel channels (32) for the convolution operation, given the group setting (1).
