@@ -1,1 +1,12 @@
-oThe error occurs because the number of input channels (256) does not match the expected number of kernel channels (32) for the convolution operation, given the group setting (1).
+To Fuse StdDev & InvStdDev into layernorm  Reduce Mean axes attribute need to  match the below condition
+
+Condition:
+
+Axes[0] + len(Axes) == len(Input_shape)
+
+
+
+
+In some cases the reduce mean axes does not support with the pattern  Input channel dimmension
+
+If the Input channel dimension and axes attribute can be changed to match the above condition. Apply transpose front and back of LayerNorm
