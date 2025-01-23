@@ -1,12 +1,6 @@
-To Fuse StdDev & InvStdDev into layernorm  Reduce Mean axes attribute need to  match the below condition
+To fuse StdDev and InvStdDev into LayerNorm, the ReduceMean axes attribute must satisfy the following condition:
 
 Condition:
-
 Axes[0] + len(Axes) == len(Input_shape)
 
-
-
-
-In some cases the reduce mean axes does not support with the pattern  Input channel dimmension
-
-If the Input channel dimension and axes attribute can be changed to match the above condition. Apply transpose front and back of LayerNorm
+In cases where the ReduceMean axes do not align with the input channel dimension, the input channel dimension and axes attribute can be modified to meet the above condition. This can be achieved by applying a transpose operation before and after the LayerNorm.
