@@ -1,3 +1,10 @@
-The error indicates a mismatch in the dimensions of the input tensor and the scale/bias parameters for the LayerNormalization node. The tensor's size is 64 along the specified axis, but the scale and bias sizes are 80, which must be corrected to match 64.
+import onnx
 
-Create a function to verify if the scale and bias values are compatible for broadcasting.
+# Load ONNX model
+model = onnx.load(model_path)
+graph = model.graph
+
+# Print layer/node names
+print("Layer Names:")
+for node in graph.node:
+    print(node.name)
