@@ -1,3 +1,5 @@
+torch.set_printoptions(threshold=float('inf'))
+
 import torch
 import torch.onnx
 
