@@ -1,10 +1,41 @@
-import onnx
+import torch
+import torch.onnx
 
-# Load ONNX model
-model = onnx.load(model_path)
-graph = model.graph
+# Input tensor with shape (1, 3, 416, 416)
+input_tensor = torch.randn(1, 3, 416, 416)
 
-# Print layer/node names
-print("Layer Names:")
-for node in graph.node:
-    print(node.name)
+# Define the model
+class ReshapeTransposeModel(torch.nn.Module):
+    def forward(self, x):
+        # First reshape: (1, 3, 416, 416) -> (1, 3, 208, 2, -1, 2)
+        x = x.reshape(1, 3, 208, 2, -1, 2)
+        # Transpose: (0, 5, 3, 1, 2, 4)
+        x = x.permute(0, 5, 3, 1, 2, 4)
+        # Second reshape: (1, 3, 208, 2, -1, 2) -> (1, 12, 208, 208)
+        x = x.reshape(1, 12, 208, 208)
+        return x
+
+# Instantiate the model
+model = ReshapeTransposeModel()
+
+# Forward pass
+output = model(input_tensor)
+print("Output shape:", output.shape)  # Should be (1, 12, 208, 208)
+
+# ONNX export
+onnx_path = "reshape_transpose_model.onnx"
+torch.onnx.export(
+    model,                       # The model
+    input_tensor,                # Example input tensor
+    onnx_path,                   # Path to save the ONNX model
+    input_names=["input"],       # Input names
+    output_names=["output"],     # Output names
+    dynamic_axes={               # Dynamic axes for batch size
+        "input": {0: "batch_size"},
+        "output": {0: "batch_size"},
+    },
+    opset_version=12             # ONNX opset version
+)
+
+print(f"ONNX model exported to {onnx_path}")
+
