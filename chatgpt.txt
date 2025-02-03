@@ -1,71 +1,44 @@
-NITHIES:
-Started  working on https://jira.internal.synopsys.com/browse/P10019563-72099?filter=-1
-Checked the pass FusePrimitiveIntoLayerNorm and FuseGelu Pass as mentioned in the Jira.
-Tried to find the root cause for the max_diff caused in t2t-vit-t-14_8xb64_in1k.onnx model 
 
- 
-NITHIES:
-Gone through the FuseIntoSpaceToDepth pass
-Found the reason for the max_diff for yolox_tiny_8x8_300e_coco.onnx model
-This pattern permute shape - 0,5,3,1,2,4
-But the required permute shape - 0,3,5,1,2,4
- 
-Able to fuse this pattern to SpaceToDepth Op with 0 max_diff - using permute shape - 0,3,5,1,2,4
-Currently checking the possibility to solution to fuse pattern to SpaceToDepth with permute shape - 0,5,3,1,2,4
-
-NITHIES:
-Started working on Legalization diff of mmlab graphs
-Tried to debug the yolox_tiny_8x8_300e_coco.onnx model 
-Found the pass where the max_diff produced (FuseIntoSpaceToDepth pass)
-Explored SpaceToDepth Onnx Op
-Sliced the (reshape+transpose+reshape) and optimized SpaceToDepth Onnx Op
-Verified the ouput using ONNXruntime. outputs are same.
-Checked the Comparedict . But I did not see any bugs in FuseIntoSpaceToDepth
-
-Nithies
- 
-For NAFNet task,
-During legalization , I had faced a warning
-WARNING: the simplification stopped because of timeout. Please set environment variable `ONNXSIM_FIXED_POINT_ITERS` to a number higher than 50if you want further simplification.
-I had increased the environment variable value to 100. This folds the constants(Gather - Add - Div -Mul) to slice. 
-Uploaded the model in the repo.
-For SwinIR task,
-It takes  around 1 hr to legalize the SWINIR model.
-For now I had legalized the model with some disabled passed (FuseWindowShift, FusePrimitivesIntoLayerNorm, FuseConsecutiveAddReshape, ReplaceScatterND)
-ReplaceScatterND - Give max_diff
-In other passes - throws key error
-Upload this legalized model in the repo for now and started debugging on  ReplaceScatterND pass
+def get_Swish_primitive_nodes():
+    nodes = [
+        helper.make_node("Sigmoid", ["X"], ["sig_x"]),
+        helper.make_node("Mul", ["X", "sig_x"], ["Y"]),
+    ]
+    return nodes
 
 
-TASK - 24/1
-Kathirvel:
-Implemented the pass for Fuse Sigmoid and Mul into Swish
-Completed the pass. The model is legalized as expected
-the swish custom op is registered by invoking the already available api
-Added docs and regression teet
-Pushed the changes and triggered frontend regression 
- 
-Harika:
-FCOS3D
-Handled onnx by disabling optional bias input parameter for MMCVModulatedDeformConv2d
-Able to generate legalized with mmcvModulatedDeformConv2d(MMCV module)
- 
-While trying to generate legalized model with standard onnx DeformCOnv:
-Registered MMCVModulatedDeformConv2d in mmcv_custom_op_register.py using mmcv package.
-Added a pass to change the domain form mmcv to onnx standard, to replace module MMCVModulatedDeformConv2d with DeformConv standard onnx op.
-However there is no DeformConv op in onnxruntime
-https://github.com/microsoft/onnxruntime/blob/main/docs/OperatorKernels.md
-Which results issue
-onnxruntime.capi.onnxruntime_pybind11_state.NotImplemented: [ONNXRuntimeError] : 9 : NOT_IMPLEMENTED : Could not find an implementation for DeformConv(19) node with name 'MMCVModulatedDeformConv2d_76'
- 
-Nithies
-Faced regression error for two testcases
-1.The error indicates a mismatch in the dimensions of the input tensor and the scale/bias parameters for the LayerNormalization node. The tensor's size is 64 along the specified axis, but the scale and bias sizes are 80, which must be corrected to match 64. For edgenext model 
-This issues are raised due onnx simplfier removed the constant mul (scale) and constant add op (bias)
-Created a function to verify if the scale and bias values are compatible for broadcasting in Fuseprimitive pass.
- 
-2. Tried to legalize model with Image values but faced max_diff values and could able to legalize the model
-For now used the random numpy file in regression_test file 
- 
-Pushed the code and Retriggered the build
- 
+def get_Swish_primitive_nodes_with_beta():
+    nodes = [
+        helper.make_node("Mul", ["X", "beta"], ["mul_1"]),
+        helper.make_node("Sigmoid", ["mul_1"], ["sig_x"]),
+        helper.make_node("Mul", ["X", "sig_x"], ["Y"]),
+    ]
+    return nodes
+
+
+def get_local_function_swish(opset_v=13, with_beta=False):
+    if with_beta:
+        docstr = "Swish y = x * sigmoid(x*beta) implemented by onnx local function."
+    else:
+        docstr = "Swish y = x * sigmoid(x) implemented by onnx local function."
+    func_domain = "snps.onnx.local"
+    func_opset_imports = [onnx.helper.make_opsetid("", opset_v)]
+    func_name = "Swish"
+    func_inputs = ["X"]
+    if with_beta:
+        func_inputs.append("beta")
+    func_outputs = ["Y"]
+    if with_beta:
+        func_nodes = get_Swish_primitive_nodes_with_beta()
+    else:
+        func_nodes = get_Swish_primitive_nodes()
+    func_local_Swish = helper.make_function(
+        func_domain,
+        func_name,
+        func_inputs,
+        func_outputs,
+        func_nodes,
+        func_opset_imports,
+        doc_string=docstr,
+    )
+    return func_local_Swish
