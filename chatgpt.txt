@@ -1,1 +1,1 @@
- FAIL : Node (/backbone/stem/Reshape_2) Op (SpaceToDepth) [ShapeInferenceError] (op_type:Reshape): Input 1 is out of bounds.
+shape_tensor = helper.make_tensor("shape", TensorProto.INT64, [4], np.array([1, 12, 2, 2], dtype=np.int64))
