@@ -1,1 +1,1 @@
-[ONNXRuntimeError] : 10 : INVALID_GRAPH : This is an invalid model. In Node, ("", Reshape, "", -1) : ("input": tensor(float),"",) -> ("_inlfunc_SpaceToDepth_reshape1_out",) , Error Node ()'s input 1 is marked single but has an empty string in the graph
+shape_tensor = helper.make_tensor("shape", TensorProto.INT64, [4], np.array([1, 12, 2, 2], dtype=np.int64))
