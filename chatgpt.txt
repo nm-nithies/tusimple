@@ -4,3 +4,4 @@ This custom SpaceToDepth operator, from the domain snps.onnx.local, includes a n
 
 When transpose([0, 5, 3, 1, 2, 4]) is applied in DCR mode
 When transpose([0, 5, 3, 1, 2, 4]) is applied in CRD mode
+Due to the absence of the Mode attribute in the standard ONNX SpaceToDepth operator, a custom SpaceToDepth operator was created under the domain snps.onnx.local.
