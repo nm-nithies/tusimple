@@ -1,4 +1,6 @@
-If this transpose([0, 5, 3, 1, 2, 4]) is applied this pattern fused to custom SpaceToDepth Op
-           This Custom SpaceToDepth Op from (domain = snps.onnx.local) has new Attribute  Mode which either(DCR or CRD)
-           When transpose([0, 5, 3, 1, 2, 4]) - DCR mode is applied
-           When transpose([0, 5, 3, 1, 2, 4]) - CRD mode is apllied
+If the transpose operation [0, 5, 3, 1, 2, 4] is applied, the pattern is fused into a custom SpaceToDepth operator.
+
+This custom SpaceToDepth operator, from the domain snps.onnx.local, includes a new attribute called Mode, which can be either DCR or CRD:
+
+When transpose([0, 5, 3, 1, 2, 4]) is applied in DCR mode
+When transpose([0, 5, 3, 1, 2, 4]) is applied in CRD mode
