@@ -1,28 +1,25 @@
-Fixed the  issue nps.onnx.local:SpaceToDepth(-1) is not a registered function/op
-Complete all MR comments 
-Removed the ONNX SpaceToDepth Op and included CRD Mode for nps.onnx.local:SpaceToDepth Op
-Retriggered the regression build.  Regression Passed.
- 
-Tried to legalize the yolov7_e-p6_syncbn_fast_8x16b-300e_coco
-I faced this warning and shapes were not updated properply at the end 
-[WARNING] Found dynamic Ops. Use ONNX shape inference instead of ONNXRUNTIME inference to generate shape information for each tensor. Note this way sometimes might be buggy.
-After setting FORCE_FIX_SHAPE=1, the shapes are updated but the diff remains for TopK layer.
-Tried to legalize the model with 4 to 5 images from coco dataset. But still faces max_diff l.
-Added comments and regression test for FuseSpaceToDepth pass.
-Cleaned and pushed the codes. Triggered the regression build
+Tried to add custom function for SpaceToDepth Op in NNAC onnx_local_function.py​
 
-Nithies:
-Added get_SpaceToDepth_primitive_nodes function succesfully in onnx_local_function.py
-Fixed the shape issue for Fuse_Space_To_depth pass for different input shapes.
-Able to legalize the 4 models with 0 diff (yolox_l_8x8_300e_coco.onnx, yolox_s_8x8_300e_coco.onnx, yolox_tiny_8x8_300e_coco.onnx, yolox_x_8x8_300e_coco.onnx)
-But legalization failed for yolov7_e-p6_syncbn_fast_8x16b-300e_coco, yolov7_e-p6_syncbn_fast_8x16b-300e_coco.onnx models
+Encountered an issue with the Reshape node where input 1 (the shape tensor) is either missing or empty, causing an invalid model error.Tried to use TensorDict values from the original graph for the Reshape operation. But faced same error​
 
- 
-Nithies:
-Tried to add custom function for SpaceToDepth in  NNAC onnx_local_function.
- 
-Faced issue INVALID_GRAPH : This is an invalid model. In Node, ("", Reshape, "", -1) : ("input": tensor(float),"",) -> ("_inlfunc_SpaceToDepth_reshape1_out",) , Error Node ()'s input 1 is marked single but has an empty string in the graph
- 
-Tried to resolve this issue. But Got stuck with this one. Tried to use the TensorDict values for Reshape Op from the original graph.  But failed
-The output graph 
-For now pushed the code to branch
+Resolved the issue by explicitly adding constant values in onnx_local_function.py​
+
+Able to add SpaceToDepth  custom Op function succesfully in onnx_local_function.py​
+
+Able to legalize the 4 yolo models with 0 diff (yolox_l_8x8_300e_coco.onnx, yolox_s_8x8_300e_coco.onnx, yolox_tiny_8x8_300e_coco.onnx, yolox_x_8x8_300e_coco.onnx) with the applied custom SpaceToDepth Op​
+
+But legalization failed for yolov7_e-p6_syncbn_fast_8x16b-300e_coco, yolov7_e-p6_syncbn_fast_8x16b-300e_coco.onnx models and faced max_diff​
+
+Faced a warning, Dynamic Ops detected. ONNX shape inference is used instead of ONNXRUNTIME in legalization and the shapes are not updated properly at the end of the graph ​
+
+After enabling FORCE_FIX_SHAPE=1, shapes are updated, but still faced max_diff values in the TopK layer.​
+
+Tried to legalize these model with random values and  4 to 5 images values from coco dataset. But still faces max_diff​
+
+Added regression test for the FuseSpaceToDepth Pass. Faced nps.onnx.local:SpaceToDepth(-1) is not a registered function/op issue​
+
+Fixed the issue after adding local functions defnition into the model ​
+
+Added a new attribute(Mode) for custom SpaceToDepth Op and removed the Onnx SpaceToDepth Op from FuseSpaceToDepth pass for Pattern1​
+
+Resolved all MR Comments. Retriggered the regression build. Build Passed
