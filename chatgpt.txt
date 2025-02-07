@@ -1,25 +1,30 @@
-Tried to add custom function for SpaceToDepth Op in NNAC onnx_local_function.py​
-
-Encountered an issue with the Reshape node where input 1 (the shape tensor) is either missing or empty, causing an invalid model error.Tried to use TensorDict values from the original graph for the Reshape operation. But faced same error​
-
-Resolved the issue by explicitly adding constant values in onnx_local_function.py​
-
-Able to add SpaceToDepth  custom Op function succesfully in onnx_local_function.py​
-
-Able to legalize the 4 yolo models with 0 diff (yolox_l_8x8_300e_coco.onnx, yolox_s_8x8_300e_coco.onnx, yolox_tiny_8x8_300e_coco.onnx, yolox_x_8x8_300e_coco.onnx) with the applied custom SpaceToDepth Op​
-
-But legalization failed for yolov7_e-p6_syncbn_fast_8x16b-300e_coco, yolov7_e-p6_syncbn_fast_8x16b-300e_coco.onnx models and faced max_diff​
-
-Faced a warning, Dynamic Ops detected. ONNX shape inference is used instead of ONNXRUNTIME in legalization and the shapes are not updated properly at the end of the graph ​
-
-After enabling FORCE_FIX_SHAPE=1, shapes are updated, but still faced max_diff values in the TopK layer.​
-
-Tried to legalize these model with random values and  4 to 5 images values from coco dataset. But still faces max_diff​
-
-Added regression test for the FuseSpaceToDepth Pass. Faced nps.onnx.local:SpaceToDepth(-1) is not a registered function/op issue​
-
-Fixed the issue after adding local functions defnition into the model ​
-
-Added a new attribute(Mode) for custom SpaceToDepth Op and removed the Onnx SpaceToDepth Op from FuseSpaceToDepth pass for Pattern1​
-
-Resolved all MR Comments. Retriggered the regression build. Build Passed
+import onnx
+from onnx import helper
+import numpy as np
+ 
+def modify_upsample_constants(onnx_model_path, output_model_path):
+    model = onnx.load(onnx_model_path)
+    graph = model.graph
+    modified_tensors = {}
+    for node in graph.node:
+        if node.op_type == "Upsample":
+            for input_name in node.input:
+                for initializer in graph.initializer:
+                    if initializer.name == input_name:
+                        # Generate a new unique name
+                        new_name = initializer.name + "_modified"
+                        # Modify the tensor values
+                        new_values = np.array(initializer.float_data) * np.random.uniform(1.1, 1.5, len(initializer.float_data))
+                        new_tensor = helper.make_tensor(
+                            new_name, initializer.data_type, initializer.dims, new_values.tolist()
+                        )
+                        # Replace in the model
+                        graph.initializer.append(new_tensor)
+                        node.input = [new_name if inp == initializer.name else inp for inp in node.input]
+                        modified_tensors[initializer.name] = new_name
+    onnx.save(model, output_model_path)
+    print(f"Modified tensors: {modified_tensors}")
+    print(f"Updated model saved to: {output_model_path}")
+ 
+# Usage
+modify_upsample_constants("input_model.onnx", "output_model.onnx")
