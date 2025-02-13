@@ -1,1 +1,51 @@
-onnxruntime.capi.onnxruntime_pybind11_state.RuntimeException: [ONNXRuntimeError] : 6 : RUNTIME_EXCEPTION : Non-zero status code returned while running Mul node. Name:'426' Status Message: /hdd2/lucia/build_onnxruntime_1.19/onnxruntime/onnxruntime/core/providers/cpu/math/element_wise_ops.h:560 void onnxruntime::BroadcastIterator::Append(ptrdiff_t, ptrdiff_t) axis == 1 || axis == largest was false. Attempting to broadcast an axis by a dimension other than 1. 4 by 17
+NITHIES:
+Yolo_Nas 
+Reverted the changes made in convert_Mul_to_NCHW Pass
+Made changes in the RemoveTransposeBeforeSoftmax Pass. Support both fp32 and quantized model . Pushed the code.
+ 
+SwinIR
+Pushed the code . Triggered the build
+ 
+Tried to fix transpose and softmax issues for qdq cut model
+
+
+NITHIES:
+Yolo_NAS
+Fixed all regression test failure. Retriggered the build . Build passed
+ 
+SwinIR:
+Fixed  keyError issues from (FuseWindowShift, FuseConsecutiveAddReshape). Yet to push the codes.
+Tring to apply FuseWindowShift (If possible)
+ 
+Yolo_NAS (For Quantize Model)
+Faced dimension mismatch for Mul Op
+There is extra transpose applied before the Mul Op. Yet to check where this transpose have been applied.
+
+
+NITHIES:
+For yolo_nas model 
+Updated FuseMulIntoConv, convert_Mul_to_NCHW, MoveTransposeToEnd pass 
+Cleaned and pushed the code . Triggered the build
+For SwinIR 
+Tried to fix KeyError for FuseWindowShift FusePrimitivesIntoLayerNorm FuseConsecutiveAddReshape pass
+
+
+
+NITHIES:
+Added comments for the regression tests for Yolo models
+As per priority started working on Yolo-NAS 
+Got the same error mentioned in the jira
+Found the reason for the legalization failure 
+ 
+ 
+Due to convert_Mul_to_NCHW pass the mul constant shapes are changed and that does not support with transpose output
+ 
+2.
+ 
+ 
+Due to FuseMulIntoConv pass, the model give max_diff. As the relu has two subbranch and mul cannot be fused to first conv.
+ 
+3. 
+ 
+There are shape mismatch for all these transpose
+Yet to resolve these issues.
