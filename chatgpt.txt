@@ -1,6 +1,1 @@
-Kathirvel:
-Modified the optimization controller to support downgrading of ir version based on environment variable.
-for Yolov8 in ultralytics observed that only non max suppression was involved in the post processing.
-As Yvonne suggested, triggered inference run of YoloV8 for whole dataset.
-It is still running
-Observed that the tflite exported in ai-hub- models is same as hugging face
+sergeev@synopsys.com
