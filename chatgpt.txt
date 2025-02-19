@@ -1,4 +1,149 @@
-sergeev@synopsys.com
-yche@synopsys.com
-jcampbel@synopsys.com
-fbedard@synopsys.com
+# Copyright 2023-2024 Synopsys, Inc.
+# This Synopsys software and all associated documentation are proprietary
+# to Synopsys, Inc. and may only be used pursuant to the terms and conditions
+# of a written license agreement with Synopsys, Inc.
+# All other use, reproduction, modification, or distribution of the Synopsys
+# software or the associated documentation is strictly prohibited.
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import networkx as nx
+import numpy as np
+
+from nnac.core.log import Logger
+from nnac.core.utils import _gen_shape_dict_for_new_node
+
+from .single_layer_transforms import (
+    prepend_Transpose,
+    get_single_predecessor,
+)
+
+logger = Logger("OPTIMIZATION")
+
+"""
+Fuse Split + Convs + Concat into a group Conv.
+"""
+
+
+pass_ops = ["Transpose", None]
+
+
+def FuseSplitConv(opt):
+    G = opt.G
+    tensorDict = opt.TensorDict
+
+    layers = list(nx.topological_sort(G))
+    for layer in layers:
+        if (
+            layer in G.nodes
+        ):  # otherwise can't find the deleted nodes in loop's next iterate
+            op_type = G.nodes[layer].get("op_type", None)
+            try_to_fuse = True
+            if op_type == "Split":
+                succ_layers = list(G.successors(layer))
+                transpose_perm = None
+                layer_to_remove = [layer]
+
+                # There are empty nodes insert after split node for split outputs
+                # Find all Conv layers
+                for i in range(len(succ_layers)):
+                    cur_layer = succ_layers[i]
+                    while True:
+                        op_type = G.nodes[cur_layer].get("op_type", None)
+                        layer_to_remove.append(cur_layer)
+                        if op_type == "Conv":
+                            # print('found one Conv', cur_layer)
+                            succ_layers[i] = cur_layer
+                            break
+                        elif op_type not in pass_ops:
+                            # print(cur_layer, op_type, 'not in pass_ops')
+                            try_to_fuse = False
+                            break
+
+                        if op_type == "Transpose":
+                            transpose_perm = G.nodes[cur_layer]["attr_dict"]["perm"]
+
+                        if len(list(G.successors(cur_layer))) != 1:
+                            try_to_fuse = False
+                            break
+
+                        cur_layer = list(G.successors(cur_layer))[0]
+
+                if not try_to_fuse:
+                    continue
+
+                concat_layer_set = set()
+                # Now, the succ_layers are Conv layers, find the Concat node
+                for conv in succ_layers:
+                    conv_succ = list(G.successors(conv))
+                    if (
+                        len(conv_succ) == 1
+                        and G.nodes[conv_succ[0]].get("op_type", None) == "Concat"
+                    ):
+                        concat_layer_set.add(conv_succ[0])
+                    else:
+                        try_to_fuse = False
+                        break
+
+                if not try_to_fuse or len(concat_layer_set) != 1:
+                    continue
+
+                concat_layer = None
+                for c in concat_layer_set:
+                    concat_layer = c
+
+                # print('split + convs + concat pattern found!!')
+                layer_to_remove.append(concat_layer)
+                concat_layer_succ = list(G.successors(concat_layer))[0]
+
+                # To ensure the data_format after removing the transpose between Split and Convs, we need to insert
+                # a transpose before Split node.
+                if transpose_perm is not None:
+                    prepend_Transpose(opt, layer, transpose_perm)
+
+                fused_w = []
+                fused_b = []
+                # Sort the Conv layers to create fused Conv parameters correctly
+                succ_layers.sort()
+                for conv in succ_layers:
+                    fused_w.append(tensorDict[G.nodes[conv]["input"][1]])
+                    fused_b.append(tensorDict[G.nodes[conv]["input"][2]])
+                fused_w = np.concatenate(fused_w, axis=0)
+                fused_b = np.concatenate(fused_b, axis=0)
+                tensorDict[layer + "/group_conv/fused_w"] = fused_w
+                tensorDict[layer + "/group_conv/fused_b"] = fused_b
+
+                attr_dict = G.nodes[succ_layers[0]]["attr_dict"]
+                attr_dict["group"] = len(succ_layers)
+
+                # remove nodes from Split to Concat
+                group_conv_input = get_single_predecessor(G, layer)
+                group_conv_layer = layer + "/group_conv"
+
+                for _ in layer_to_remove:
+                    G.remove_node(_)
+
+                node_dict = {
+                    "op_type": "Conv",
+                    "input": [
+                        group_conv_input,
+                        group_conv_layer + "/fused_w",
+                        group_conv_layer + "/fused_b",
+                    ],
+                    "output": [group_conv_layer],
+                    "attr_dict": attr_dict,
+                }
+                G.add_node(
+                    group_conv_layer,
+                    **node_dict
+                )
+                # generate and update fused Conv output shape
+                _gen_shape_dict_for_new_node(opt, node_dict)
+                opt.compare_dict[group_conv_layer] = opt.compare_dict[concat_layer]
+                G.nodes[concat_layer_succ]["input"][0] = group_conv_layer
+                G.add_edge(group_conv_input, group_conv_layer)
+                G.add_edge(group_conv_layer, concat_layer_succ)
+
+                opt.passes_counter["FuseSplitConv"] += 1
