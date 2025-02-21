@@ -1,149 +1,57 @@
-# Copyright 2023-2024 Synopsys, Inc.
-# This Synopsys software and all associated documentation are proprietary
-# to Synopsys, Inc. and may only be used pursuant to the terms and conditions
-# of a written license agreement with Synopsys, Inc.
-# All other use, reproduction, modification, or distribution of the Synopsys
-# software or the associated documentation is strictly prohibited.
+Nithies:
+Fixed the issues faced in Yolov8 qdq subgraph .
+Now added Dequantized node before tranpose 
+But this creates issues in RemoveTransposeBeforeSoftmax pass 
+Currenty working on fixing this issue 
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+Nithies NM:
+Tried to find the root cause for mlp_mixer model 
+Checked the different subgraph outputs in the mlp_mixer. Book 1.xlsx
+Currently checking the compare.py file 
 
-import networkx as nx
-import numpy as np
+Nithies:
+Ran Onnx Slim for SwinIR Model
+Tried to fix the max_diff for mlp_mixer Model. Tried to legalize the model with realistic image values. But there is no deviation in max-diff
+Compared the LayerNorm Pattern with other existing model Layernorm Patterns
+Yvonne Chen Can you please suggest me any idea to find the root cause for the max-diff
 
-from nnac.core.log import Logger
-from nnac.core.utils import _gen_shape_dict_for_new_node
-
-from .single_layer_transforms import (
-    prepend_Transpose,
-    get_single_predecessor,
-)
-
-logger = Logger("OPTIMIZATION")
-
-"""
-Fuse Split + Convs + Concat into a group Conv.
-"""
-
-
-pass_ops = ["Transpose", None]
-
-
-def FuseSplitConv(opt):
-    G = opt.G
-    tensorDict = opt.TensorDict
-
-    layers = list(nx.topological_sort(G))
-    for layer in layers:
-        if (
-            layer in G.nodes
-        ):  # otherwise can't find the deleted nodes in loop's next iterate
-            op_type = G.nodes[layer].get("op_type", None)
-            try_to_fuse = True
-            if op_type == "Split":
-                succ_layers = list(G.successors(layer))
-                transpose_perm = None
-                layer_to_remove = [layer]
-
-                # There are empty nodes insert after split node for split outputs
-                # Find all Conv layers
-                for i in range(len(succ_layers)):
-                    cur_layer = succ_layers[i]
-                    while True:
-                        op_type = G.nodes[cur_layer].get("op_type", None)
-                        layer_to_remove.append(cur_layer)
-                        if op_type == "Conv":
-                            # print('found one Conv', cur_layer)
-                            succ_layers[i] = cur_layer
-                            break
-                        elif op_type not in pass_ops:
-                            # print(cur_layer, op_type, 'not in pass_ops')
-                            try_to_fuse = False
-                            break
-
-                        if op_type == "Transpose":
-                            transpose_perm = G.nodes[cur_layer]["attr_dict"]["perm"]
-
-                        if len(list(G.successors(cur_layer))) != 1:
-                            try_to_fuse = False
-                            break
-
-                        cur_layer = list(G.successors(cur_layer))[0]
-
-                if not try_to_fuse:
-                    continue
-
-                concat_layer_set = set()
-                # Now, the succ_layers are Conv layers, find the Concat node
-                for conv in succ_layers:
-                    conv_succ = list(G.successors(conv))
-                    if (
-                        len(conv_succ) == 1
-                        and G.nodes[conv_succ[0]].get("op_type", None) == "Concat"
-                    ):
-                        concat_layer_set.add(conv_succ[0])
-                    else:
-                        try_to_fuse = False
-                        break
-
-                if not try_to_fuse or len(concat_layer_set) != 1:
-                    continue
-
-                concat_layer = None
-                for c in concat_layer_set:
-                    concat_layer = c
-
-                # print('split + convs + concat pattern found!!')
-                layer_to_remove.append(concat_layer)
-                concat_layer_succ = list(G.successors(concat_layer))[0]
-
-                # To ensure the data_format after removing the transpose between Split and Convs, we need to insert
-                # a transpose before Split node.
-                if transpose_perm is not None:
-                    prepend_Transpose(opt, layer, transpose_perm)
-
-                fused_w = []
-                fused_b = []
-                # Sort the Conv layers to create fused Conv parameters correctly
-                succ_layers.sort()
-                for conv in succ_layers:
-                    fused_w.append(tensorDict[G.nodes[conv]["input"][1]])
-                    fused_b.append(tensorDict[G.nodes[conv]["input"][2]])
-                fused_w = np.concatenate(fused_w, axis=0)
-                fused_b = np.concatenate(fused_b, axis=0)
-                tensorDict[layer + "/group_conv/fused_w"] = fused_w
-                tensorDict[layer + "/group_conv/fused_b"] = fused_b
-
-                attr_dict = G.nodes[succ_layers[0]]["attr_dict"]
-                attr_dict["group"] = len(succ_layers)
-
-                # remove nodes from Split to Concat
-                group_conv_input = get_single_predecessor(G, layer)
-                group_conv_layer = layer + "/group_conv"
-
-                for _ in layer_to_remove:
-                    G.remove_node(_)
-
-                node_dict = {
-                    "op_type": "Conv",
-                    "input": [
-                        group_conv_input,
-                        group_conv_layer + "/fused_w",
-                        group_conv_layer + "/fused_b",
-                    ],
-                    "output": [group_conv_layer],
-                    "attr_dict": attr_dict,
-                }
-                G.add_node(
-                    group_conv_layer,
-                    **node_dict
-                )
-                # generate and update fused Conv output shape
-                _gen_shape_dict_for_new_node(opt, node_dict)
-                opt.compare_dict[group_conv_layer] = opt.compare_dict[concat_layer]
-                G.nodes[concat_layer_succ]["input"][0] = group_conv_layer
-                G.add_edge(group_conv_input, group_conv_layer)
-                G.add_edge(group_conv_layer, concat_layer_succ)
-
-                opt.passes_counter["FuseSplitConv"] += 1
+Tasks: 17-02-2025
+Kathirvel B:
+ 
+Worked on setting up the MobileNetV2 Pytorch repo to do the QAT and produce the QDQ model.
+Setup https://github.com/yakhyo/mobilenetv2-pytorch repo, but when running the QAT API, the QAT process is getting stuck.
+ 
+Tried using 
+torch.hub.load('pytorch/vision:v0.10.0', 'mobilenet_v2', pretrained=True)
+But it is giving zero accuracy with the existing ILSVRC2012 dataset. 
+ 
+Harika:
+Yolov8:
+Tried to add FM model accuracy support
+When passed original yolov8 tflite quantized model, facing issue while generating FM 
+/remote/us01sgnfs00562/NNSDK/harikam/har/nnac/nnac_backend/src/conversion/converter.cc:235 -> Unhandled op: Cast 
+ 
+When passed already optimized model which is sliced by sne4onnx, facing issue
+Pass failed: Annotate L0 fusions
+Backend initialization failed: Graph Backend transformations failed
+Failed to compile the graph: Graph Backend transformations failed
+ 
+Able to generate functional model with the last nodes specified in the new_yolov7_models repo branch
+Trying to add postprocessing support.
+Currently setting up https://github.com/d-li14/mobilenetv2.pytorch repo. and this requires the dataset in the particular format where classes are seperate folders and images are present inside it. The dataset preparation is in progress
+ 
+NITHIES:
+For fix transpose and softmax issues for qdq cut model task, required futher enhancement in the previous fix 
+Made changes in convert_Softmax_to_NCHW pass to fix the issue 
+Triggered the regression
+ 
+mlp_mixer legalization failure
+Tried to find the root cause for the max_diff
+ 
+NITHIES:
+Tried to fix the hanging Qunatized and dequantized Nodes
+Gone through the MoveTransposeToEnd Pass, Tried to fix this issue. But stilll faces the hanging node issue
+Nithies
+Fixed yolo_nas hanging qdq_nodes issue
+Fixed fix transpose and softmax issues for qdq cut model issue
+Uploaded SwinIr model in onnx repo
