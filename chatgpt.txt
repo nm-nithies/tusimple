@@ -1,57 +1,47 @@
-Nithies:
-Fixed the issues faced in Yolov8 qdq subgraph .
-Now added Dequantized node before tranpose 
-But this creates issues in RemoveTransposeBeforeSoftmax pass 
-Currenty working on fixing this issue 
+# LayerNorm Discrepancy Analysis in MLP-Mixer Model
 
-Nithies NM:
-Tried to find the root cause for mlp_mixer model 
-Checked the different subgraph outputs in the mlp_mixer. Book 1.xlsx
-Currently checking the compare.py file 
+## Overview
+This document outlines the analysis and solution for a significant output difference observed when fusing a LayerNorm pattern in an MLP-Mixer model to the ONNX LayerNorm operation. The issue was identified during output verification using ONNX Runtime.
 
-Nithies:
-Ran Onnx Slim for SwinIR Model
-Tried to fix the max_diff for mlp_mixer Model. Tried to legalize the model with realistic image values. But there is no deviation in max-diff
-Compared the LayerNorm Pattern with other existing model Layernorm Patterns
-Yvonne Chen Can you please suggest me any idea to find the root cause for the max-diff
+## Observed Issue
+- The MLP-Mixer model initially contained a LayerNorm pattern, which was later fused to an ONNX LayerNorm OP.
+- When verifying the output using ONNX Runtime, a large discrepancy was observed between the two versions of the model.
 
-Tasks: 17-02-2025
-Kathirvel B:
- 
-Worked on setting up the MobileNetV2 Pytorch repo to do the QAT and produce the QDQ model.
-Setup https://github.com/yakhyo/mobilenetv2-pytorch repo, but when running the QAT API, the QAT process is getting stuck.
- 
-Tried using 
-torch.hub.load('pytorch/vision:v0.10.0', 'mobilenet_v2', pretrained=True)
-But it is giving zero accuracy with the existing ILSVRC2012 dataset. 
- 
-Harika:
-Yolov8:
-Tried to add FM model accuracy support
-When passed original yolov8 tflite quantized model, facing issue while generating FM 
-/remote/us01sgnfs00562/NNSDK/harikam/har/nnac/nnac_backend/src/conversion/converter.cc:235 -> Unhandled op: Cast 
- 
-When passed already optimized model which is sliced by sne4onnx, facing issue
-Pass failed: Annotate L0 fusions
-Backend initialization failed: Graph Backend transformations failed
-Failed to compile the graph: Graph Backend transformations failed
- 
-Able to generate functional model with the last nodes specified in the new_yolov7_models repo branch
-Trying to add postprocessing support.
-Currently setting up https://github.com/d-li14/mobilenetv2.pytorch repo. and this requires the dataset in the particular format where classes are seperate folders and images are present inside it. The dataset preparation is in progress
- 
-NITHIES:
-For fix transpose and softmax issues for qdq cut model task, required futher enhancement in the previous fix 
-Made changes in convert_Softmax_to_NCHW pass to fix the issue 
-Triggered the regression
- 
-mlp_mixer legalization failure
-Tried to find the root cause for the max_diff
- 
-NITHIES:
-Tried to fix the hanging Qunatized and dequantized Nodes
-Gone through the MoveTransposeToEnd Pass, Tried to fix this issue. But stilll faces the hanging node issue
-Nithies
-Fixed yolo_nas hanging qdq_nodes issue
-Fixed fix transpose and softmax issues for qdq cut model issue
-Uploaded SwinIr model in onnx repo
+## Root Cause Analysis
+To identify the cause of the discrepancy, the following steps were undertaken:
+
+### 1. Isolated Subgraph Verification
+- A LayerNorm pattern subgraph was sliced and compared with the standalone ONNX LayerNorm OP.
+- The outputs from both computations were found to be identical.
+
+### 2. Reduction Mean Axis and Epsilon Verification
+- The reduction axis used for computing the mean and variance was validated and matched in both implementations.
+- The epsilon value (used for numerical stability) was confirmed to be the same in both cases.
+
+### 3. Scale and Bias Range Check
+- The scale and bias parameters were analyzed and confirmed to lie within the expected range (0 to 1).
+
+### 4. MatMul Placement
+- The LayerNorm operation is followed by a MatMul operation in the model.
+- The subgraph containing **LayerNorm pattern + MatMul** and **LayerNorm OP + MatMul** was tested separately, and the outputs were found to be identical.
+- Despite this, a large difference was observed when running the entire model with the fused LayerNorm OP.
+
+### 5. Verification with Other Models in NNSDK
+- The LayerNorm pattern was also verified against other models containing LayerNorm patterns in NNSDK.
+- The results were consistent, confirming that the isolated LayerNorm behaves correctly, reinforcing that the issue arises when running the full model.
+
+## Possible Solutions
+- **Precision Loss Investigation:**
+  - Verify if there is any precision loss introduced during the fusion process by analyzing floating-point precision in ONNX.
+- **Execution Order Differences:**
+  - The fused LayerNorm OP might be executed differently within the entire model, leading to numerical differences.
+- **Numerical Stability Checks:**
+  - Examine if numerical stability issues arise due to small differences in intermediate computations that amplify during later operations.
+- **Alternative Fusion Approach:**
+  - If fusion is necessary, consider an alternative method that ensures numerical consistency between the fused and non-fused implementations.
+
+## Conclusion
+The issue seems to stem from execution differences when running the full model, rather than an isolated LayerNorm discrepancy. Further debugging is required to analyze how the fused LayerNorm OP interacts within the complete graph.
+
+## Next Steps
+Continue refining the debugging process by analyzing intermediate activations throughout the full model execution and testing alternative fusion strategies to mitigate the discrepancy.
