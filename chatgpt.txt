@@ -1,1 +1,43 @@
-The maximum difference (max_diff) originates from the LayerNorm operation. These small differences accumulate and become significant due to subsequent MatMul operations. MatMul amplifies the numerical discrepancies, leading to larger overall differences.
+regnet_int8:
+Able to fix the shape mismatch to conv layer after modifying the convert_Split_to_NCHW Pass
+Pushed the code and Triggered build. Regression has been failed to some models
+Yet to fix it
+
+
+For this regnet pre-quantized tflite task,
+Found the root for the issue 
+two transpose Op is apllied before the split Op by convert_Split_to_NCHW, ConvertModelFormatToNCHW passes
+And RemoveIdentity_Transpose pass remove both transpose Op and causes input shape issue in the following solutions. 
+ 
+Tried to append another transpose after the split Node. But faced difficult is in linking the transpose node 
+And also tried to  remove all the tranpose, before and after the split Op(Also required to remove qdq Nodes followed by transpose Op)
+ 
+
+NITHIES:
+mlp_mixer:
+Resolved the MR comment for https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/932
+ 
+bevformer_tiny:
+Ran the legalization and generated the optimized file and Upload the model and log files onnx_repo.
+ 
+regnet pre-quantized tflite :
+Started working on convert_Split_to_NCHW pass fix.
+
+mlp_mixer and t2t_vit:
+Pushed the README to https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/932
+ 
+pointpillar_gemm2d_pre_sim:
+Gone through the JIRA ticket https://jira.internal.synopsys.com/browse/P10019563-74913
+Found the issue is caused in DownShiftingTranspose Pass and Updated the CompareDict 
+Pushed the code and Triggered te build - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/933
+ 
+Yolov8 qdq subgraph:
+Tried to fix the Yolov8 qdq subgraph
+ 
+Investigated this BN README.md  https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/blob/main/nnac/legalizer/development_study/conv_bn_fuse_problem/conv_bn_fuse_problem.md?ref_type=heads 
+ 
+This README issue is with untrained parameter
+For this mlp_mixer and t2t_vit case, Intermediate Subgraph Layernorm follolwed by Matmul is mapped exacted with Layernorm Op followed by Matmul. If parameters are not trained correctly, the ouput should not be matched for the subgraph.
+ 
+For now created a README for the root cause analysis. 
+Path to readme - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/932
