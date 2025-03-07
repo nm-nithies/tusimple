@@ -1,1 +1,29 @@
-This function merges all parallel convolution layer weights and biases into a single set. Additionally, it consolidates the scale and zero-point values for both weights and biases, ensuring compatibility across all channels. This is necessary because the QDQ (Quantize-Dequantize) nodes have different scale and zero-point values for each channel in the convolution layer.
+Fixed the Falied Nodes issue in legalization
+Madesome changes in RemoveTransposeBeforeSoftmax, convert_Softmax_to_NCHW to produce a valid model
+Added FuseSplitConvQDQ pass ( (split+transpose+conv+clip+concat) -> conv + clip)
+Yet to check correctness and push the code
+
+Fixed the hanging node issues
+Fixed the conflit between merging conv weights and bias into single dequantized layer
+ 
+
+faced an issue 
+ Non-zero status code returned while running DequantizeLinear node. Name:'496/Dequantize/duplicated' Status Message: /hdd2/lucia/build_onnxruntime_1.19/onnxruntime/onnxruntime/core/providers/cpu/quantization/quantize_linear.cc:109 void onnxruntime::PrepareForQDQ(const onnxruntime::TensorShape&, const onnxruntime::Tensor&, const onnxruntime::Tensor*, int64_t, int64_t, int64_t&, int64_t&, int64_t&) scale.Shape().NumDimensions() == 1 && scale.Shape()[0] == broadcast_dim was false. For per axis quantization, scale must be 1D tensor with size 528
+ 
+Fixed this by adding scale and zero_point values into dequantized layer for conv layers
+Currenty facing max-diff values and shape mismatch for this dequantized layers.
+
+
+Found the scale and zeropoint values are not merged sequentially to support the input values>
+Updated the pass and able to legalize the model 
+Added unit_test for this pattern and added comments to pass
+Cleaned and pushed the code. Triggered the build. 
+Later found some minor bugs shapemismatch in the conv dequantized layer. Fixed it & pushed the code.
+
+
+Resolved all MR comments and Triggered the build. Build passed
+Rebased the MR - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/941
+Faced merge conflicts. Resolved it and pushed the code. Retriggered the build 
+ 
+For SwinIR
+Checked fuse_attention_customized for several output formed in the graph
