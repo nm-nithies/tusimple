@@ -60,3 +60,6 @@ Yolov8 subragph
 Found the reason for the IDT build failure
 Fixed the issue and pushed to the code. Build passed
 MR - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/941
+
+RemoveSigmoidInverseSigmoid
+FuseMatMulAddSlice
