@@ -1,1 +1,1 @@
-Constant subgraph with Shape not optimized
+onnxruntime.capi.onnxruntime_pybind11_state.Fail: [ONNXRuntimeError] : 1 : FAIL : Node (Resize_140_quant) Op (Resize) [ShapeInferenceError] Number of elements of input 'sizes' (0) must be same as rank of input 'X' (4).
