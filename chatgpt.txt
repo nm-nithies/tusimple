@@ -1,2 +1,1 @@
-Could the Resize has constant as sizes/scales for this model instead?
-The resize node does not have the tensor data for given fcn_resnet50-12-qdq model
+[ONNXRuntimeError] : 2 : INVALID_ARGUMENT : Non-zero status code returned while running Gather node. Name:'/Gather_68' Status Message: indices element out of data bounds, idx=-1 must be within the inclusive range [0,-1]
