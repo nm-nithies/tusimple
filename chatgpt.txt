@@ -1,1 +1,277 @@
- RUNTIME_EXCEPTION : Non-zero status code returned while running Add node. Name:'Add_40' Status Message: /hdd2/lucia/build_onnxruntime_1.19/onnxruntime/onnxruntime/core/providers/cpu/math/element_wise_ops.h:666 onnxruntime::Broadcaster::Broadcaster(gsl::span<const long int>, gsl::span<const long int>) largest <= 1 was false. Can broadcast 0 by 0 or 1. 8 is invalid.
+/slowfs/us01dwt2p219/ARCJenkinsTools/ToolsCommon/SynopsysCaffe/1.6-eng1-nocuda-MX/Linux/lib/python3.11/site-packages/onnxscript/converter.py:820: FutureWarning: 'onnxscript.values.Op.param_schemas' is deprecated in version 0.1 and will be removed in the future. Please use '.op_signature' instead.
+  param_schemas = callee.param_schemas()
+/slowfs/us01dwt2p219/ARCJenkinsTools/ToolsCommon/SynopsysCaffe/1.6-eng1-nocuda-MX/Linux/lib/python3.11/site-packages/onnxscript/converter.py:820: FutureWarning: 'onnxscript.values.OnnxFunction.param_schemas' is deprecated in version 0.1 and will be removed in the future. Please use '.op_signature' instead.
+  param_schemas = callee.param_schemas()
+============================================================================
+                 MetaWare ARC NN compiler                  
+                  Copyright  Synopsys, Inc.                
+                    Version 1.7                    
+
+This software and the associated documentation are proprietary to Synopsys,  
+Inc., and may only be used in accordance with the terms and conditions of    
+a written license agreement with Synopsys, Inc.                     
+============================================================================
+
+  ### NN Model Information
+  -----------------------------------
+| NN Model Name              : dtpp_decoder_simplified
+| NN Model Type              : onnx
+| NN Model Path              : /remote/us01sgnfs00562/NNSDK/nithies/onnx_model/dtpp_decoder_simplified.onnx
+| NN Model Calibration Input : /remote/us01sgnfs00562/NNSDK/nithies/nnsdk/nnac/frontend/nnac/compiler/calibration/demo_images/ImageNet
+| NN Model Quantization Mode : No
+
+
+Importing NN model to MetaWare NN Compiler started
+================================================================
+
+[INFO] Mark original input data_format to be `NCHW`. Please change the convert_data_format setup if this is not correct!
+[INFO] Checking model correctness by running onnxruntime inference.
+[INFO] Set cpu_cores to be 16 for Onnxruntime inference.
+******************************All ONNX Ops Summary******************************
+{'Abs': 3, 'Add': 303, 'Cast': 6, 'Clip': 4, 'Concat': 166, 'ConstantOfShape': 1, 'Cos': 60, 'Div': 145, 'Einsum': 1, 'Elu': 41, 'Equal': 35, 'Erf': 20, 'Exp': 30, 'Expand': 30, 'Floor': 30, 'Gather': 386, 'Gemm': 62, 'MatMul': 206, 'Mul': 432, 'Neg': 31, 'Not': 3, 'Pow': 71, 'ReduceMax': 31, 'ReduceMean': 114, 'ReduceSum': 123, 'Relu': 31, 'Reshape': 78, 'Shape': 31, 'Sigmoid': 30, 'Sin': 60, 'Slice': 257, 'Softmax': 20, 'Sqrt': 70, 'Sub': 283, 'Tile': 2, 'Transpose': 76, 'Unsqueeze': 341, 'Where': 33}
+********************************************************************************
+[INFO] Update model Opset version from 13 to 21.
+[INFO] ONNX simplify applied successfully.
+[INFO] Available RAM in system: 506.840297472 GB
+[INFO] Set cpu_cores to be 16 for Onnxruntime inference.
+[INFO] Load input data from npy: encoder_outputs_encoding with data type float32
+[INFO] Load input data from npy: encoder_outputs_mask with data type bool
+[INFO] Load input data from npy: ego_traj_inputs with data type float32
+[INFO] Load input data from npy: agents_states with data type float32
+[INFO] Load input data from npy: timesteps with data type int64
+[INFO] Optimization: custom pass RemoveIdentity applied successfully.
+[WARNING] Original output weights does not exist in optimized model anymore!
+[INFO] Optimization: custom pass ModifyShareInitializersName applied successfully.
+[INFO] Skip legalization passes ['ReplaceEinsumByMul', 'CheckQDQPattern', 'ConvertUint8ToInt8', 'EltwiseAddInsertMissingQDQ', 'GemmBiasAddMissingScale', 'ConvertDynamicReshapeToStatic', 'ModifyShareInitializersName', 'ConvertModelFormatToNCHW', 'RemoveLastNode', 'ReplaceSliceByConv'] in following handling.
+[INFO] Optimization: custom pass FuseGroupNormalization applied successfully.
+[INFO] Optimization: custom pass RemoveNopSlice applied successfully.
+[INFO] Optimization: custom pass ReplaceConv1x1s2WithConv1x1s1AndSlice applied successfully.
+[INFO] Optimization: custom pass RemoveNopConcat applied successfully.
+[INFO] Optimization: custom pass RemoveSqueezeUnsqueezeAfterReduce applied successfully.
+[INFO] Optimization: custom pass RemoveReshapeTransposeReshape applied successfully.
+[INFO] Optimization: custom pass RemoveConsecutiveReshapes applied successfully.
+[INFO] Optimization: custom pass RemoveConsecutiveReduces applied successfully.
+[INFO] Optimization: custom pass RemoveConsecutiveSqueezes applied successfully.
+[INFO] Optimization: custom pass FuseIdenticalSiblingLayers applied successfully.
+[INFO] Optimization: custom pass RemovePairedTransposes applied successfully.
+[INFO] Optimization: custom pass RemoveTransposeBeforeBroadcastableOp applied successfully.
+[INFO] Optimization: custom pass RemoveTransposeBeforeReduceOp applied successfully.
+[INFO] Optimization: custom pass RemoveTransposeBeforeResize applied successfully.
+[INFO] Optimization: custom pass RemoveTransposeBeforeSoftmax applied successfully.
+[INFO] Optimization: custom pass RemovePairedReshapeAroundSoftmax applied successfully.
+[INFO] Optimization: custom pass RemoveReshapeShapeNotChanged applied successfully.
+[INFO] Optimization: custom pass RemoveSoftmaxBeforeArgMax applied successfully.
+[INFO] Optimization: custom pass RemoveExpandBeforeBroadcastableOp applied successfully.
+[INFO] Optimization: custom pass RemovePairedSqueezeUnsqueeze applied successfully.
+[INFO] Optimization: custom pass RemoveConsecutiveClips applied successfully.
+[INFO] Optimization: custom pass ReplaceAvgpool applied successfully.
+[INFO] Optimization: custom pass ReplaceGridSampler applied successfully.
+[INFO] Optimization: custom pass MoveConstantNodeToInitializer applied successfully.
+[INFO] Optimization: custom pass FuseExpandToResize applied successfully.
+[INFO] Optimization: custom pass FusePad applied successfully.
+[INFO] Optimization: custom pass FuseIntoSoftmax applied successfully.
+[INFO] Optimization: custom pass RemoveFlattenReshapeAroundSoftmax applied successfully.
+[INFO] Optimization: custom pass FuseIntoHardSwish applied successfully.
+[INFO] Optimization: custom pass FuseIntoHardSigmoid applied successfully.
+[INFO] Optimization: custom pass FuseBNIntoInstanceNorm applied successfully.
+[INFO] Optimization: custom pass FuseGeLU applied successfully.
+[INFO] Optimization: custom pass FuseMish applied successfully.
+[INFO] Optimization: custom pass FuseSwish applied successfully.
+[INFO] Optimization: custom pass FuseInitializerWithTranspose applied successfully.
+[INFO] Optimization: custom pass FusePrimitives applied successfully.
+[INFO] Optimization: custom pass FusePrimitivesIntoLayerNorm applied successfully.
+[INFO] Optimization: custom pass FuseAttention applied successfully.
+[INFO] Optimization: custom pass FuseLpNormalization applied successfully.
+[INFO] Optimization: custom pass FuseBNasBias applied successfully.
+[INFO] Optimization: custom pass FuseBNIntoPrevConv applied successfully.
+[INFO] Optimization: custom pass FuseBNIntoSuccConv applied successfully.
+[INFO] Optimization: custom pass FuseBNIntoPrevGemm applied successfully.
+[INFO] Optimization: custom pass FuseBNIntoSuccGemm applied successfully.
+[INFO] Optimization: custom pass FuseBNIntoPrevMatMul applied successfully.
+[INFO] Optimization: custom pass FuseMatMulAddAsGemm applied successfully.
+[INFO] Optimization: custom pass FuseGemmAdd applied successfully.
+[INFO] Optimization: custom pass FuseSplitConv applied successfully.
+[INFO] Optimization: custom pass FuseSplitAdd applied successfully.
+[INFO] Optimization: custom pass FuseMulAddIntoNormalization applied successfully.
+[INFO] Optimization: custom pass DownShiftingTranspose applied successfully.
+[INFO] Optimization: custom pass ReplaceMinMaxByClip applied successfully.
+[INFO] Optimization: custom pass ConvertSpatialPyramidPool applied successfully.
+[INFO] Optimization: custom pass ReplaceSum applied successfully.
+[INFO] Optimization: custom pass FuseIntoSpaceToDepth applied successfully.
+[INFO] Optimization: custom pass MoveActivationUpwardToConv applied successfully.
+[INFO] Optimization: custom pass FuseTransposeIntoGemm applied successfully.
+[INFO] Optimization: custom pass FusePadIntoConv applied successfully.
+[INFO] Optimization: custom pass RemoveNopWhere applied successfully.
+[INFO] Optimization: custom pass FuseUnsqueezeConcatReduce applied successfully.
+[INFO] Optimization: custom pass FusePreprocessingIntoMulAndAdd applied successfully.
+[INFO] Optimization: custom pass ConvertReduceMeanToGlobalAveragePool applied successfully.
+[INFO] Optimization: custom pass FusePatchMerging applied successfully.
+[INFO] Optimization: custom pass FuseWindowPartitionReverse applied successfully.
+[INFO] Optimization: custom pass FuseWindowShift applied successfully.
+[INFO] Optimization: custom pass FuseParallelActivationBranches applied successfully.
+[INFO] Optimization: custom pass RemoveUnsqueezeGather applied successfully.
+[INFO] Optimization: custom pass FuseIntoDepthToSpace applied successfully.
+[INFO] Optimization: custom pass ReplaceSqueezeByFlatten applied successfully.
+[INFO] Optimization: custom pass FuseMulIntoMatMulAdd applied successfully.
+[INFO] Optimization: custom pass FuseMulIntoConv applied successfully.
+[INFO] Optimization: custom pass FuseSubAndDivIntoBN applied successfully.
+[INFO] Optimization: custom pass ConvertArithmeticOps applied successfully.
+[INFO] Optimization: custom pass RemoveConsecutiveResizes applied successfully.
+[INFO] Optimization: custom pass MoveTransposeToEnd applied successfully.
+[INFO] Optimization: custom pass FuseReluClip applied successfully.
+[INFO] Optimization: custom pass FuseChannelShuffle applied successfully.
+[INFO] Optimization: custom pass ReplaceEinsumByMatMul applied successfully.
+[INFO] Optimization: custom pass FuseInverseSigmoid applied successfully.
+[INFO] Optimization: custom pass SplitMatMulAdd applied successfully.
+[INFO] Optimization: custom pass ReplaceScatterND applied successfully.
+[INFO] Optimization: custom pass FuseAddIntoSuccConv applied successfully.
+[INFO] Optimization: custom pass FuseReshapeUnsqueezeFlatten applied successfully.
+[INFO] Optimization: custom pass FuseConsecutiveAddReshape applied successfully.
+[INFO] Optimization: custom pass RemoveSigmoidInverseSigmoid applied successfully.
+[INFO] Optimization: custom pass FuseConstantConcatAsPad applied successfully.
+[INFO] Optimization: custom pass RemoveClipQDQ applied successfully.
+[INFO] Optimization: custom pass FuseSwishQDQ applied successfully.
+[INFO] Optimization: custom pass FusePadIntoConvQDQ applied successfully.
+[INFO] Optimization: custom pass FuseLogReshapeExp applied successfully.
+[INFO] Optimization: custom pass RemoveConcatSlice applied successfully.
+[INFO] Optimization: custom pass RemoveConcatAndGather applied successfully.
+[INFO] Optimization: custom pass FuseMultipleReshapeBN applied successfully.
+[INFO] Optimization: custom pass RemoveIdentity applied successfully.
+[INFO] Optimization: custom pass FuseSplitConvQDQ applied successfully.
+[INFO] Optimization: custom pass FuseGroupNormalization applied successfully.
+[INFO] Optimization: custom pass RemoveNopSlice applied successfully.
+[INFO] Optimization: custom pass ReplaceConv1x1s2WithConv1x1s1AndSlice applied successfully.
+[INFO] Optimization: custom pass RemoveNopConcat applied successfully.
+[INFO] Optimization: custom pass RemoveSqueezeUnsqueezeAfterReduce applied successfully.
+[INFO] Optimization: custom pass RemoveReshapeTransposeReshape applied successfully.
+[INFO] Optimization: custom pass RemoveConsecutiveReshapes applied successfully.
+[INFO] Optimization: custom pass RemoveConsecutiveReduces applied successfully.
+[INFO] Optimization: custom pass RemoveConsecutiveSqueezes applied successfully.
+[INFO] Optimization: custom pass FuseIdenticalSiblingLayers applied successfully.
+[INFO] Optimization: custom pass RemovePairedTransposes applied successfully.
+[INFO] Optimization: custom pass RemoveTransposeBeforeBroadcastableOp applied successfully.
+[INFO] Optimization: custom pass RemoveTransposeBeforeReduceOp applied successfully.
+[INFO] Optimization: custom pass RemoveTransposeBeforeResize applied successfully.
+[INFO] Optimization: custom pass RemoveTransposeBeforeSoftmax applied successfully.
+[INFO] Optimization: custom pass RemovePairedReshapeAroundSoftmax applied successfully.
+[INFO] Optimization: custom pass RemoveReshapeShapeNotChanged applied successfully.
+[INFO] Optimization: custom pass RemoveSoftmaxBeforeArgMax applied successfully.
+[INFO] Optimization: custom pass RemoveExpandBeforeBroadcastableOp applied successfully.
+[INFO] Optimization: custom pass RemovePairedSqueezeUnsqueeze applied successfully.
+[INFO] Optimization: custom pass RemoveConsecutiveClips applied successfully.
+[INFO] Optimization: custom pass ReplaceAvgpool applied successfully.
+[INFO] Optimization: custom pass ReplaceGridSampler applied successfully.
+[INFO] Optimization: custom pass MoveConstantNodeToInitializer applied successfully.
+[INFO] Optimization: custom pass FuseExpandToResize applied successfully.
+[INFO] Optimization: custom pass FusePad applied successfully.
+[INFO] Optimization: custom pass FuseIntoSoftmax applied successfully.
+[INFO] Optimization: custom pass RemoveFlattenReshapeAroundSoftmax applied successfully.
+[INFO] Optimization: custom pass FuseIntoHardSwish applied successfully.
+[INFO] Optimization: custom pass FuseIntoHardSigmoid applied successfully.
+[INFO] Optimization: custom pass FuseBNIntoInstanceNorm applied successfully.
+[INFO] Optimization: custom pass FuseGeLU applied successfully.
+[INFO] Optimization: custom pass FuseMish applied successfully.
+[INFO] Optimization: custom pass FuseSwish applied successfully.
+[INFO] Optimization: custom pass FuseInitializerWithTranspose applied successfully.
+[INFO] Optimization: custom pass FusePrimitives applied successfully.
+[INFO] Optimization: custom pass FusePrimitivesIntoLayerNorm applied successfully.
+[INFO] Optimization: custom pass FuseAttention applied successfully.
+[INFO] Optimization: custom pass FuseLpNormalization applied successfully.
+[INFO] Optimization: custom pass FuseBNasBias applied successfully.
+[INFO] Optimization: custom pass FuseBNIntoPrevConv applied successfully.
+[INFO] Optimization: custom pass FuseBNIntoSuccConv applied successfully.
+[INFO] Optimization: custom pass FuseBNIntoPrevGemm applied successfully.
+[INFO] Optimization: custom pass FuseBNIntoSuccGemm applied successfully.
+[INFO] Optimization: custom pass FuseBNIntoPrevMatMul applied successfully.
+[INFO] Optimization: custom pass FuseMatMulAddAsGemm applied successfully.
+[INFO] Optimization: custom pass FuseGemmAdd applied successfully.
+[INFO] Optimization: custom pass FuseSplitConv applied successfully.
+[INFO] Optimization: custom pass FuseSplitAdd applied successfully.
+[INFO] Optimization: custom pass FuseMulAddIntoNormalization applied successfully.
+[INFO] Optimization: custom pass DownShiftingTranspose applied successfully.
+[INFO] Optimization: custom pass ReplaceMinMaxByClip applied successfully.
+[INFO] Optimization: custom pass ConvertSpatialPyramidPool applied successfully.
+[INFO] Optimization: custom pass ReplaceSum applied successfully.
+[INFO] Optimization: custom pass FuseIntoSpaceToDepth applied successfully.
+[INFO] Optimization: custom pass MoveActivationUpwardToConv applied successfully.
+[INFO] Optimization: custom pass FuseTransposeIntoGemm applied successfully.
+[INFO] Optimization: custom pass FusePadIntoConv applied successfully.
+[INFO] Optimization: custom pass RemoveNopWhere applied successfully.
+[INFO] Optimization: custom pass FuseUnsqueezeConcatReduce applied successfully.
+[INFO] Optimization: custom pass FusePreprocessingIntoMulAndAdd applied successfully.
+[INFO] Optimization: custom pass ConvertReduceMeanToGlobalAveragePool applied successfully.
+[INFO] Optimization: custom pass FusePatchMerging applied successfully.
+[INFO] Optimization: custom pass FuseWindowPartitionReverse applied successfully.
+[INFO] Optimization: custom pass FuseWindowShift applied successfully.
+[INFO] Optimization: custom pass FuseParallelActivationBranches applied successfully.
+[INFO] Optimization: custom pass RemoveUnsqueezeGather applied successfully.
+[INFO] Optimization: custom pass FuseIntoDepthToSpace applied successfully.
+[INFO] Optimization: custom pass ReplaceSqueezeByFlatten applied successfully.
+[INFO] Optimization: custom pass FuseMulIntoMatMulAdd applied successfully.
+[INFO] Optimization: custom pass FuseMulIntoConv applied successfully.
+[INFO] Optimization: custom pass FuseSubAndDivIntoBN applied successfully.
+[INFO] Optimization: custom pass ConvertArithmeticOps applied successfully.
+[INFO] Optimization: custom pass RemoveConsecutiveResizes applied successfully.
+[INFO] Optimization: custom pass MoveTransposeToEnd applied successfully.
+[INFO] Optimization: custom pass FuseReluClip applied successfully.
+[INFO] Optimization: custom pass FuseChannelShuffle applied successfully.
+[INFO] Optimization: custom pass ReplaceEinsumByMatMul applied successfully.
+[INFO] Optimization: custom pass FuseInverseSigmoid applied successfully.
+[INFO] Optimization: custom pass SplitMatMulAdd applied successfully.
+[INFO] Optimization: custom pass ReplaceScatterND applied successfully.
+[INFO] Optimization: custom pass FuseAddIntoSuccConv applied successfully.
+[INFO] Optimization: custom pass FuseReshapeUnsqueezeFlatten applied successfully.
+[INFO] Optimization: custom pass FuseConsecutiveAddReshape applied successfully.
+[INFO] Optimization: custom pass RemoveSigmoidInverseSigmoid applied successfully.
+[INFO] Optimization: custom pass FuseMatMulAddSlice applied successfully.
+[INFO] Optimization: custom pass FuseConstantConcatAsPad applied successfully.
+[INFO] Optimization: custom pass RemoveClipQDQ applied successfully.
+[INFO] Optimization: custom pass FuseSwishQDQ applied successfully.
+[INFO] Optimization: custom pass FusePadIntoConvQDQ applied successfully.
+[INFO] Optimization: custom pass FuseLogReshapeExp applied successfully.
+[INFO] Optimization: custom pass RemoveConcatSlice applied successfully.
+[INFO] Optimization: custom pass RemoveConcatAndGather applied successfully.
+[INFO] Optimization: custom pass FuseMultipleReshapeBN applied successfully.
+[INFO] Optimization: custom pass RemoveIdentity applied successfully.
+[INFO] Optimization: custom pass FuseSplitConvQDQ applied successfully.
+[INFO] All the legalization passes applied.
+*********************Legalization passes applied summary: **********************
+{'FuseGeLU': 20, 'FusePrimitivesIntoLayerNorm': 40, 'ModifyShareInitializersName': 2747, 'RemoveConsecutiveReduces': 30}
+********************************************************************************
+[INFO] Set cpu_cores to be 16 for Onnxruntime inference.
+******************************All ONNX Ops Summary******************************
+{'Abs': 3, 'Add': 303, 'Cast': 6, 'Clip': 4, 'Concat': 166, 'Constant': 145, 'ConstantOfShape': 1, 'Cos': 60, 'Div': 145, 'Einsum': 1, 'Elu': 41, 'Equal': 35, 'Erf': 20, 'Exp': 30, 'Expand': 30, 'Floor': 30, 'Gather': 386, 'Gemm': 62, 'MatMul': 206, 'Mul': 432, 'Neg': 31, 'Not': 3, 'Pow': 71, 'ReduceMax': 31, 'ReduceMean': 114, 'ReduceSum': 123, 'Relu': 31, 'Reshape': 78, 'Shape': 31, 'Sigmoid': 30, 'Sin': 60, 'Slice': 257, 'Softmax': 20, 'Sqrt': 70, 'Sub': 283, 'Tile': 2, 'Transpose': 76, 'Unsqueeze': 341, 'Where': 33}
+********************************************************************************
+[INFO] Set cpu_cores to be 16 for Onnxruntime inference.
+[1;31m2025-03-16 23:47:56.015936382 [E:onnxruntime:, sequential_executor.cc:516 ExecuteKernel] Non-zero status code returned while running Mul node. Name:'Mul_13609' Status Message: /hdd2/lucia/build_onnxruntime_1.19/onnxruntime/onnxruntime/core/framework/op_kernel.cc:83 virtual OrtValue* onnxruntime::OpKernelContext::OutputMLValue(int, const onnxruntime::TensorShape&) status.IsOK() was false. Shape mismatch attempting to re-use buffer. {1} != {1,10}. Validate usage of dim_value (values should be > 0) and dim_param (all values with the same string should equate to the same size) in shapes in the model.
+[m
+[1m
+[0m
+[1m
+[0m
+Traceback (most recent call last):
+  File "/remote/us01sgnfs00562/NNSDK/nithies/nnsdk/nnac/frontend/nnac.py", line 16, in <module>
+    nnac_integrate_cli()
+  File "/remote/us01sgnfs00562/NNSDK/nithies/nnsdk/nnac/frontend/nnac/nnac_integrate_cli.py", line 147, in nnac_integrate_cli
+    legalized_model = legalize(model=converted_model,
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/remote/us01sgnfs00562/NNSDK/nithies/nnsdk/nnac/frontend/nnac/legalizer/legalize.py", line 63, in legalize
+    opt_model, _, _, _ = optimization(
+                         ^^^^^^^^^^^^^
+  File "/remote/us01sgnfs00562/NNSDK/nithies/nnsdk/nnac/frontend/nnac/legalizer/optimization_controller.py", line 703, in optimization
+    optimized_result1 = validate_onnx_onnx(
+                        ^^^^^^^^^^^^^^^^^^^
+  File "/remote/us01sgnfs00562/NNSDK/nithies/nnsdk/nnac/frontend/nnac/core/validate_onnx_onnx.py", line 72, in validate_onnx_onnx
+    onnx_out_new, onnx_name_op_new = inference_onnx(
+                                     ^^^^^^^^^^^^^^^
+  File "/remote/us01sgnfs00562/NNSDK/nithies/nnsdk/nnac/frontend/nnac/core/onnx_inference.py", line 412, in inference_onnx
+    _, onnx_out, name_op_dict, _ = onnx_inference_with_input_generate(
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/remote/us01sgnfs00562/NNSDK/nithies/nnsdk/nnac/frontend/nnac/core/onnx_inference.py", line 339, in onnx_inference_with_input_generate
+    pred_onnx = sess.run([], feed_dict)
+                ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/slowfs/us01dwt2p219/ARCJenkinsTools/ToolsCommon/SynopsysCaffe/1.6-eng1-nocuda-MX/Linux/lib/python3.11/site-packages/onnxruntime/capi/onnxruntime_inference_collection.py", line 220, in run
+    return self._sess.run(output_names, input_feed, run_options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+onnxruntime.capi.onnxruntime_pybind11_state.RuntimeException: [ONNXRuntimeError] : 6 : RUNTIME_EXCEPTION : Non-zero status code returned while running Mul node. Name:'Mul_13609' Status Message: /hdd2/lucia/build_onnxruntime_1.19/onnxruntime/onnxruntime/core/framework/op_kernel.cc:83 virtual OrtValue* onnxruntime::OpKernelContext::OutputMLValue(int, const onnxruntime::TensorShape&) status.IsOK() was false. Shape mismatch attempting to re-use buffer. {1} != {1,10}. Validate usage of dim_value (values should be > 0) and dim_param (all values with the same string should equate to the same size) in shapes in the model.
+
