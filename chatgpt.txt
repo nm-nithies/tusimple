@@ -1,11 +1,5 @@
-    logger.debug(
-        "[DEBUG] insert a Reshape layer {} to keep the original output shape of layer {}".format(
-            reshape_layer, layer
-        )
+logger.debug(
+    "[DEBUG] Insert a Reshape layer {} to keep the original output shape of layer {}. Replace Einsum layer {} with a MatMul layer.".format(
+        reshape_layer, layer, layer
     )
-
-    logger.debug(
-        "[DEBUG] replace Einsum layer {} by MatMul layer".format(
-            layer
-        )
-    )
+)
