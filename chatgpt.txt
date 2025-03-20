@@ -1,24 +1,11 @@
-import torch
-import torch.onnx
+    logger.debug(
+        "[DEBUG] insert a Reshape layer {} to keep the original output shape of layer {}".format(
+            reshape_layer, layer
+        )
+    )
 
-# Define the Einsum model with an equal node
-class EinsumModel(torch.nn.Module):
-    def forward(self, x, y):
-        einsum_out = torch.einsum('bi,bj->bij', x, y)  # Outer product
-        equal_out = einsum_out == 0.5  # Example: Element-wise comparison with 0.5
-        return equal_out.float()  # Convert bool to float (ONNX compatibility)
-
-# Create the model
-model = EinsumModel()
-
-# Generate fixed-size input tensors
-x = torch.randn(1, 240)
-y = torch.randn(1, 236)
-
-# Export to ONNX with static batch dimensions
-onnx_filename = "einsum_model_static.onnx"
-torch.onnx.export(model, (x, y), onnx_filename, 
-                  input_names=["x", "y"], output_names=["output"],
-                  opset_version=12)  # No dynamic_axes for static export
-
-print(f"ONNX model exported to {onnx_filename} with static batch size.")
+    logger.debug(
+        "[DEBUG] replace Einsum layer {} by MatMul layer".format(
+            layer
+        )
+    )
