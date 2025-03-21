@@ -1,3 +1,2 @@
-Fix legalization issue for segformer.b1.512x512.ade.160k.onnx
-Legalize: Fold Concat+BatchNormalization into preceding Conv operations
-Qwen2_VL model Encoder model D legalize failure
+onnxruntime_extensions import failed due to error: model with IR version >= 3 must specify opset_import for ONNX
+[WARNING] ONNX simplify not successfully performed due to error: model with IR version >= 3 must specify opset_import for ONNX
