@@ -12,3 +12,15 @@ if not model.opset_import:
 
 # Save the fixed model
 onnx.save(model, "your_model_fixed.onnx")
+
+
+import onnx
+
+# Load the ONNX model
+model = onnx.load("model.onnx")
+
+# Change the IR version
+model.ir_version = onnx.IR_VERSION  # or set to a specific version like 7
+
+# Save the updated model
+onnx.save(model, "model_updated.onnx")
