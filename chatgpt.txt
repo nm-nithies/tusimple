@@ -1,2 +1,14 @@
-onnxruntime_extensions import failed due to error: model with IR version >= 3 must specify opset_import for ONNX
-[WARNING] ONNX simplify not successfully performed due to error: model with IR version >= 3 must specify opset_import for ONNX
+import onnx
+from onnx import helper
+
+# Load the model
+model = onnx.load("your_model.onnx")
+
+# Check if opset_import is missing or empty
+if not model.opset_import:
+    # Add a default opset (e.g., version 11 or 13)
+    opset = helper.make_operatorsetid("", 13)  # "" refers to the ONNX domain
+    model.opset_import.append(opset)
+
+# Save the fixed model
+onnx.save(model, "your_model_fixed.onnx")
