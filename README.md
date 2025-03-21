@@ -1,28 +1,59 @@
-public OpRewritePattern<> is a template class in MLIR used to define custom patterns for rewriting operations. 
-It allows you to match specific operations and replace them with optimized or transformed versions during MLIR's optimization passes.
-
-
-rewriter.create<> is a method in MLIR that creates a new operation during a rewrite or transformation pass. 
-It takes the operation's location, types, and operands, and inserts the newly created operation into the IR.
-
-mlir::Value is a handle to an SSA (Static Single Assignment) value in the MLIR (Multi-Level Intermediate Representation) framework. 
-It represents the result of an operation or a block argument and is used to connect operations in the IR.
-
-rewriter.replaceOp<> replaces the specified operation with new result(s), typically from a transformed or optimized operation, and updates all uses of the old operation to the new result.
-rewriter.eraseOp<> deletes the specified operation from the IR, removing it entirely from the current computation graph.
-
-mlir::arith::ConstantOp is an operation in MLIR that creates a constant value in the arithmetic dialect. It can represent scalar or tensor constants, such as integers or floating-point values, and is often used for optimization and transformation purposes.
-
-
-mlir::DenseElementsAttr is an attribute in MLIR that represents a dense collection of elements, typically used for tensor data. It stores constant values in a compact form for tensors or vectors and allows efficient access to the underlying elements, whether they are integers, floats, or other types.
-
-
-llvm::APFloat is a class in the LLVM framework that represents arbitrary precision floating-point numbers.
+DTPP_decoder:
+Created MR. Resolved the MR comments
+ 
+Qwen2_VL model:
+Found the reason for the bug mentioned in the jira. 
+This reason is same dtpp_decoder that history_len and ids_len input nodes is needed positive values as the NNAC set these input values as zero (as default). Fix it by setting its as 1
+ 
+During legalization, layer validation part is skipped due to larger size
+One output node is falied due max_diff value around 1.00
+ 
+This diff is not caused by any passes
+Yvonne Chen Whether is this caused by input values or any other reasons?
+ 
+And also faced version issues
 
 
 
 
 
 
-#Enga vandhu Yaaruh kitta 
-#MAKKAL THALAPATHY than da massuh 🔥
+ NITHIES:
+DTPP Decoder model
+Added a new pattern in ReplaceEinsumByMatmul pass
+Able to legalize the model
+Added unit test case for this pattern and comments to the pass
+Cleaned, Optmized and pushed the code
+
+
+
+
+DTPP Decoder model:
+Found the ReduceSum Op got updated with the wrong axis values. Updated RemoveConsecutiveReduces pass accordingly
+In ReplaceEinsumByMatmul pass, found the matmul gets improper input shapes, Added additional tranpose before matmul to fix this issue. But these changes are messing with the ReplaceEinsumByMatmul_pattern2
+
+
+DTPP Decoder model :
+ 
+The issue is arraised due to timesteps input node
+ 
+InNNAC , 0 is set to timesteps node by default. I think the input(timesteps) need to be greater than 1 for this case due to the sub node which contains constant value 1 .
+the issue mentioned in the jira is ressolved after setting the value to 5 to timesteps node
+Later Found some issue with ReplaceEinsumByMul RemoveConsecutiveReduces passes . Currently debugging this
+ 
+After that I had faced another issue when tried to legalize the model (disabling the above passes for now)
+There is ConstantOfShape Op with infinity values
+I tried with onnx slim to remove this, but it doesn't work
+ 
+Updated the jira and moved the bevformer files to customer folder
+
+
+
+
+
+Fcn_resnet50:
+The resize node does not have the tensor data for given fcn_resnet50-12-qdq model
+
+
+Tried to run these models mentioned in the jira https://jira.internal.synopsys.com/browse/P10019563-75410 and https://jira.internal.synopsys.com/browse/P10019563-75411
+Faced the exact issue and currently debugging it
