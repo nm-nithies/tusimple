@@ -1,1 +1,1 @@
-[ONNXRuntimeError] : 1 : FAIL : Non-zero status code returned while running Slice node. Name:'/Slice_2' Status Message: slice.cc:195 FillVectorsFromInput Starts must be a 1-D array
+onnxruntime.capi.onnxruntime_pybind11_state.InvalidArgument: [ONNXRuntimeError] : 2 : INVALID_ARGUMENT : Invalid model. Node input 'onnx::Unsqueeze_1509' is not a graph input, initializer, or output of a previous node.
