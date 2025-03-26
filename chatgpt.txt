@@ -1,1 +1,1 @@
-onnxruntime.capi.onnxruntime_pybind11_state.InvalidArgument: [ONNXRuntimeError] : 2 : INVALID_ARGUMENT : Invalid model. Node input 'onnx::Unsqueeze_1509' is not a graph input, initializer, or output of a previous node.
+The time input node must be a positive number greater than 3; otherwise, it may cause errors in ONNX Runtime.
