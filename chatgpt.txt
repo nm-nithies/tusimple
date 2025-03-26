@@ -1,1 +1,1 @@
-The time input node must be a positive number greater than 3; otherwise, it may cause errors in ONNX Runtime.
+To run ONNX Runtime successfully, provide realistic values for the time input node during inference.
