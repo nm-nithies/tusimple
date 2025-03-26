@@ -1,1 +1,1 @@
-To run ONNX Runtime successfully, provide realistic values for the time input node during inference.
+FAIL : Non-zero status code returned while running Conv node. Name:'/model.11/cv6/conv/Conv' Status Message: Input channels C is not equal to kernel channels * group. C: 512 kernel channels: 1024 group: 1
