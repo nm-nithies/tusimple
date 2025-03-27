@@ -1,33 +1,54 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+import torch.onnx
 
-class FusedModel(nn.Module):
-    def __init__(self, conv1, conv2):
-        super(FusedModel, self).__init__()
-        self.conv1 = conv1  # no BN fusion here (due to ReLU)
-        self.conv2 = conv2  # BN already fused
+class CustomModel(nn.Module):
+    def __init__(self):
+        super(CustomModel, self).__init__()
+        self.conv1 = nn.Conv2d(128, 128, kernel_size=1, bias=False)
         self.relu = nn.ReLU()
+        self.conv2 = nn.Conv2d(128, 128, kernel_size=3, padding=1, bias=True)
+        self.bn = nn.BatchNorm2d(256)
+
+        # Initialize weights as needed
+        self._init_weights()
+
+    def _init_weights(self):
+        # Conv1 (no bias)
+        nn.init.normal_(self.conv1.weight, mean=0, std=1)
+
+        # Conv2
+        nn.init.normal_(self.conv2.weight, mean=0, std=1)
+        nn.init.zeros_(self.conv2.bias)
+
+        # BatchNorm - Initialize scale, bias, mean, var with 256-length vectors
+        nn.init.constant_(self.bn.weight, 1.0)   # scale (gamma)
+        nn.init.constant_(self.bn.bias, 0.0)     # bias (beta)
+        nn.init.constant_(self.bn.running_mean, 0.0)  # mean
+        nn.init.constant_(self.bn.running_var, 1.0)   # var
 
     def forward(self, x):
-        out1 = self.relu(self.conv1(x))  # Conv1 + ReLU
-        out2 = self.conv2(x)             # Conv2 (with BN fused)
-        return torch.cat([out1, out2], dim=1)  # concat along channel axis
+        x1 = self.relu(self.conv1(x))
+        x2 = self.conv2(x)
+        x_cat = torch.cat([x1, x2], dim=1)  # Concat along channel dimension
+        out = self.bn(x_cat)
+        return out
 
-# Export the model to ONNX
-model = FusedModel(conv1, conv2)  # assumes conv1, conv2 already fused/prepared
+# Create model and dummy input
+model = CustomModel()
 model.eval()
 
-dummy_input = torch.randn(1, 128, 64, 64)  # example input
+dummy_input = torch.randn(1, 128, 32, 32)
 
+# Export to ONNX
 torch.onnx.export(
     model,
     dummy_input,
-    "fused_parallel.onnx",
+    "custom_model.onnx",
     input_names=["input"],
     output_names=["output"],
     opset_version=11,
     dynamic_axes={"input": {0: "batch"}, "output": {0: "batch"}}
 )
 
-print("✅ Exported: fused_parallel.onnx")
+print("ONNX model exported to custom_model.onnx")
