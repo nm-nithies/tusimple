@@ -10,27 +10,28 @@ class CustomModel(nn.Module):
         self.conv2 = nn.Conv2d(128, 128, kernel_size=3, padding=1, bias=True)
         self.bn = nn.BatchNorm2d(256)
 
-        # Initialize weights as needed
         self._init_weights()
 
     def _init_weights(self):
-        # Conv1 (no bias)
+        # Initialize Conv1 (no bias)
         nn.init.normal_(self.conv1.weight, mean=0, std=1)
 
-        # Conv2
+        # Initialize Conv2
         nn.init.normal_(self.conv2.weight, mean=0, std=1)
         nn.init.zeros_(self.conv2.bias)
 
-        # BatchNorm - Initialize scale, bias, mean, var with 256-length vectors
-        nn.init.constant_(self.bn.weight, 1.0)   # scale (gamma)
-        nn.init.constant_(self.bn.bias, 0.0)     # bias (beta)
-        nn.init.constant_(self.bn.running_mean, 0.0)  # mean
-        nn.init.constant_(self.bn.running_var, 1.0)   # var
+        # Initialize BatchNorm
+        nn.init.constant_(self.bn.weight, 2.0)         # scale (gamma)
+        nn.init.constant_(self.bn.bias, -0.5)          # bias (beta)
+
+        # Set custom mean and var
+        self.bn.running_mean.copy_(torch.linspace(-1.0, 1.0, 256))  # example range
+        self.bn.running_var.copy_(torch.linspace(0.1, 2.0, 256))    # avoid zero to keep variance valid
 
     def forward(self, x):
         x1 = self.relu(self.conv1(x))
         x2 = self.conv2(x)
-        x_cat = torch.cat([x1, x2], dim=1)  # Concat along channel dimension
+        x_cat = torch.cat([x1, x2], dim=1)
         out = self.bn(x_cat)
         return out
 
@@ -51,4 +52,5 @@ torch.onnx.export(
     dynamic_axes={"input": {0: "batch"}, "output": {0: "batch"}}
 )
 
-print("ONNX model exported to custom_model.onnx")
+print("✅ ONNX model exported to 'custom_model.onnx' with custom mean/var in BatchNorm.")
+
