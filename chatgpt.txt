@@ -1,45 +1,36 @@
-ScaledYoloV4:
-Added unit test for FuseBnIntoConv pass and added comments
-Optimized the code and pushed it
-Triggered the regression build
+import torch
+import torch.nn as nn
+import torch.onnx
 
+class ReshapeReorderModel(nn.Module):
+    def forward(self, x):
+        # Step 1: reshape to (1, 3, 112, 2, 112, 2)
+        x = x.view(1, 3, 112, 2, 112, 2)
 
-scaleYoloV4:
-Fixed the max diff issues and able to legalized the model
-Yet to push the code
- 
-Added README for qwen2vl_decoder, qwen2vl_encoder, dtpp_decoder and Updated JIRA
-Upload input_files and optimized model for qwen2vl_decoder
-MR - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/976
-scaledYoloV4_optimized.onnx
+        # Step 2: permute (0, 3, 5, 1, 2, 4)
+        x = x.permute(0, 3, 5, 1, 2, 4)
 
-scaleYoloV4:
-To fuse BatchNormalization into Conv operations made some changes in FuseBNIntoPrevConv pass. 
-Faced max_diff values . Yet to fx it
+        # Step 3: reshape to (1, 12, 112, 112)
+        x = x.reshape(1, 12, 112, 112)
 
+        return x
 
-segformer.b1.512x512:
-Added a additional check condition in single_layer_transforms.py
-Pushed the code - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/967/diffs#7fffc7549c8d03e72495dd743cc6493439a634b8
- 
-Qwen_VL encoder D:
-Added the model into regression - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/969
- 
-started working on https://jira.internal.synopsys.com/browse/P10019563-75584?filter=-1 task?
+# Instantiate and set to eval mode
+model = ReshapeReorderModel()
+model.eval()
 
+# Dummy input
+dummy_input = torch.randn(1, 3, 224, 224)
 
+# Export to ONNX
+torch.onnx.export(
+    model,
+    dummy_input,
+    "reshape_transpose_model.onnx",
+    input_names=["input"],
+    output_names=["output"],
+    opset_version=11,
+    dynamic_axes={"input": {0: "batch"}, "output": {0: "batch"}}
+)
 
-segformer.b1.512x512:
-Identified the bug in the pass in the RemoveTransposeBeforeReduceOp pass.( additional tranpose has been added without edges)
-able to legalize the model
-Yet to update the RemoveTransposeBeforeReduceOp pass
- 
-Qwen2_VL model Encoder:
-able to legalize the model with the given real input values 
- 
-dtpp_decoder:
-Rebase done - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/963
-
-
-FCN-ResNet50 QDQ legalization issue fix and compile test + accuracy measurement
-Accuracy degrades by using different ViT model
+print("✅ ONNX model exported to reshape_transpose_model.onnx")
