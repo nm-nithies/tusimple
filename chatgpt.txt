@@ -1,56 +1,41 @@
-import torch
-import torch.nn as nn
-import torch.onnx
+ScaledYoloV4:
+Added unit test for FuseBnIntoConv pass and added comments
+Optimized the code and pushed it
+Triggered the regression build
 
-class CustomModel(nn.Module):
-    def __init__(self):
-        super(CustomModel, self).__init__()
-        self.conv1 = nn.Conv2d(128, 128, kernel_size=1, bias=False)
-        self.relu = nn.ReLU()
-        self.conv2 = nn.Conv2d(128, 128, kernel_size=3, padding=1, bias=True)
-        self.bn = nn.BatchNorm2d(256)
 
-        self._init_weights()
+scaleYoloV4:
+Fixed the max diff issues and able to legalized the model
+Yet to push the code
+ 
+Added README for qwen2vl_decoder, qwen2vl_encoder, dtpp_decoder and Updated JIRA
+Upload input_files and optimized model for qwen2vl_decoder
+MR - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/976
+scaledYoloV4_optimized.onnx
 
-    def _init_weights(self):
-        # Initialize Conv1 (no bias)
-        nn.init.normal_(self.conv1.weight, mean=0, std=1)
+scaleYoloV4:
+To fuse BatchNormalization into Conv operations made some changes in FuseBNIntoPrevConv pass. 
+Faced max_diff values . Yet to fx it
 
-        # Initialize Conv2
-        nn.init.normal_(self.conv2.weight, mean=0, std=1)
-        nn.init.zeros_(self.conv2.bias)
 
-        # Initialize BatchNorm
-        nn.init.constant_(self.bn.weight, 2.0)         # scale (gamma)
-        nn.init.constant_(self.bn.bias, -0.5)          # bias (beta)
+segformer.b1.512x512:
+Added a additional check condition in single_layer_transforms.py
+Pushed the code - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/967/diffs#7fffc7549c8d03e72495dd743cc6493439a634b8
+ 
+Qwen_VL encoder D:
+Added the model into regression - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/969
+ 
+started working on https://jira.internal.synopsys.com/browse/P10019563-75584?filter=-1 task?
 
-        # Set custom mean and var
-        self.bn.running_mean.copy_(torch.linspace(-1.0, 1.0, 256))  # example range
-        self.bn.running_var.copy_(torch.linspace(0.1, 2.0, 256))    # avoid zero to keep variance valid
 
-    def forward(self, x):
-        x1 = self.relu(self.conv1(x))
-        x2 = self.conv2(x)
-        x_cat = torch.cat([x1, x2], dim=1)
-        out = self.bn(x_cat)
-        return out
 
-# Create model and dummy input
-model = CustomModel()
-model.eval()
-
-dummy_input = torch.randn(1, 128, 32, 32)
-
-# Export to ONNX
-torch.onnx.export(
-    model,
-    dummy_input,
-    "custom_model.onnx",
-    input_names=["input"],
-    output_names=["output"],
-    opset_version=11,
-    dynamic_axes={"input": {0: "batch"}, "output": {0: "batch"}}
-)
-
-print("✅ ONNX model exported to 'custom_model.onnx' with custom mean/var in BatchNorm.")
-
+segformer.b1.512x512:
+Identified the bug in the pass in the RemoveTransposeBeforeReduceOp pass.( additional tranpose has been added without edges)
+able to legalize the model
+Yet to update the RemoveTransposeBeforeReduceOp pass
+ 
+Qwen2_VL model Encoder:
+able to legalize the model with the given real input values 
+ 
+dtpp_decoder:
+Rebase done - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/963
