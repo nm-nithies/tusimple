@@ -39,3 +39,7 @@ able to legalize the model with the given real input values
  
 dtpp_decoder:
 Rebase done - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/963
+
+
+FCN-ResNet50 QDQ legalization issue fix and compile test + accuracy measurement
+Accuracy degrades by using different ViT model
