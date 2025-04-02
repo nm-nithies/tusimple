@@ -1,18 +1,2 @@
-import onnx
-
-# Load the ONNX model
-model_path = "your_model.onnx"
-model = onnx.load(model_path)
-
-# Find the Resize node and remove scales input
-for node in model.graph.node:
-    if node.op_type == "Resize":
-        print(f"Fixing Resize Node: {node.name}")
-        if len(node.input) > 2:  # Typically, scales is the third input
-            scales_input = node.input[2]  # Get the third input (scales)
-            if "scales" in scales_input or scales_input.isdigit():  # Ensure it's scales
-                node.input.remove(scales_input)  # Remove scales input
-
-# Save the modified model
-onnx.save(model, "fixed_model.onnx")
-print("Successfully removed scales input from Resize node!")
+[ONNXRuntimeError] : 10 : INVALID_GRAPH : This is an invalid model. Type Error: Type 'tensor(int64)' of input parameter (527) of operator (Resize) in node (Resize_140_quant) is invalid.
+[ERROR]: The model cannot run onnxruntime inference! Please recheck the model and the onnx/onnxruntime version as well as your param setup to make sure everything is correct
