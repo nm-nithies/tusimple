@@ -1,16 +1,4 @@
-import onnx
-
-# Load the ONNX model
-model_path = "your_model.onnx"
-model = onnx.load(model_path)
-
-# Find the Resize node and remove scales input
-for node in model.graph.node:
-    if node.op_type == "Resize":
-        print(f"Fixing Resize Node: {node.name}")
-        if len(node.input) > 2:  # scales is usually the third input
-            node.input = [node.input[0], node.input[1], node.input[2]]  # Keep only roi and sizes
-
-# Save the modified model
-onnx.save(model, "fixed_model.onnx")
-print("Successfully removed scales input from Resize node!")
+    ^^^^^^^^^^
+  File "/slowfs/us01dwt2p219/ARCJenkinsTools/ToolsCommon/SynopsysCaffe/1.7-eng1-nocuda-MX/Linux/lib/python3.11/site-packages/google/protobuf/internal/python_message.py", line 664, in setter
+    raise AttributeError('Assignment not allowed to repeated field '
+AttributeError: Assignment not allowed to repeated field "input" in protocol message object.
