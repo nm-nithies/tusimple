@@ -1,1 +1,16 @@
-2025-04-02 10:21:08.333729390 [E:onnxruntime:, sequential_executor.cc:516 ExecuteKernel] Non-zero status code returned while running Resize node. Name:'Resize_140_quant' Status Message: upsample.cc:1416 Compute Only one of scales or sizes must be provided as input
+import onnx
+
+# Load the ONNX model
+model_path = "your_model.onnx"
+model = onnx.load(model_path)
+
+# Find the Resize node and remove scales input
+for node in model.graph.node:
+    if node.op_type == "Resize":
+        print(f"Fixing Resize Node: {node.name}")
+        if len(node.input) > 2:  # scales is usually the third input
+            node.input = [node.input[0], node.input[1], node.input[2]]  # Keep only roi and sizes
+
+# Save the modified model
+onnx.save(model, "fixed_model.onnx")
+print("Successfully removed scales input from Resize node!")
