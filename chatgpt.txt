@@ -4,16 +4,17 @@ import onnx
 model_path = "your_model.onnx"
 model = onnx.load(model_path)
 
-# Fix the Resize node to use 'sizes' instead of wrongly renamed 'scales'
+# Find Resize node and change attribute from scales -> sizes
 for node in model.graph.node:
     if node.op_type == "Resize":
         print(f"Fixing Resize Node: {node.name}")
-        
-        # Ensure sizes is correctly set as the third input (instead of scales)
-        if len(node.input) > 2 and "scales" in node.input[2]:  
-            node.input[2] = "sizes"  # Rename it back to sizes
-            print(f"Renamed input {node.input[2]} back to 'sizes'")
+
+        # Iterate through the attributes to modify 'scales' → 'sizes'
+        for attr in node.attribute:
+            if attr.name == "scales":
+                print(f"Changing attribute '{attr.name}' to 'sizes'")
+                attr.name = "sizes"
 
 # Save the modified model
 onnx.save(model, "fixed_model.onnx")
-print("Successfully fixed Resize input to use 'sizes'!")
+print("Successfully changed Resize attribute from 'scales' to 'sizes'!")
