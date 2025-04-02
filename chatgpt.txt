@@ -1,1 +1,15 @@
-onnxruntime.capi.onnxruntime_pybind11_state.Fail: [ONNXRuntimeError] : 1 : FAIL : Node (Resize_140_quant) Op (Resize) [ShapeInferenceError] Number of elements of input 'sizes' (0) must be same as rank of input 'X' (4).
+import onnx
+from onnx import shape_inference
+
+# Load ONNX model
+model_path = "your_model.onnx"
+model = onnx.load(model_path)
+
+# Run shape inference
+inferred_model = shape_inference.infer_shapes(model)
+
+# Save the inferred model
+onnx.save(inferred_model, "inferred_model.onnx")
+
+# Print inferred model graph
+print(onnx.helper.printable_graph(inferred_model.graph))
