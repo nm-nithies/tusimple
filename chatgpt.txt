@@ -1,1 +1,17 @@
- 10 : INVALID_GRAPH : This is an invalid model. In Node, ("Resize_140_quant", Resize, "", -1) : ("516": tensor(float),"default_roi": tensor(float),"","527": tensor(int64),) -> ("out_QuantizeInput",) , Error Node (Resize_140_quant)'s input 2 is marked single but has an empty string in the graph
+Calculated the accuracy for both vit_mmlab optimized and FM model.
+FCN-resnet50
+ 
+Replaced roi and scales values as constants. Later Found either scale or sizes can be used in resize Op.
+As mentioned in the resize Onnx documentation , replaced empty string to the scale values .
+ 
+but faced This is an invalid model. In Node, ("Resize_140_quant", Resize, "", -1) : ("516": tensor(float),"default_roi": tensor(float),"","527": tensor(int64),) -> ("out_QuantizeInput",) , Error Node (Resize_140_quant)'s input 2 is marked single but has an empty string in the graph
+
+Fix accuracy degrades by using different ViT model:
+Fixed the legalization issue. As the FuseAttentionCustomized Pass mutliplied both the Mul contants values into query's (weights and bias). But one of the Mul needs to be multiplied with the key (weights and bias ) . This might be the reason for the accuracy drop.
+Pushed the changes. Faced regression failure for Vit_mmlab model
+Fixed the issue and re-pushed the code
+
+Checked the possibility to fuse the extra Mul layer in Customized Attention Op.
+Checked the Fuseattention pass
+Made a study on Attention Op 
+Yet to fix the max_diff values and find a solution to fuse these extra Mul layers into Attention Op
