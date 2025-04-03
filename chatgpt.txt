@@ -15,3 +15,6 @@ Checked the possibility to fuse the extra Mul layer in Customized Attention Op.
 Checked the Fuseattention pass
 Made a study on Attention Op 
 Yet to fix the max_diff values and find a solution to fuse these extra Mul layers into Attention Op
+
+
+Fixed the legalization issue. As the FuseAttentionCustomized Pass mutliplied both the Mul contants values into query's (weights and bias). But one of the Mul needs to be multiplied with the key (weights and bias ) . This might be the reason for the accuracy drop.
