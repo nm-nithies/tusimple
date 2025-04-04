@@ -1,20 +1,16 @@
-Calculated the accuracy for both vit_mmlab optimized and FM model.
-FCN-resnet50
- 
-Replaced roi and scales values as constants. Later Found either scale or sizes can be used in resize Op.
-As mentioned in the resize Onnx documentation , replaced empty string to the scale values .
- 
-but faced This is an invalid model. In Node, ("Resize_140_quant", Resize, "", -1) : ("516": tensor(float),"default_roi": tensor(float),"","527": tensor(int64),) -> ("out_QuantizeInput",) , Error Node (Resize_140_quant)'s input 2 is marked single but has an empty string in the graph
+It should be possible to fold the BatchNormalization operation in both Conv operations even if there is a Relu in between for the cases in scaledYoloV4.onnx.
 
-Fix accuracy degrades by using different ViT model:
-Fixed the legalization issue. As the FuseAttentionCustomized Pass mutliplied both the Mul contants values into query's (weights and bias). But one of the Mul needs to be multiplied with the key (weights and bias ) . This might be the reason for the accuracy drop.
-Pushed the changes. Faced regression failure for Vit_mmlab model
-Fixed the issue and re-pushed the code
+BatchNormalization is doing
 
-Checked the possibility to fuse the extra Mul layer in Customized Attention Op.
-Checked the Fuseattention pass
-Made a study on Attention Op 
-Yet to fix the max_diff values and find a solution to fuse these extra Mul layers into Attention Op
+y = (x - input_mean) / sqrt(input_var + epsilon) * scale + B
+Or
+y = x * (scale / sqrt(input_var + epsilon)) - (input_mean - B)
+If both 'scale / sqrt(input_var + epsilon)' and 'input_mean - B' are positive the first Relu can be removed, ie Conv+Relu+BatchNorm+Relu is the same as Conv+BatchNorm+Relu in that case
 
+Fot the usecase in this graph this will always be the case, ie
 
-Fixed the legalization issue. As the FuseAttentionCustomized Pass mutliplied both the Mul contants values into query's (weights and bias). But one of the Mul needs to be multiplied with the key (weights and bias ) . This might be the reason for the accuracy drop.
+sqrt(input_var + epsilon) is always positive
+input_mean will always be positive because it was calculated based on tensors with only positive values (after Relu)
+scale is not used (always 1) so 'scale / sqrt(input_var + epsilon)' will always be psoitive
+B is not used (always 0) so 'input_mean - B' will always be positive
+So if 'scale / sqrt(input_var + epsilon)' and 'input_mean - B' are positive the first Relu can be removed and the BatchNormalization can be folded into the coefficients of the Conv operation
